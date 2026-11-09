@@ -1,4 +1,6 @@
-/* webOS TV 3.x (Chromium 38) compatibility: no CSS custom properties.\n   Actual tile dimensions are assigned as inline styles in app.js. */\n/* Sizes are the Android launcher's dp values doubled: webOS renders web apps at 1920x1080. */
+/* webOS TV 3.x (Chromium 38) compatibility: no CSS custom properties.
+   Actual tile dimensions are assigned as inline styles in app.js. */
+/* Sizes are the Android launcher's dp values doubled: webOS renders web apps at 1920x1080. */
 
 /* Lexend: one variable file for every weight, and it covers Vietnamese. Outfit was missing 42 of
    the 53 Vietnamese letters, so TVs substituted their own font mid-word. */

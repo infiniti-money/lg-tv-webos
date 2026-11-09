@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * LG TV Vibehack - runs ON the rooted TV.
+ * Infiniti TV Home - runs ON the rooted TV.
  * A small web page for changing the wallpaper from a phone: the launcher's Wallpaper button shows a
  * QR code, the phone opens this page, picks a photo (from the phone or from a USB stick in the TV),
  * and the photo becomes the wallpaper. The phone crops and shrinks the photo to 1920x1080 first.
@@ -23,7 +23,7 @@ var execFile = require('child_process').execFile;
 
 var PORT = 8090;
 var DATA = '/home/root/lg-tv-vibehack';
-var APP_DIR = '/media/developer/apps/usr/palm/applications/com.gathin.tvhome';
+var APP_DIR = '/media/developer/apps/usr/palm/applications/com.infinitimoney.tvhome';
 var WALLPAPER = path.join(DATA, 'wallpaper.jpg');
 var SETTINGS = path.join(DATA, 'settings.json');
 var USB_ROOT = '/tmp/usb';
@@ -74,7 +74,7 @@ function sync(cb) {
     if (err) log('sync failed: ' + (errOut || err.message));
     writeWallJs();
     execFile('luna-send', ['-n', '1', 'luna://com.webos.applicationManager/launch',
-      JSON.stringify({ id: 'com.gathin.tvhome', params: { reload: true } })]);
+      JSON.stringify({ id: 'com.infinitimoney.tvhome', params: { reload: true } })]);
     cb(err);
   });
 }

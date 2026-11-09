@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * LG TV Vibehack - runs ON the rooted TV.
+ * Infiniti TV Home - runs ON the rooted TV.
  * Backup for the Home button: whenever LG's home screen comes to the front (at boot, or if the
  * button remap is not installed), bring the launcher back. Gives up after 5 tries in 10 s so it can
  * never fight the TV in a loop.
@@ -13,7 +13,7 @@
 var spawn = require('child_process').spawn;
 var execFile = require('child_process').execFile;
 
-var LAUNCHER = 'com.gathin.tvhome';
+var LAUNCHER = 'com.infinitimoney.tvhome';
 var HOME_IDS = ['com.webos.app.home'];
 var BOOT_IDS = ['com.webos.app.livetv'];
 var BOOT_GRACE_MS = 90000;

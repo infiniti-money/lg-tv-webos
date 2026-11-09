@@ -392,3 +392,34 @@ Trên TV đã root, cài **LG Input Hook** từ Homebrew Channel và **mở ứn
 Tính năng `home-control.sh enable` tự tạo cấu hình tương đương `{"773":{"action":"launch","id":"com.infinitimoney.tvhome"}}` khi tìm thấy LG Input Hook. Trước đó script lưu ánh xạ Home cũ vào `home-key-backup.json`; `disable` sẽ khôi phục lại. **Không dùng lệnh `luna://org.webosbrew.inputhook/setMapping`** nếu chưa xác thực API trên firmware của bạn. `initctl status inputhook` cũng không phải phép thử đủ tin cậy trên mọi webOS; hãy kiểm tra trực tiếp nhật ký trong ứng dụng.
 
 Sau khi cài gói `.ipk`, thử mở Infiniti TV Home từ danh sách ứng dụng trước khi kích hoạt Home Watcher và gán nút Home. Chỉ thay đổi khi đã xác minh khả năng quay về LG Home.
+
+## Hỗ trợ LG webOS TV 3.x (2016–2017)
+
+**Mức hỗ trợ:** giao diện đã được điều chỉnh để không yêu cầu các API JavaScript/CSS mới hơn Chromium 38; các script phía TV nhắm Node.js 0.12.2. Đó là **tương thích mã nguồn**, chưa phải xác nhận chạy trên mọi model hoặc firmware. webOS 3.x sử dụng Chromium 38 và Node.js 0.12.2 theo tài liệu LG.
+
+**Phụ trợ cần thiết cho TV đã root:**
+
+- Homebrew Channel với quyền root và SSH hoạt động. Kiểm tra trên TV bằng `id -u` (kết quả phải là `0`).
+- LG Input Hook nếu muốn gán trực tiếp phím Home. Mở LG Input Hook tối thiểu một lần trước khi gán phím; mã Home tùy điều khiển, một số remote dùng `773`.
+- `node`, `curl`, `luna-send` có sẵn trên TV; `tv/compat-check.sh` chỉ đọc trạng thái, không chỉnh sửa hệ thống.
+- Máy tính cài Node.js 20 trở lên và `@webos-tools/cli` để tạo gói `.ipk`, hoặc tải tệp `.ipk` từ GitHub Actions artifact sau khi workflow thành công.
+
+**Cài thử an toàn trên webOS 3.x, chỉ sau khi có Release chứa `infiniti-tv-home.ipk`:**
+
+1. Trước tiên sao lưu `/home/root/.config/lginputhook/keybinds.json` (nếu tồn tại), ghi lại IP TV và phiên bản firmware. Không xóa ứng dụng Home gốc.
+2. Kết nối `ssh root@IP_TV`; đọc `/etc/os-release`, `node -v` và chạy `id -u`. Nếu TV không có root thực sự, dừng lại.
+3. Chỉ tải trình cài từ repository `infiniti-money/lg-tv-webos`; đọc script trước khi chạy. Trong lần đầu, sử dụng `--no-home-button` để giữ Home LG.
+4. Mở Infiniti TV Home thủ công từ danh sách ứng dụng, kiểm tra điều khiển, icon, tiếng Việt, hình nền và mở ứng dụng.
+5. Khi đã chắc chắn hoạt động, cài LG Input Hook, xác nhận đúng mã Home từ log và bật bằng `sh /home/root/lg-tv-vibehack/home-control.sh enable`.
+6. Nếu Home không hoạt động như ý, dùng SSH chạy `sh /home/root/lg-tv-vibehack/home-control.sh disable` rồi `reboot` để quay lại LG Home.
+
+Các lệnh chẩn đoán (không thay đổi hệ thống):
+
+```sh
+id -u
+node -v
+cat /etc/os-release
+sh /home/root/lg-tv-vibehack/compat-check.sh
+```
+
+**Quan trọng:** không chạy `install.sh` từ nhánh `main` khi GitHub Releases chưa chứa gói `infiniti-tv-home.ipk`. Cơ chế gán Home và tự khởi động cần được thử trực tiếp vì phụ thuộc firmware và phiên bản LG Input Hook.

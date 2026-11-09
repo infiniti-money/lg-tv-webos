@@ -1,8 +1,8 @@
 #!/bin/sh
-# LG TV Vibehack - one-command installer for ROOTED LG webOS TVs.
+# Infiniti TV Home - one-command installer for ROOTED LG webOS TVs.
 # Run it ON the TV as root (over SSH):
 #
-#   curl -fsSL https://raw.githubusercontent.com/hoangvya19/lg-tv-webos-vibehack/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh | sh
 #
 # Options (add after `sh -s --`), e.g.
 #   curl -fsSL .../install.sh | sh -s -- --lang vi --city "Hanoi" --wallpaper https://example.com/photo.jpg
@@ -21,12 +21,12 @@
 #   --uninstall             Remove everything this script installed
 set -e
 
-REPO="hoangvya19/lg-tv-webos-vibehack"
+REPO="infiniti-money/lg-tv-webos"
 BRANCH="main"
 RAW="https://raw.githubusercontent.com/$REPO/$BRANCH"
-IPK_URL="https://github.com/$REPO/releases/latest/download/lg-tv-vibehack.ipk"
+IPK_URL="https://github.com/$REPO/releases/latest/download/infiniti-tv-home.ipk"
 
-APP_ID="com.gathin.tvhome"
+APP_ID="com.infinitimoney.tvhome"
 APP_DIR="/media/developer/apps/usr/palm/applications/$APP_ID"
 DATA="/home/root/lg-tv-vibehack"
 INITD="/var/lib/webosbrew/init.d/lg-tv-vibehack"
@@ -57,7 +57,7 @@ luna_wait() {
 }
 
 # ---------------------------------------------------------------- options
-LANG_OPT=""; CLOCK=""; COLS=""; CITY=""; FAHR=""; NOWEATHER=""; WALL=""; NOWALL=""; DIM=""; GLOW=""
+LANG_OPT="vi"; CLOCK="on"; COLS=""; CITY=""; FAHR=""; NOWEATHER=""; WALL=""; NOWALL=""; DIM=""; GLOW=""
 HOME_BTN=1; UNINSTALL=""
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -85,7 +85,7 @@ for c in node luna-send curl; do command -v "$c" >/dev/null 2>&1 || die "'$c' no
 
 # ---------------------------------------------------------------- uninstall
 if [ -n "$UNINSTALL" ]; then
-  say "Removing LG TV Vibehack"
+  say "Removing Infiniti TV Home"
   pkill -f "$DATA/homewatch.js" 2>/dev/null || true
   pkill -f "$DATA/wallpaper-server.js" 2>/dev/null || true
   rm -f "$INITD"

@@ -1,9 +1,10 @@
-# Builds the launcher package and attaches it to a GitHub Release.
-# Create a release by pushing a tag:  git tag v1.1.0 && git push origin v1.1.0
-name: Release
+# Package Infiniti TV Home for LG webOS.
+# Push to main or run manually to obtain an Actions artifact; v* tags also publish GitHub Releases.
+name: Build Infiniti TV Home
 
 on:
   push:
+    branches: [main]
     tags: ['v*']
   workflow_dispatch:
 
@@ -11,24 +12,48 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  package:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
+
+      - name: Validate app metadata
+        shell: bash
+        run: |
+          node -e "const a=require('./app/appinfo.json');if(a.id!=='com.infinitimoney.tvhome'||a.title!=='Infiniti TV Home')process.exit(1);console.log(a.id, a.version)"
 
       - name: Package the launcher
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p build
           npx -y -p @webos-tools/cli ares-package app -o build
-          cp build/com.gathin.tvhome_*.ipk build/lg-tv-vibehack.ipk
-          ls -la build
+          shopt -s nullglob
+          files=(build/com.infinitimoney.tvhome_*.ipk)
+          test "${#files[@]}" -eq 1
+          cp "${files[0]}" build/infiniti-tv-home.ipk
+          (cd build && sha256sum infiniti-tv-home.ipk > infiniti-tv-home.ipk.sha256)
+          ls -lh build
 
-      - name: Publish release
+      - name: Upload downloadable IPK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: infiniti-tv-home-ipk
+          path: |
+            build/infiniti-tv-home.ipk
+            build/infiniti-tv-home.ipk.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish tagged release
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/lg-tv-vibehack.ipk
+          files: |
+            build/infiniti-tv-home.ipk
+            build/infiniti-tv-home.ipk.sha256
           generate_release_notes: true

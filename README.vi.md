@@ -515,3 +515,5 @@ Chưa phát hành chính thức trước khi kiểm tra các phần này và rol
 
 File IPK chỉ chứa giao diện; chức năng root (Home Watcher, Input Hook) phải
 được cài riêng bằng `install.sh` sau khi tạo Release và SHA-256 hợp lệ.
+
+Trong mục **Tùy chỉnh > Giao diện & phông chữ**, nút **Đổi thành phố / Hình nền** mở mã QR để thiết lập thành phố dự báo thời tiết hoặc hình nền bằng điện thoại (yêu cầu máy chủ hình nền trên TV root đang chạy).

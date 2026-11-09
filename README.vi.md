@@ -366,3 +366,21 @@ chủ sở hữu tương ứng. Project không liên quan đến LG Electronics.
 ## Giấy phép
 
 [MIT](LICENSE). Có sử dụng mã nguồn từ tv-vibehack và webos-vibehack, cũng theo giấy phép MIT.
+
+## Thay thế Home LG an toàn và khôi phục (TV đã root)
+
+**Điều kiện:** đã đóng gói và phát hành `infiniti-tv-home.ipk` từ chính repository này; `LG Input Hook` đã cài nếu muốn bấm Home chuyển trực tiếp. Không xóa hoặc ghi đè ứng dụng Home hệ thống của LG.
+
+Trước khi cài, kiểm tra gói phát hành, sao lưu cấu hình quan trọng và kết nối SSH vào TV bằng tài khoản root. Trình cài mới tải các tệp từ `infiniti-money/lg-tv-webos`, bật Home Watcher và, nếu có LG Input Hook, sao lưu riêng ánh xạ phím Home (mã 773) vào `/home/root/lg-tv-vibehack/home-key-backup.json` trước khi thay đổi.
+
+```sh
+# Bật lại thay thế Home sau khi cài đặt:
+sh /home/root/lg-tv-vibehack/home-control.sh enable
+# Kiểm tra:
+sh /home/root/lg-tv-vibehack/home-control.sh status
+# Trả lại phím Home cũ, dừng Home Watcher, không xóa ứng dụng:
+sh /home/root/lg-tv-vibehack/home-control.sh disable
+reboot
+```
+
+Nếu muốn giữ Home LG ngay từ lúc cài, dùng tùy chọn `--no-home-button`. Khi gỡ, trình cài khôi phục ánh xạ đã sao lưu; nếu không thể khôi phục, nó dừng thay vì xóa dữ liệu sao lưu. Không chỉnh hoặc xóa `home-key-backup.json` bằng tay trước khi khôi phục. Nếu một công cụ khác đã sửa phím Home sau đó, việc khôi phục sẽ không ghi đè thay đổi của công cụ ấy và yêu cầu bạn kiểm tra thủ công. Sau khi thử Home Watcher và LG Input Hook trên model TV cụ thể, mới nên sử dụng thường xuyên.

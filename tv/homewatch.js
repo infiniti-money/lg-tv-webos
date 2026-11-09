@@ -14,6 +14,8 @@ var spawn = require('child_process').spawn;
 var execFile = require('child_process').execFile;
 
 var LAUNCHER = 'com.infinitimoney.tvhome';
+var fs = require('fs');
+var ENABLE_FILE = '/home/root/lg-tv-vibehack/home-enabled';
 var HOME_IDS = ['com.webos.app.home'];
 var BOOT_IDS = ['com.webos.app.livetv'];
 var BOOT_GRACE_MS = 90000;
@@ -24,6 +26,7 @@ var readyAt = 0;
 function log(msg) { console.log(new Date().toISOString() + ' ' + msg); }
 
 function launch() {
+  if (!fs.existsSync(ENABLE_FILE)) return;
   execFile('luna-send', ['-n', '1', 'luna://com.webos.applicationManager/launch', JSON.stringify({ id: LAUNCHER })]);
 }
 
@@ -33,6 +36,7 @@ function isHome(id) {
 }
 
 function handle(id) {
+  if (!fs.existsSync(ENABLE_FILE)) return;
   if (!isHome(id)) return;
   var now = Date.now();
   hits = hits.filter(function (t) { return now - t < 10000; });

@@ -17,7 +17,7 @@
 #   --no-wallpaper          Back to plain black
 #   --dim 0-0.8             Darken the wallpaper so text stays readable (default: 0.35)
 #   --glow on|off           Coloured glow behind the focused app
-#   --no-home-button        Do not remap the remote's Home button
+#   --no-home-button        Keep LG Home; disable and restore previous key mapping
 #   --uninstall             Remove everything this script installed
 set -e
 
@@ -86,16 +86,14 @@ for c in node luna-send curl; do command -v "$c" >/dev/null 2>&1 || die "'$c' no
 # ---------------------------------------------------------------- uninstall
 if [ -n "$UNINSTALL" ]; then
   say "Removing Infiniti TV Home"
-  pkill -f "$DATA/homewatch.js" 2>/dev/null || true
+  if [ -f "$DATA/home-control.sh" ]; then
+    sh "$DATA/home-control.sh" disable || die "Could not safely restore the previous Home key binding. Check $DATA/home-key-backup.json"
+  else
+    warn "No Home rollback controller found; inspect LG Input Hook keybinds before proceeding."
+    die "Refusing uninstall without a reversible Home configuration."
+  fi
   pkill -f "$DATA/wallpaper-server.js" 2>/dev/null || true
   rm -f "$INITD"
-  if [ -f "$HOOK_CFG" ]; then
-    node -e '
-      var fs=require("fs"),f=process.argv[1],k=process.argv[2];
-      var j={}; try{j=JSON.parse(fs.readFileSync(f,"utf8"))}catch(e){}
-      if(j[k]&&String(j[k].command||"").indexOf("lg-tv-vibehack")!==-1){delete j[k];fs.writeFileSync(f,JSON.stringify(j));}
-    ' "$HOOK_CFG" "$HOME_KEY"
-  fi
   luna_wait luna://com.webos.appInstallService/remove "{\"id\":\"$APP_ID\",\"subscribe\":true}" || warn "Could not remove the launcher app"
   rm -f /tmp/lg-tv-vibehack.log
   rm -rf "$DATA"
@@ -106,7 +104,7 @@ fi
 # ---------------------------------------------------------------- files
 say "Downloading scripts"
 mkdir -p "$DATA/icons"
-for f in sync.js homewatch.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh; do
+for f in sync.js homewatch.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh home-control.sh; do
   curl -fsSL "$RAW/tv/$f" -o "$DATA/$f" || die "Could not download $f. Is the TV online?"
 done
 chmod +x "$DATA"/*.sh "$DATA"/*.js
@@ -179,27 +177,18 @@ ok "Launcher installed"
 say "Reading your apps"
 node "$DATA/sync.js" || die "App sync failed."
 
-# ---------------------------------------------------------------- start at boot + Home watcher
+# ---------------------------------------------------------------- safe boot and Home replacement
+# The wallpaper service and app sync run regardless of whether Home replacement is enabled.
 cp "$DATA/boot.sh" "$INITD"
 chmod +x "$INITD"
-nohup setsid /usr/bin/node "$DATA/homewatch.js" >> /tmp/lg-tv-vibehack.log 2>&1 < /dev/null &
 nohup setsid /usr/bin/node "$DATA/wallpaper-server.js" >> /tmp/lg-tv-vibehack.log 2>&1 < /dev/null &
-ok "Starts automatically at every boot"
-
-# ---------------------------------------------------------------- Home button
 if [ -n "$HOME_BTN" ]; then
-  if [ -d "$HOOK_APP" ]; then
-    mkdir -p "$(dirname "$HOOK_CFG")"
-    node -e '
-      var fs=require("fs"),f=process.argv[1],k=process.argv[2],cmd=process.argv[3];
-      var j={}; try{j=JSON.parse(fs.readFileSync(f,"utf8"))}catch(e){}
-      j[k]={action:"exec",command:cmd}; fs.writeFileSync(f,JSON.stringify(j));
-    ' "$HOOK_CFG" "$HOME_KEY" "$DATA/golauncher.sh"
-    ok "Home button mapped to the launcher (takes effect after a reboot)"
-  else
-    warn "LG Input Hook is not installed: the Home button still opens LG's home for a moment."
-    warn "Install 'LG Input Hook' from the Homebrew Channel, then run this command again."
-  fi
+  sh "$DATA/home-control.sh" enable || die "Could not safely activate Home replacement."
+  nohup setsid /usr/bin/node "$DATA/homewatch.js" >> /tmp/lg-tv-vibehack.log 2>&1 < /dev/null &
+  ok "Home replacement enabled. Reboot once for LG Input Hook."
+else
+  sh "$DATA/home-control.sh" disable || die "Could not safely disable Home replacement."
+  ok "LG Home preserved (Home replacement disabled)."
 fi
 
 luna-send -n 1 luna://com.webos.applicationManager/launch "{\"id\":\"$APP_ID\",\"params\":{\"reload\":true}}" >/dev/null 2>&1 || true

@@ -6,7 +6,7 @@ LOG=/tmp/lg-tv-vibehack.log
 echo "$(date) boot" >> "$LOG"
 if [ -f "$DIR/home-enabled" ] && [ -f "$DIR/homewatch.js" ]; then
   if ! ps | grep '[h]omewatch.js' | grep -v grep >/dev/null 2>&1; then
-    nohup setsid /usr/bin/node "$DIR/homewatch.js" >> "$LOG" 2>&1 < /dev/null &
+    nohup setsid /usr/bin/node "$DIR/homewatch.js" --boot >> "$LOG" 2>&1 < /dev/null &
   fi
 fi
 # Never block wallpaper startup when launch point sync fails. Avoid duplicate services.

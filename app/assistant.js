@@ -21,8 +21,9 @@
     panel.classList.add('hidden');
     opened = false;
     if (recognition) { try { recognition.stop(); } catch (e) {} recognition = null; }
-    if (activeRequest) { activeRequest.abort(); activeRequest = null; }
+    if (activeRequest) { var request = activeRequest; activeRequest = null; request.abort(); }
     busy = false;
+    send.disabled = false;
   }
   function submit() {
     var q = (prompt.value || '').replace(/^\s+|\s+$/g, '');
@@ -34,7 +35,7 @@
       msg(languageVi ? 'Chưa cấu hình máy chủ AI HTTPS (CONFIG.aiEndpoint).' :
         'Configure your HTTPS AI endpoint in CONFIG.aiEndpoint.'); return;
     }
-    if (!token || token.length < 24) {
+    if (!token || token.length < 32) {
       msg(languageVi ? 'Nhập mã truy cập AI do quản trị cấp.' : 'Enter your AI access token.'); return;
     }
     busy = true;
@@ -113,7 +114,6 @@
       hide();
       return;
     }
-    if (e.type === "keyup" && code === 13) return;
     e.stopPropagation();
     if (e.stopImmediatePropagation) e.stopImmediatePropagation();
     if (code === 13 && e.target === prompt) {

@@ -471,3 +471,69 @@ body.arranging .item:nth-child(even):not(.moving):not(.focused) .card { animatio
   line-height: 1.45;
   opacity: 1;
 }
+
+/* Vietnamese voice and AI - no CSS variables or advanced selectors (Chromium 38). */
+#aiPanel { position:fixed; top:0; left:0; right:0; bottom:0; z-index:100; background:rgba(0,0,0,.84); padding:100px 100px 50px; box-sizing:border-box; }
+#aiPanel.hidden { display:none; }
+.aiDialog { max-width:1660px; margin:0 auto; background:#22232a; border:2px solid #5b5e68; border-radius:28px; padding:38px; color:#fff; font-size:29px; }
+.aiHead { display:flex; justify-content:space-between; align-items:center; font-size:42px; }
+.aiDialog p { font-size:25px; color:#dadbe0; margin:22px 0; }
+.aiDialog button { background:#eceefa; color:#171923; font-size:27px; border:2px solid transparent; border-radius:16px; padding:16px 22px; cursor:pointer; }
+.aiDialog button:focus, .aiDialog input:focus { outline:5px solid #7fb2ff; }
+.aiDialog button:disabled { opacity:.45; }
+.aiRow { display:flex; align-items:center; margin:20px 0; }
+.aiRow > * { margin-right:16px; }
+.aiRow input { background:#15161b; border:2px solid #777; color:white; padding:18px; border-radius:12px; font-size:30px; }
+#aiPrompt { flex:1; min-width:0; }
+.aiAuth { font-size:24px; }
+#aiToken { width:440px; font-size:25px; }
+#aiStatus { font-size:23px; color:#b1d3ff; min-height:40px; margin-top:18px; }
+#aiAnswer { font-size:31px; line-height:1.5; background:#16171d; border-radius:18px; padding:26px; overflow-y:auto; max-height:420px; min-height:145px; white-space:pre-wrap; }
+
+
+/* webOS 3.4.0: legacy flexbox only, no CSS custom properties or grid. */
+#lunarDate { margin:2px 0 0 8px; font-size:26px; color:#e9d5ab; letter-spacing:.02em; }
+#weekWeather { position:absolute; left:112px; right:112px; top:330px; height:180px; z-index:2; display:flex; }
+#weekWeather.hidden, body.forecast-hidden #weekWeather { display:none; }
+.weekDay { flex:1; min-width:0; margin-right:12px; border-radius:21px; border:1px solid rgba(255,255,255,.23); background:rgba(24,25,33,.85); padding:19px 12px; text-align:center; color:#fff; }
+.weekDay .weekLabel {font-size:24px; font-weight:600; color:#c9d9ff;}
+.weekDay .weekCondition {font-size:21px; padding:14px 0 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.weekDay .weekTemperature {font-size:27px; font-weight:600;}
+.weekDay .weekRain {font-size:21px; color:#89cefa; padding-top:7px;}
+.weekEmpty {font-size:26px; padding:22px; color:#f5d39b;}
+#topButtons {align-items:center;}
+#topButtons .pill { height:64px; margin-left:11px; padding:0 18px; font-size:23px; border-radius:34px; }
+#topButtons .pill svg { width:30px; height:30px; margin-right:9px; }
+#topButtons .pill.iconOnly { padding:0 18px; }
+#customizePanel {position:fixed; top:0; bottom:0; left:0; right:0; z-index:110; background:rgba(0,0,0,.9); padding:50px 75px;}
+#customizePanel.hidden, #customizeStyleView.hidden, #customizeAppsView.hidden {display:none;}
+.customizeDialog {margin:0 auto; width:1540px; max-height:960px; overflow:hidden; padding:30px 45px; border-radius:32px; border:2px solid #525967; background:#1c1f29; font-size:25px; color:white;}
+.customizeHead {display:flex; align-items:center; justify-content:space-between; font-size:40px;}
+.customizeTabs {display:flex; margin:20px 0;}
+.customizeDialog button {background:#343947; color:#fff; border:2px solid #636b7b; border-radius:14px; padding:13px 24px; font-size:23px; margin:4px 12px 4px 0; cursor:pointer;}
+.customizeDialog button.selected {background:#dcecff; color:#102337; border-color:#dcecff;}
+.customizeDialog button:focus {outline:5px solid #ffd388;}
+.customizeDialog p {margin:10px 0 18px; font-size:23px; color:#c9ccd8;}
+#customizeAppList {max-height:540px; overflow-y:auto; display:flex; flex-wrap:wrap; margin:10px 0 24px;}
+.customizeApp {display:flex; align-items:center; width:49%; min-height:69px; padding:5px 16px; margin-right:1%; border-bottom:1px solid #454a54;}
+.customizeApp span {flex:1; font-size:23px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:10px;}
+.customizeApp button {font-size:20px; padding:10px 13px; width:190px; margin:0;}
+#customizeStyleView h3 {font-size:26px; margin:24px 0 10px; color:#e6d5ab;}
+.customizeChoice {display:flex; flex-wrap:wrap;}
+#customizeStatus {min-height:40px; color:#a7dfbc; font-size:23px; margin:10px 0;}
+.customizeHint {font-size:21px!important; color:#9fa5b4!important;}
+body.theme-ocean #dockBand {background:#082a3b;}
+body.theme-ocean .pill {border-color:rgba(104,204,237,.6);}
+body.theme-ocean #glass {border-color:#6cd6ec;}
+body.theme-ocean #hero {color:#b5e9ff;}
+body.theme-amber #dockBand {background:#332315;}
+body.theme-amber .pill {border-color:rgba(255,205,124,.56);}
+body.theme-amber #glass {border-color:#ffd18e;}
+body.theme-amber #hero {color:#ffe0a6;}
+body.font-sans {font-family:Arial,'DejaVu Sans',sans-serif;}
+body.font-serif {font-family:Georgia,'Times New Roman',serif;}
+body.font-large .name {font-size:33px;}
+body.font-large #date {font-size:33px;}
+body.font-large #lunarDate {font-size:31px;}
+body.font-large .weekDay .weekLabel {font-size:27px;}
+body.font-large .weekDay .weekTemperature {font-size:31px;}

@@ -19,7 +19,11 @@
   // ---- Weather (Open-Meteo, no API key) ----
   var W = C.weather || {};
   var el = document.getElementById('weather');
-  if (!el || !W.enabled || !W.latitude || !W.longitude) return;
+  var week = document.getElementById('weekWeather');
+  if (!el || !W.enabled || !W.latitude || !W.longitude) {
+    if (week) week.classList.add('hidden');
+    return;
+  }
 
   var vi = C.language === 'vi';
   var NAMES = vi ? {
@@ -35,28 +39,75 @@
   };
   var fahrenheit = W.unit === 'fahrenheit';
 
+
+  function cell(parent, className, value) {
+    var box = document.createElement('div');
+    box.className = className;
+    box.textContent = value;
+    parent.appendChild(box);
+  }
+  function renderWeek(daily) {
+    if (!week) return;
+    var list = window.INFINITI_FORECAST ?
+      window.INFINITI_FORECAST.prepare(daily, vi) : [];
+    week.innerHTML = '';
+    if (!list.length) {
+      cell(week, 'weekEmpty', vi ? 'Chưa có dữ liệu dự báo 7 ngày.' : 'No weekly forecast available.');
+    } else {
+      for (var i=0; i<list.length; i++) {
+        var d = list[i], box = document.createElement('div');
+        box.className = 'weekDay';
+        cell(box, 'weekLabel', d.label);
+        cell(box, 'weekCondition', d.condition);
+        cell(box, 'weekTemperature', d.high + '° / ' + d.low + '°');
+        cell(box, 'weekRain', d.rain === null ? '—' : 'Mưa ' + d.rain + '%');
+        week.appendChild(box);
+      }
+    }
+    week.classList.remove('hidden');
+  }
   function load() {
-    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + W.latitude + '&longitude=' + W.longitude +
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' +
+      encodeURIComponent(W.latitude) + '&longitude=' + encodeURIComponent(W.longitude) +
       '&current=temperature_2m,weather_code' +
-      '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
-      '&timezone=auto&forecast_days=1' + (fahrenheit ? '&temperature_unit=fahrenheit' : '');
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
+      '&timezone=auto&forecast_days=7' +
+      (fahrenheit ? '&temperature_unit=fahrenheit' : '');
     var x = new XMLHttpRequest();
-    x.open('GET', url);
-    x.timeout = 10000;
+    x.open('GET', url, true);
+    x.timeout = 13000;
     x.onload = function () {
+      if (x.status < 200 || x.status >= 300) {
+        if (week && !week.children.length) renderWeek(null);
+        return;
+      }
       try {
-        var d = JSON.parse(x.responseText), c = d.current, day = d.daily;
-        var u = fahrenheit ? '°F' : '°C';
-        var text = Math.round(c.temperature_2m) + u;
-        if (NAMES[c.weather_code]) text += ' · ' + NAMES[c.weather_code];
-        if (W.place) text += ' · ' + W.place;
-        text += '   ↑' + Math.round(day.temperature_2m_max[0]) + '° ↓' + Math.round(day.temperature_2m_min[0]) + '°';
-        var rain = day.precipitation_probability_max[0];
-        if (rain !== null && rain !== undefined) text += '  ☂ ' + rain + '%';
-        el.textContent = text;
-        el.className = 'shown';
-      } catch (e) { /* keep the old text */ }
+        var data = JSON.parse(x.responseText), current = data.current || {}, daily = data.daily || {};
+        if (typeof current.temperature_2m === 'number') {
+          var unit = fahrenheit ? '°F' : '°C';
+          var str = Math.round(current.temperature_2m) + unit;
+          if (NAMES[current.weather_code]) str += ' · ' + NAMES[current.weather_code];
+          if (W.place) str += ' · ' + W.place;
+          if (daily.temperature_2m_max && daily.temperature_2m_max.length &&
+              daily.temperature_2m_min && daily.temperature_2m_min.length) {
+            str += '   ↑' + Math.round(daily.temperature_2m_max[0]) +
+              '° ↓' + Math.round(daily.temperature_2m_min[0]) + '°';
+          }
+          var rain = daily.precipitation_probability_max &&
+            daily.precipitation_probability_max.length ? daily.precipitation_probability_max[0] : null;
+          if (typeof rain === 'number') str += '  ☂ ' + rain + '%';
+          el.textContent = str;
+          el.className = 'shown';
+        }
+        renderWeek(daily);
+      } catch (e) {
+        if (week && !week.children.length) renderWeek(null);
+      }
     };
+    x.onerror = function () {
+      if (week && !week.children.length) renderWeek(null);
+    };
+    x.ontimeout = x.onerror;
     x.send();
   }
   load();

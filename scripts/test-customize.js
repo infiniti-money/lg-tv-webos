@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+'use strict';
+var assert = require('assert'), p = require('../app/customize.js');
+assert.strictEqual(p.isProtected('com.infinitimoney.tvhome'), true);
+assert.strictEqual(p.isProtected('com.webos.app.hdmi1'), true);
+assert.strictEqual(p.setVisible('com.webos.app.livetv', true), false);
+assert.strictEqual(p.isVisible('com.webos.app.livetv', []), false);
+assert.strictEqual(p.isVisible('com.netflix.app', []), true);
+assert.strictEqual(p.isVisible('shortcutcopilot', ['shortcutcopilot']), false);
+assert.strictEqual(p.setVisible('shortcutcopilot', true), true);
+assert.strictEqual(p.isVisible('shortcutcopilot', ['shortcutcopilot']), true);
+assert.strictEqual(p.setVisible('com.netflix.app', false), true);
+assert.strictEqual(p.isVisible('com.netflix.app', []), false);
+p.resetVisible();
+assert.strictEqual(p.isVisible('shortcutcopilot', ['shortcutcopilot']), false);
+assert.strictEqual(p.getAppearance().theme, 'midnight');
+assert.strictEqual(p.saveAppearance({theme:'ocean', font:'sans', showWeek:false}).theme, 'ocean');
+assert.strictEqual(p.getAppearance().showWeek, false);
+assert.strictEqual(p.saveAppearance({theme:'unknown'}).theme, 'midnight');
+console.log('Customization and app visibility tests passed.');

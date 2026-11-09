@@ -34,6 +34,11 @@ function isFile(p) { try { return !!p && fs.statSync(p).isFile(); } catch (e) { 
 // fs.copyFileSync only exists from Node 8.5. webOS 4 TVs run Node 0.12, where calling it threw and
 // every app was skipped, so the launcher ended up empty. Keep every TV script ES5 and Node 0.12 safe.
 function copyFile(src, dest) { fs.writeFileSync(dest, fs.readFileSync(src)); }
+function atomicWrite(file, content) {
+  var temp = file + '.infiniti-' + process.pid + '.tmp';
+  fs.writeFileSync(temp, content);
+  fs.renameSync(temp, file);
+}
 
 // Where webOS keeps installed apps. Read when listLaunchPoints gives nothing (seen on webOS 4.4).
 var APP_DIRS = [
@@ -131,6 +136,8 @@ function main() {
     var name = safeName(p.id);
     var custom = path.join(DATA, 'icons', name);
     var src = isFile(custom) ? custom : (isFile(p.largeIcon) ? p.largeIcon : p.icon);
+    // Preserve launchable apps even if their original icon is missing.
+    if (!isFile(src)) src = path.join(APP_DIR, 'icon.png');
     if (!isFile(src)) return;
     try { copyFile(src, path.join(iconDir, name)); } catch (e) { return; }
     apps.push({ id: p.id, title: p.title, icon: 'icons/' + name, iconColor: p.iconColor || p.bgColor || '' });
@@ -144,7 +151,7 @@ function main() {
     process.exit(1);
   }
 
-  fs.writeFileSync(path.join(APP_DIR, 'apps.js'),
+  atomicWrite(path.join(APP_DIR, 'apps.js'),
     '// Generated on the TV by sync.js\nwindow.TV_APPS = ' + JSON.stringify({ apps: apps, inputs: inputs }, null, 1) + ';\n');
 
   // Personal settings and wallpaper. The copy is named after the photo's timestamp so a new photo
@@ -157,7 +164,7 @@ function main() {
   });
   if (bgName && !isFile(path.join(APP_DIR, bgName))) copyFile(wp, path.join(APP_DIR, bgName));
   settings.wallpaper = bgName;
-  fs.writeFileSync(path.join(APP_DIR, 'user.js'),
+  atomicWrite(path.join(APP_DIR, 'user.js'),
     '// Generated on the TV by sync.js from ' + DATA + '/settings.json\n' +
     '(function () { var u = ' + JSON.stringify(settings) + '; for (var k in u) window.CONFIG[k] = u[k]; })();\n');
 

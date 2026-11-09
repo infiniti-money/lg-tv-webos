@@ -1,11 +1,11 @@
-# Package Infiniti TV Home for LG webOS.
-# Push to main or run manually to obtain an Actions artifact; v* tags also publish GitHub Releases.
+# Package Infiniti TV Home for legacy LG webOS 3.4.0 (Chromium 38).
 name: Build Infiniti TV Home
-
 on:
   push:
     branches: [main]
     tags: ['v*']
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -26,27 +26,38 @@ jobs:
         run: |
           node -e "const a=require('./app/appinfo.json');if(a.id!=='com.infinitimoney.tvhome'||a.title!=='Infiniti TV Home')process.exit(1);console.log(a.id, a.version)"
 
-      - name: Check legacy JavaScript and shell syntax
+      - name: Check ES5 compatibility, Home rollback, and shell syntax
+        shell: bash
         run: |
-          set -e
+          set -euo pipefail
           node scripts/check-webos3.js
-          for file in app/app.js app/extras.js app/config.js app/qrcode.js tv/*.js; do node --check "$file"; done
+          node scripts/test-homewatch.js
+          node scripts/test-keymap.js
+          node scripts/test-ai-worker.mjs
+          node scripts/test-assistant.js
+          node scripts/test-lunar.js
+          node scripts/test-forecast.js
+          node scripts/test-customize.js
+          node scripts/test-app-structure.js
+          for file in app/app.js app/extras.js app/config.js app/assistant.js app/customize.js app/lunar.js app/forecast.js app/qrcode.js tv/*.js; do node --check "$file"; done
           for file in install.sh tv/*.sh; do sh -n "$file"; done
 
-      - name: Package the launcher
+      - name: Package without modern-JS minification
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p build
-          npx -y -p @webos-tools/cli ares-package app -o build
+          npx -y -p @webos-tools/cli@3.2.6 ares-package --no-minify app -o build
           shopt -s nullglob
           files=(build/com.infinitimoney.tvhome_*.ipk)
           test "${#files[@]}" -eq 1
           cp "${files[0]}" build/infiniti-tv-home.ipk
+          ar t build/infiniti-tv-home.ipk | grep -qx 'debian-binary'
+          ar t build/infiniti-tv-home.ipk | grep -q '^data.tar'
           (cd build && sha256sum infiniti-tv-home.ipk > infiniti-tv-home.ipk.sha256)
           ls -lh build
 
-      - name: Upload downloadable IPK artifact
+      - name: Upload IPK artifact
         uses: actions/upload-artifact@v4
         with:
           name: infiniti-tv-home-ipk

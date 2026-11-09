@@ -104,7 +104,7 @@ fi
 # ---------------------------------------------------------------- files
 say "Downloading scripts"
 mkdir -p "$DATA/icons"
-for f in sync.js homewatch.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh home-control.sh compat-check.sh; do
+for f in sync.js homewatch.js keymap.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh home-control.sh compat-check.sh; do
   curl -fsSL "$RAW/tv/$f" -o "$DATA/$f" || die "Could not download $f. Is the TV online?"
 done
 chmod +x "$DATA"/*.sh "$DATA"/*.js
@@ -168,9 +168,12 @@ say "Installing the launcher (latest release)"
 pkill -f "$DATA/homewatch.js" 2>/dev/null || true
 pkill -f "$DATA/wallpaper-server.js" 2>/dev/null || true
 curl -fsSL "$IPK_URL" -o /tmp/lg-tv-vibehack.ipk || die "Could not download the launcher package."
+curl -fsSL "$IPK_URL.sha256" -o /tmp/lg-tv-vibehack.ipk.sha256 || die "Could not download IPK SHA-256 verification file."
+command -v sha256sum >/dev/null 2>&1 || die "sha256sum required to verify installation."
+(cd /tmp && sed 's/infiniti-tv-home.ipk/lg-tv-vibehack.ipk/g' lg-tv-vibehack.ipk.sha256 | sha256sum -c -) || die "IPK checksum mismatch; installation aborted."
 luna_wait luna://com.webos.appInstallService/dev/install \
   '{"id":"com.ares.defaultName","ipkUrl":"/tmp/lg-tv-vibehack.ipk","subscribe":true}' || die "Install failed (see message above)."
-rm -f /tmp/lg-tv-vibehack.ipk
+rm -f /tmp/lg-tv-vibehack.ipk /tmp/lg-tv-vibehack.ipk.sha256
 ok "Launcher installed"
 
 # ---------------------------------------------------------------- app list, settings, wallpaper

@@ -76,7 +76,7 @@
   // Set sizing directly on elements rather than relying on var(--tile-...).
   glass.style.borderRadius = Math.round(TILE_W * 47 / 360) + 'px';
   var ambients = [$('ambientA'), $('ambientB')], ambientFront = 0, ambientColor = null;
-  var pills = [$('btnInputs'), $('btnWifi'), $('btnWall'), $('btnSettings')];
+  var pills = [$('btnInputs'), $('btnWifi'), $('btnWall'), $('btnSettings'), $('btnAI'), $('btnCustomize')];
   var panel = $('inputsPanel'), wallPanel = $('wallPanel'), pen = $('penBtn'), colsPanel = $('colsPanel');
 
   var items = [];               // {app, el, color}
@@ -131,6 +131,13 @@
     all.forEach(function (a) { byId[a.id] = a; });
     var hidden = {};
     (CONFIG.hiddenApps || []).forEach(function (id) { hidden[id] = true; });
+    // User's in-launcher editor overrides defaults without touching installed apps.
+    if (window.INFINITI_PREFS) {
+      all.forEach(function (a) {
+        if (INFINITI_PREFS.isVisible(a.id, CONFIG.hiddenApps || [])) delete hidden[a.id];
+        else hidden[a.id] = true;
+      });
+    }
     var byTitle = function (a, b) { return a.title.toLowerCase() < b.title.toLowerCase() ? -1 : 1; };
 
     // An order arranged on the TV wins, until dockApps in config.js changes.
@@ -528,7 +535,9 @@
     if (i === 0) showInputs();
     else if (i === 1) launch('com.palm.app.settings', 'Settings', { target: 'network' });
     else if (i === 2) showWall();
-    else launch('com.palm.app.settings', 'Settings');
+    else if (i === 3) launch('com.palm.app.settings', 'Settings');
+    else if (i === 4 && window.INFINITI_AI_OPEN) window.INFINITI_AI_OPEN();
+    else if (i === 5 && window.INFINITI_CUSTOMIZE_OPEN) window.INFINITI_CUSTOMIZE_OPEN();
   }
 
   // ---- wallpaper QR panel --------------------------------------------------------------------
@@ -900,6 +909,18 @@
   });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) resume(); });
 
+  window.INFINITI_LAUNCHER_REFRESH = function () {
+    if (editing) finishEdit(false);
+    if (arranging) stopArrange();
+    var oldIndex = focused;
+    build();
+    focused = Math.max(0, Math.min(oldIndex, items.length - 1));
+    animateIn();
+    if (items.length) focusTile(focused);
+    else focusPill(pills.length - 1);
+  };
+  window.INFINITI_CUSTOMIZE_CLOSED = function () { focusPill(pills.length - 1); };
+  window.INFINITI_WALLPAPER_OPEN = showWall;
   build();
   updateClock();
   setInterval(updateClock, 10000);
@@ -912,5 +933,6 @@
   watchNetwork();
   animateIn();
   zone = 'none';
-  focusTile(0);
+  if (items.length) focusTile(0);
+  else focusPill(pills.length - 1);
 })();

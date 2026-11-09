@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="utf-8">
-  <title>Home</title>
+  <title>Infiniti TV Home</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,6 +19,7 @@
       <div id="timeRow">
         <span id="clock"></span><span id="ampm"></span><span class="divider"></span><span id="date"></span>
       </div>
+      <div id="lunarDate"></div>
       <div id="weather"></div>
     </div>
     <div id="topButtons">
@@ -37,8 +38,12 @@
         <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04,-0.3 0.06,-0.61 0.06,-0.94c0,-0.32 -0.02,-0.64 -0.07,-0.94l2.030,-1.58c0.18,-0.14 0.23,-0.41 0.12,-0.61l-1.92,-3.32c-0.12,-0.22 -0.37,-0.29 -0.59,-0.22l-2.39,0.96c-0.5,-0.38 -1.03,-0.7 -1.62,-0.94L14.4,2.81c-0.04,-0.24 -0.24,-0.41 -0.48,-0.41h-3.84c-0.24,0 -0.43,0.17 -0.47,0.41L9.25,5.35C8.66,5.59 8.12,5.92 7.63,6.29L5.24,5.33c-0.22,-0.08 -0.47,0 -0.59,0.22L2.74,8.87C2.62,9.08 2.66,9.34 2.86,9.48l2.030,1.58C4.84,11.36 4.8,11.69 4.8,12s0.02,0.64 0.07,0.94l-2.030,1.58c-0.18,0.14 -0.23,0.41 -0.12,0.61l1.92,3.32c0.12,0.22 0.37,0.29 0.59,0.22l2.39,-0.96c0.5,0.38 1.03,0.7 1.62,0.94l0.36,2.54c0.05,0.24 0.24,0.41 0.48,0.41h3.84c0.24,0 0.44,-0.17 0.47,-0.41l0.36,-2.54c0.59,-0.24 1.13,-0.56 1.62,-0.94l2.39,0.96c0.22,0.08 0.47,0 0.59,-0.22l1.92,-3.32c0.12,-0.22 0.07,-0.47 -0.12,-0.61L19.14,12.94zM12,15.6c-1.98,0 -3.6,-1.62 -3.6,-3.6s1.62,-3.6 3.6,-3.6s3.6,1.62 3.6,3.6S13.98,15.6 12,15.6z"/></svg>
         <span>Settings</span>
       </div>
+      <div class="pill" id="btnAI"><span>🎙 AI tiếng Việt</span></div>
+      <div class="pill" id="btnCustomize"><span>Tùy chỉnh</span></div>
     </div>
   </header>
+
+  <div id="weekWeather" class="hidden" aria-label="Dự báo thời tiết 7 ngày"></div>
 
   <!-- Everything below the header scrolls together: dock band, tiles and the glass highlight. -->
   <div id="viewport">
@@ -71,11 +76,63 @@
 
   <div id="toast"></div>
 
+  <!-- In-launcher edit panel: never uninstalls system applications. -->
+  <div id="customizePanel" class="hidden" role="dialog" aria-label="Tùy chỉnh Infiniti TV Home">
+    <div class="customizeDialog">
+      <div class="customizeHead"><strong>Tùy chỉnh Infiniti TV Home</strong><button id="customizeClose" type="button">Đóng ×</button></div>
+      <div class="customizeTabs">
+        <button type="button" id="customizeAppsTab">Thêm / ẩn ứng dụng</button>
+        <button type="button" id="customizeStyleTab">Giao diện &amp; phông chữ</button>
+      </div>
+      <div id="customizeAppsView">
+        <p>Chọn ứng dụng để hiện hoặc ẩn trên màn hình Home. Ứng dụng vẫn được cài trên TV.</p>
+        <div id="customizeAppList"></div>
+        <button type="button" id="customizeResetApps">Khôi phục ứng dụng mặc định</button>
+      </div>
+      <div id="customizeStyleView" class="hidden">
+        <p>Chọn phong cách, phông chữ dễ đọc và cách hiển thị thời tiết.</p>
+        <h3>Chủ đề</h3><div id="customizeThemes" class="customizeChoice"></div>
+        <h3>Phông chữ</h3><div id="customizeFonts" class="customizeChoice"></div>
+        <h3>Tùy chọn</h3>
+        <div class="customizeChoice">
+          <button type="button" id="customizeLargeText">Cỡ chữ lớn</button>
+          <button type="button" id="customizeShowWeek">Dự báo 7 ngày</button>
+          <button type="button" id="customizeWeatherCity">Đổi thành phố / Hình nền</button>
+          <button type="button" id="customizeResetStyle">Đặt lại giao diện</button>
+        </div>
+      </div>
+      <div id="customizeStatus" role="status"></div>
+      <p class="customizeHint">Remote: các phím mũi tên, OK, Back · Phím đỏ để mở tùy chỉnh.</p>
+    </div>
+  </div>
+
+
+  <!-- Vietnamese AI assistant: microphone is optional; LG keyboard dictation remains the fallback. -->
+  <div id="aiPanel" class="hidden" role="dialog" aria-label="Trợ lý AI tiếng Việt">
+    <div class="aiDialog">
+      <div class="aiHead"><strong>Trợ lý AI tiếng Việt</strong><button id="aiClose" type="button">Đóng ×</button></div>
+      <p>Hỏi đáp bằng giọng nói hoặc bàn phím LG. Chỉ gửi câu hỏi sau khi chọn Gửi AI.</p>
+      <div class="aiRow">
+        <input id="aiPrompt" type="text" lang="vi" autocomplete="off" maxlength="1500" placeholder="Ví dụ: Hôm nay có gì hay để xem?">
+        <button id="aiVoice" type="button">🎤 Nói tiếng Việt</button>
+        <button id="aiSend" type="button">Gửi AI</button>
+      </div>
+      <div class="aiRow aiAuth"><label for="aiToken">Mã truy cập AI:</label><input id="aiToken" type="password" autocomplete="off" placeholder="Nhập mã riêng, không lưu trên TV"></div>
+      <div id="aiStatus" role="status"></div>
+      <div id="aiAnswer" aria-live="polite"></div>
+    </div>
+  </div>
+
+
   <script src="config.js"></script>
   <script src="user.js"></script>
   <script src="apps.js"></script>
   <script src="qrcode.js"></script>
+  <script src="customize.js"></script>
   <script src="app.js"></script>
+  <script src="forecast.js"></script>
   <script src="extras.js"></script>
+  <script src="lunar.js"></script>
+  <script src="assistant.js"></script>
 </body>
 </html>

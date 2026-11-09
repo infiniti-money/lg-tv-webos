@@ -433,3 +433,39 @@ scripts\build-windows.cmd
 ```
 
 Script tự chuyển đến thư mục dự án, kiểm tra các tệp tương thích webOS 3.x và dùng `npx.cmd` để gọi webOS CLI, tránh lỗi chặn `npm.ps1` trong PowerShell. Kết quả: `build\com.infinitimoney.tvhome_1.2.1_all.ipk` (tên tệp có thể khác khi thay phiên bản). Script **chỉ tạo bộ cài trên máy tính**, không kết nối hoặc thay Home của TV.
+
+
+# Trợ lý AI tiếng Việt cho Infiniti TV Home
+
+## Phương thức nhận giọng nói trên webOS 3.4.0
+
+webOS 3.x dùng Chromium 38. Ứng dụng web không được bảo đảm truy cập âm thanh
+thô của micro Magic Remote. Nút AI tiếng Việt hỗ trợ nhập câu hỏi bằng bàn phím
+LG (nút micro nếu firmware cung cấp), hoặc Web Speech API khi có sẵn.
+Nếu không, remote vẫn có thể gõ. Nút Gửi AI chỉ gửi văn bản sau khi người dùng
+chủ động xác nhận. Không có tính năng nghe lén hoặc ghi âm thường trực.
+
+## Cấu hình Cloudflare Worker (không để OpenAI API key trong IPK)
+
+Yêu cầu Node 20+, Cloudflare và OpenAI API. Trong thư mục repository:
+
+    cd cloudflare/ai
+    npx wrangler login
+    npx wrangler secret put OPENAI_API_KEY
+    npx wrangler secret put AI_ACCESS_TOKEN
+    npx wrangler deploy
+
+AI_ACCESS_TOKEN phải là chuỗi ngẫu nhiên mạnh ít nhất 32 ký tự. KHÔNG
+commit token, API key, hay cấu hình chứa token lên GitHub. Đặt hạn mức
+chi tiêu OpenAI và Cloudflare WAF/rate limit trước khi dùng thật.
+
+Đặt CONFIG.aiEndpoint trong app/config.js thành URL Worker HTTPS kết thúc
+bằng /api/chat. Trên TV root có thể thay bằng cách thêm aiEndpoint
+vào /home/root/lg-tv-vibehack/settings.json và chạy lại node
+/home/root/lg-tv-vibehack/sync.js. Không lưu mã truy cập vào localStorage.
+
+Chu trình: tiếng nói -> LG/Web Speech chuyển thành chữ -> bấm Gửi AI
+-> HTTPS Cloudflare Worker -> OpenAI Responses -> câu trả lời tiếng Việt.
+
+Trợ lý chưa có quyền điều khiển TV hoặc mở ứng dụng bằng câu lệnh AI.
+Cần thử thật trên TV, đặc biệt nút micro, bàn phím, TLS/CORS và Magic Remote.

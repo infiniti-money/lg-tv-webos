@@ -113,6 +113,7 @@
       hide();
       return;
     }
+    if (e.type === "keyup" && code === 13) return;
     e.stopPropagation();
     if (e.stopImmediatePropagation) e.stopImmediatePropagation();
     if (code === 13 && e.target === prompt) {

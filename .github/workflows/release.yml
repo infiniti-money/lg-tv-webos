@@ -33,7 +33,8 @@ jobs:
           node scripts/check-webos3.js
           node scripts/test-homewatch.js
           node scripts/test-keymap.js
-          for file in app/app.js app/extras.js app/config.js app/qrcode.js tv/*.js; do node --check "$file"; done
+          node scripts/test-ai-worker.mjs
+          for file in app/app.js app/extras.js app/config.js app/assistant.js app/qrcode.js tv/*.js; do node --check "$file"; done
           for file in install.sh tv/*.sh; do sh -n "$file"; done
 
       - name: Package without modern-JS minification
@@ -44,8 +45,8 @@ jobs:
           npx -y -p @webos-tools/cli ares-package --no-minify app -o build
           shopt -s nullglob
           files=(build/com.infinitimoney.tvhome_*.ipk)
-          test "$(printf '%s\n' "$files" | wc -l)" -eq 1
-          cp "$files" build/infiniti-tv-home.ipk
+          test "${#files[@]}" -eq 1
+          cp "${files[0]}" build/infiniti-tv-home.ipk
           ar t build/infiniti-tv-home.ipk | grep -qx 'debian-binary'
           ar t build/infiniti-tv-home.ipk | grep -q '^data.tar'
           (cd build && sha256sum infiniti-tv-home.ipk > infiniti-tv-home.ipk.sha256)

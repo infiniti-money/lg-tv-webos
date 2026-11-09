@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LG TV Vibehack - installer for TVs WITHOUT root (Developer Mode).
+# Infiniti TV Home - installer for TVs WITHOUT root (Developer Mode).
 # Run it on a Mac or Linux computer on the same network as the TV:
 #
 #   ./install-noroot.sh
@@ -9,7 +9,7 @@
 # Personal settings (language, columns, weather, wallpaper): edit app/config.js first.
 set -euo pipefail
 cd "$(dirname "$0")"
-APP_ID=com.gathin.tvhome
+APP_ID=com.infinitimoney.tvhome
 DEVICE="${DEVICE:-lgtv}"
 
 ares() {

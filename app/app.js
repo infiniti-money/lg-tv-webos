@@ -17,13 +17,6 @@
   // Tile size follows the column count (4 columns = the original 360x202 tiles).
   var TILE_W = Math.min(360, Math.round((1920 - 2 * 112) / COLUMNS * 0.85));
   var TILE_H = Math.round(TILE_W * 9 / 16);
-  (function () {
-    var r = Math.round(TILE_W * 32 / 360), st = document.documentElement.style;
-    st.setProperty('--tile-w', TILE_W + 'px');
-    st.setProperty('--tile-h', TILE_H + 'px');
-    st.setProperty('--tile-r', r + 'px');
-    st.setProperty('--glass-r', Math.round(r * 47 / 32) + 'px');
-  })();
   var CELL_W = (1920 - 2 * 112) / COLUMNS;
   var ROW_PITCH = TILE_H + 90;
   var DOCK_TOP = 708;           // tile top of the dock row: next row peeks in at the bottom

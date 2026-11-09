@@ -27,6 +27,8 @@ for %%F in (scripts\test-homewatch.js scripts\test-keymap.js scripts\test-lunar.
 )
 node.exe scripts\test-ai-worker.mjs
 if errorlevel 1 exit /b 1
+node.exe scripts\test-assistant.js
+if errorlevel 1 exit /b 1
 if not exist build mkdir build
 echo [3/4] Packaging .ipk with LG webOS CLI without minification...
 call npx.cmd --yes --package @webos-tools/cli ares-package --no-minify app -o build

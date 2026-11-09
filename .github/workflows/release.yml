@@ -34,6 +34,7 @@ jobs:
           node scripts/test-homewatch.js
           node scripts/test-keymap.js
           node scripts/test-ai-worker.mjs
+          node scripts/test-assistant.js
           node scripts/test-lunar.js
           node scripts/test-forecast.js
           node scripts/test-customize.js

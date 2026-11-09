@@ -6,5 +6,7 @@ export PATH=/usr/sbin:/usr/bin:/sbin:/bin:$PATH
 DIR=/home/root/lg-tv-vibehack
 LOG=/tmp/lg-tv-vibehack.log
 echo "$(date) boot" >> "$LOG"
-nohup setsid /usr/bin/node $DIR/homewatch.js >> "$LOG" 2>&1 < /dev/null &
+if [ -f "$DIR/home-enabled" ]; then
+  nohup setsid /usr/bin/node "$DIR/homewatch.js" >> "$LOG" 2>&1 < /dev/null &
+fi
 nohup setsid sh -c "sleep 30; /usr/bin/node $DIR/sync.js; exec /usr/bin/node $DIR/wallpaper-server.js" >> "$LOG" 2>&1 < /dev/null &

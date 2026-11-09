@@ -191,7 +191,7 @@ body.editing #glass { opacity: 0 !important; }
 
 .card {
   position: relative;
-  width: var(--tile-w, 360px);
+  width: 360px;
   height: 202px;
   border-radius: 32px;
   overflow: hidden;

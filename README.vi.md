@@ -469,3 +469,49 @@ Chu trình: tiếng nói -> LG/Web Speech chuyển thành chữ -> bấm Gửi A
 
 Trợ lý chưa có quyền điều khiển TV hoặc mở ứng dụng bằng câu lệnh AI.
 Cần thử thật trên TV, đặc biệt nút micro, bàn phím, TLS/CORS và Magic Remote.
+
+## Nâng cấp 1.4.0: tùy chỉnh, thời tiết 7 ngày, âm lịch
+
+**Quản lý ứng dụng trên Home:** chọn nút Tùy chỉnh ở góc trên phải, hoặc nhấn
+phím ĐỎ của remote (nếu TV gửi keycode 403). Chọn tab Thêm / ẩn ứng dụng.
+Chọn Thêm vào Home hoặc Ẩn khỏi Home cho từng ứng dụng. Thao tác này KHÔNG
+gỡ ứng dụng khỏi TV, không ảnh hưởng LG Home, HDMI, Live TV hay dữ liệu ứng dụng.
+Ứng dụng cài mới sẽ xuất hiện trong danh sách sau lần đồng bộ apps.js.
+Nhấn Khôi phục ứng dụng mặc định để xóa các lựa chọn ẩn/hiện riêng.
+
+**Tùy biến giao diện:** trong tab Giao diện & phông chữ, chọn Đêm đen,
+Đại dương, Ánh vàng. Phông chữ có Lexend (đã đóng gói và có dấu tiếng Việt),
+Arial, Georgia; bật hoặc tắt cỡ chữ lớn và thanh dự báo 7 ngày.
+Người dùng có thể thay hình nền qua trang điện thoại của nút Hình nền.
+Lựa chọn được lưu trong localStorage của riêng ứng dụng để giữ lại sau reboot
+(trừ khi bộ nhớ ứng dụng bị xóa).
+
+**Dự báo 7 ngày:** dùng Open-Meteo Forecast API với `forecast_days=7`,
+các trường `daily.weather_code`, `temperature_2m_max`, `temperature_2m_min`,
+`precipitation_probability_max`. Chọn thành phố bằng trình cài `--city` hoặc
+trang điện thoại hình nền. Thanh dự báo tự ẩn khi chưa bật thời tiết, và
+hiển thị trạng thái thiếu dữ liệu nếu API không trả về danh sách hợp lệ.
+Nguồn: https://open-meteo.com/en/docs
+
+**Âm lịch Việt Nam:** tính trực tiếp trên TV, không cần internet, theo
+mốc múi giờ UTC+7, hiển thị ngày/tháng âm và Can Chi của năm, có dấu tháng nhuận.
+Công thức dựa trên thuật toán thiên văn chuyển đổi Dương/Âm lịch cho Việt Nam.
+Nguồn: https://honguyenviet.com/amlich/vncal_en.html
+
+**Giới hạn kiểm thử:** cần thử thật trên TV webOS 3.4.0 về vùng hiển thị
+1920×1080, điều hướng Magic Remote, cập nhật apps.js và kết nối TLS tới Open-Meteo.
+Chưa phát hành chính thức trước khi kiểm tra các phần này và rollback phím Home.
+
+### Kiểm thử và đóng gói
+
+    node scripts/check-webos3.js
+    node scripts/test-homewatch.js
+    node scripts/test-keymap.js
+    node scripts/test-lunar.js
+    node scripts/test-forecast.js
+    node scripts/test-customize.js
+    node scripts/test-ai-worker.mjs
+    npx -y -p @webos-tools/cli ares-package --no-minify app -o build
+
+File IPK chỉ chứa giao diện; chức năng root (Home Watcher, Input Hook) phải
+được cài riêng bằng `install.sh` sau khi tạo Release và SHA-256 hợp lệ.

@@ -28,6 +28,9 @@ window.CONFIG = {
   // true = 14:45, false = 2:45 pm
   clock24: true,
 
+  // Configure your own trusted HTTPS Cloudflare Worker proxy. NEVER embed OpenAI API keys.
+  aiEndpoint: '',
+
   // Background image file inside the app folder (e.g. 'bg.jpg'). Empty = plain black.
   wallpaper: '',
   // How much to darken the wallpaper so text stays readable: 0 (none) to 0.8.

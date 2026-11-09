@@ -76,7 +76,7 @@
   // Set sizing directly on elements rather than relying on var(--tile-...).
   glass.style.borderRadius = Math.round(TILE_W * 47 / 360) + 'px';
   var ambients = [$('ambientA'), $('ambientB')], ambientFront = 0, ambientColor = null;
-  var pills = [$('btnInputs'), $('btnWifi'), $('btnWall'), $('btnSettings')];
+  var pills = [$('btnInputs'), $('btnWifi'), $('btnWall'), $('btnSettings'), $('btnAI')];
   var panel = $('inputsPanel'), wallPanel = $('wallPanel'), pen = $('penBtn'), colsPanel = $('colsPanel');
 
   var items = [];               // {app, el, color}
@@ -528,7 +528,8 @@
     if (i === 0) showInputs();
     else if (i === 1) launch('com.palm.app.settings', 'Settings', { target: 'network' });
     else if (i === 2) showWall();
-    else launch('com.palm.app.settings', 'Settings');
+    else if (i === 3) launch('com.palm.app.settings', 'Settings');
+    else if (window.INFINITI_AI_OPEN) window.INFINITI_AI_OPEN();
   }
 
   // ---- wallpaper QR panel --------------------------------------------------------------------

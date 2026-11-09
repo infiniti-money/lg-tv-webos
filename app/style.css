@@ -1,11 +1,11 @@
-/* Sizes are the Android launcher's dp values doubled: webOS renders web apps at 1920x1080. */
+/* webOS TV 3.x (Chromium 38) compatibility: no CSS custom properties.\n   Actual tile dimensions are assigned as inline styles in app.js. */\n/* Sizes are the Android launcher's dp values doubled: webOS renders web apps at 1920x1080. */
 
 /* Lexend: one variable file for every weight, and it covers Vietnamese. Outfit was missing 42 of
    the 53 Vietnamese letters, so TVs substituted their own font mid-word. */
 @font-face {
   font-family: 'Lexend';
   src: url('fonts/lexend.ttf') format('truetype');
-  font-weight: 100 900;
+  font-weight: normal;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -163,7 +163,7 @@ body.scrolled header {
 
 .item {
   position: absolute;
-  width: var(--tile-w, 360px);
+  width: 360px;
   opacity: 0;
   transform: translateY(24px);
   transition: opacity 400ms ease, transform 400ms cubic-bezier(0.2, 0.8, 0.3, 1),
@@ -192,8 +192,8 @@ body.editing #glass { opacity: 0 !important; }
 .card {
   position: relative;
   width: var(--tile-w, 360px);
-  height: var(--tile-h, 202px);
-  border-radius: var(--tile-r, 32px);
+  height: 202px;
+  border-radius: 32px;
   overflow: hidden;
   background: #1c1c1e;
   transition: transform 180ms ease;
@@ -204,7 +204,7 @@ body.editing #glass { opacity: 0 !important; }
   content: '';
   position: absolute;
   top: 0; right: 0; bottom: 0; left: 0;
-  border-radius: var(--tile-r, 32px);
+  border-radius: 32px;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
@@ -251,7 +251,7 @@ body.editing #glass { opacity: 0 !important; }
   position: absolute;
   left: 0;
   top: 0;
-  border-radius: var(--glass-r, 47px);
+  border-radius: 47px;
   border: 3px solid rgba(255, 255, 255, 0.8);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.07));
   box-shadow: 0 0 4px 2px rgba(255, 255, 255, 0.19), 0 0 12px 4px rgba(255, 255, 255, 0.08);

@@ -1,114 +1,159 @@
 #!/usr/bin/env node
-/*
- * Infiniti TV Home - runs ON the rooted TV.
- * Backup for the Home button: whenever LG's home screen comes to the front (at boot, or if the
- * button remap is not installed), bring the launcher back. Gives up after 5 tries in 10 s so it can
- * never fight the TV in a loop.
- *
- * Right after boot the TV usually opens Live TV (or the last input) instead of LG's home, so for
- * BOOT_GRACE_MS after webOS is ready Live TV is treated like LG's home too.
- * Plain ES5: the TV runs Node 8.
+/* Infiniti TV Home - resilient Home watcher for rooted webOS 3.x (Node 0.12 / ES5).
+ * Home redirects are rate-limited and only run when the user's enable flag exists.
+ * An Input Hook foreground at initial boot is expected, not proof that Home was pressed.
  */
 'use strict';
-var spawn = require('child_process').spawn;
-var execFile = require('child_process').execFile;
-
-var LAUNCHER = 'com.infinitimoney.tvhome';
 var fs = require('fs');
-var ENABLE_FILE = '/home/root/lg-tv-vibehack/home-enabled';
+var cp = require('child_process');
+var LAUNCHER = 'com.infinitimoney.tvhome';
+var DATA = '/home/root/lg-tv-vibehack';
+var ENABLE_FILE = DATA + '/home-enabled';
+var SYNC = DATA + '/sync.js';
+var BOOT_IDS = ['com.webos.app.livetv', 'org.webosbrew.hbchannel', 'org.webosbrew.inputhook'];
 var HOME_IDS = ['com.webos.app.home'];
-var BOOT_IDS = ['com.webos.app.livetv'];
 var BOOT_GRACE_MS = 90000;
-var READY_TIMEOUT_MS = 8000;    // no foreground app reported yet: subscribe again
-var hits = [];
-var readyAt = 0;
+var readyAt = 0, lastLaunch = 0, shuttingDown = false;
+var hits = [], syncing = false, syncAgain = false;
+var fgProcess = null, appsProcess = null;
 
-function log(msg) { console.log(new Date().toISOString() + ' ' + msg); }
-
-function launch() {
-  if (!fs.existsSync(ENABLE_FILE)) return;
-  execFile('luna-send', ['-n', '1', 'luna://com.webos.applicationManager/launch', JSON.stringify({ id: LAUNCHER })]);
-}
-
-function isHome(id) {
+function log(s) { console.log(new Date().toISOString() + ' ' + s); }
+function enabled() { return fs.existsSync(ENABLE_FILE); }
+function shouldRedirect(id, isFirst, elapsed) {
   if (HOME_IDS.indexOf(id) !== -1) return true;
-  return BOOT_IDS.indexOf(id) !== -1 && Date.now() - readyAt < BOOT_GRACE_MS;
+  return !!isFirst && elapsed <= BOOT_GRACE_MS && BOOT_IDS.indexOf(id) !== -1;
 }
-
-function handle(id) {
-  if (!fs.existsSync(ENABLE_FILE)) return;
-  if (!isHome(id)) return;
+function parseObject(s) {
+  try { return JSON.parse(s); } catch (e) { return null; }
+}
+function launch() {
+  if (!enabled() || shuttingDown) return;
+  cp.execFile('luna-send',
+    ['-n', '1', 'luna://com.webos.applicationManager/launch', JSON.stringify({id: LAUNCHER})],
+    {timeout: 10000}, function (err, stdout) {
+      if (err) { log('launcher call failed: ' + err.message); return; }
+      var reply = parseObject(String(stdout || '').trim());
+      if (reply && reply.returnValue === false) log('launcher rejected: ' + String(stdout).slice(0, 300));
+    });
+}
+function handle(id, initial) {
+  if (!enabled() || !id || id === LAUNCHER) return;
   var now = Date.now();
+  if (!shouldRedirect(id, initial, now - readyAt)) return;
   hits = hits.filter(function (t) { return now - t < 10000; });
-  if (hits.length >= 5) { log('LG home keeps coming back, giving up for now'); return; }
+  if (hits.length >= 5) { log('Home redirect rate limit reached; not fighting TV'); return; }
+  if (now - lastLaunch < 1800) return;
+  lastLaunch = now;
   hits.push(now);
-  log(id + ' -> launcher');
-  setTimeout(launch, hits.length > 1 ? 400 : 0);
+  log('foreground ' + id + ' -> ' + LAUNCHER + (initial ? ' (boot)' : ''));
+  setTimeout(launch, initial ? 700 : 100);
 }
-
-// Subscribing before webOS is ready gives a subscription that never reports anything, so until the
-// first real app id arrives the subscription is renewed every READY_TIMEOUT_MS.
-function start() {
-  var p = spawn('luna-send', ['-i', 'luna://com.webos.applicationManager/getForegroundAppInfo', '{"subscribe":true}']);
+function onForeground(id) {
+  if (!id) return;
+  var initial = !readyAt;
+  if (initial) {
+    readyAt = Date.now();
+    log('webOS ready, foreground: ' + id);
+  }
+  handle(id, initial);
+}
+function consumeLines(proc, callback) {
   var buf = '';
-  var retry = readyAt ? null : setTimeout(function () { p.kill(); }, READY_TIMEOUT_MS);
-  p.stdout.on('data', function (d) {
-    buf += d;
-    var lines = buf.split('\n');
+  proc.stdout.on('data', function (chunk) {
+    buf += String(chunk);
+    if (buf.length > 512 * 1024) buf = buf.slice(-4096);
+    var lines = buf.split(/\r?\n/);
     buf = lines.pop();
-    lines.forEach(function (l) {
-      var j;
-      try { j = JSON.parse(l); } catch (e) { return; }
-      if (!j.appId) return;
-      if (!readyAt) {
-        readyAt = Date.now();
-        clearTimeout(retry);
-        log('webOS ready, foreground: ' + j.appId);
-      }
-      handle(j.appId);
+    lines.forEach(function (line) {
+      var msg = parseObject(line.trim());
+      if (msg) callback(msg);
     });
   });
-  p.on('exit', function () { clearTimeout(retry); setTimeout(start, readyAt ? 2000 : 1000); });
+  proc.stdout.on('end', function () {
+    var msg = parseObject(buf.trim());
+    if (msg) callback(msg);
+  });
 }
-
-// ---- app list ---------------------------------------------------------------------------------
-// webOS reports every install and removal on this subscription, so the launcher no longer has to
-// wait for the next boot to notice a new app. Each change re-runs sync.js, which rewrites apps.js;
-// the launcher picks that up when it is opened again.
-var SYNC = '/home/root/lg-tv-vibehack/sync.js';
-var syncing = false, syncAgain = false;
-
+function subscribeForeground() {
+  if (shuttingDown) return;
+  var p;
+  try { p = cp.spawn('luna-send', ['-i', 'luna://com.webos.applicationManager/getForegroundAppInfo', '{"subscribe":true}']); }
+  catch (e) { log('foreground spawn failed: ' + e.message); setTimeout(subscribeForeground, 5000); return; }
+  fgProcess = p;
+  var completed = false;
+  var firstTimeout = !readyAt ? setTimeout(function () { p.kill(); }, 9000) : null;
+  consumeLines(p, function (msg) {
+    if (msg.appId) {
+      if (firstTimeout) { clearTimeout(firstTimeout); firstTimeout = null; }
+      onForeground(msg.appId);
+    }
+  });
+  p.on('error', function (e) { log('foreground subscribe error: ' + e.message); });
+  p.on('close', function () {
+    if (firstTimeout) clearTimeout(firstTimeout);
+    if (fgProcess === p) fgProcess = null;
+    if (completed || shuttingDown) return;
+    completed = true;
+    setTimeout(subscribeForeground, readyAt ? 3000 : 1500);
+  });
+}
+// A polling fallback is needed on older firmware where a Luna subscription
+// stays alive but never sends foreground changes after its first response.
+var pollBusy = false;
+function pollForeground() {
+  if (!enabled() || shuttingDown || pollBusy) return;
+  pollBusy = true;
+  cp.execFile('luna-send',
+    ['-n', '1', 'luna://com.webos.applicationManager/getForegroundAppInfo', '{}'],
+    {timeout: 7000}, function (err, stdout) {
+      pollBusy = false;
+      if (err) return;
+      var msg = parseObject(String(stdout || '').trim());
+      if (msg && msg.appId) onForeground(msg.appId);
+    });
+}
 function runSync() {
   if (syncing) { syncAgain = true; return; }
   syncing = true;
-  execFile('/usr/bin/node', [SYNC], { timeout: 180000 }, function (err, out, errOut) {
+  cp.execFile('/usr/bin/node', [SYNC], {timeout: 180000}, function (err, out, stderr) {
     syncing = false;
-    log('app list changed, synced' + (err ? ' with errors: ' + String(errOut).trim() : ': ' + String(out).trim()));
+    log('apps sync ' + (err ? 'failed: ' + String(stderr || err.message).trim().slice(0, 300) :
+      'ok: ' + String(out || '').trim().slice(0, 300)));
     if (syncAgain) { syncAgain = false; runSync(); }
   });
 }
-
 function watchApps() {
-  var p = spawn('luna-send', ['-i', 'luna://com.webos.applicationManager/listLaunchPoints', '{"subscribe":true}']);
-  var buf = '';
-  p.stdout.on('data', function (d) {
-    buf += d;
-    var lines = buf.split('\n');
-    buf = lines.pop();
-    lines.forEach(function (l) {
-      var j;
-      try { j = JSON.parse(l); } catch (e) { return; }
-      // The first reply carries the whole list; after that webOS sends one launch point per
-      // change, tagged "added", "removed" or "updated".
-      if (j.launchPoints) return;
-      if (j.change !== 'added' && j.change !== 'removed') return;
-      log('app ' + j.change + ': ' + j.id);
+  if (shuttingDown) return;
+  var p;
+  try { p = cp.spawn('luna-send', ['-i', 'luna://com.webos.applicationManager/listLaunchPoints', '{"subscribe":true}']); }
+  catch (e) { log('app watcher spawn failed: ' + e.message); setTimeout(watchApps, 5000); return; }
+  appsProcess = p;
+  consumeLines(p, function (msg) {
+    if (msg.launchPoints) return;
+    if (msg.change === 'added' || msg.change === 'removed' || msg.change === 'updated') {
+      log('apps ' + msg.change + ': ' + (msg.id || 'unknown'));
       runSync();
-    });
+    }
   });
-  p.on('exit', function () { setTimeout(watchApps, 5000); });
+  p.on('error', function (e) { log('app subscription error: ' + e.message); });
+  p.on('close', function () {
+    if (appsProcess === p) appsProcess = null;
+    if (!shuttingDown) setTimeout(watchApps, 5000);
+  });
 }
-
-log('homewatch started');
-start();
-watchApps();
+function shutdown() {
+  shuttingDown = true;
+  if (fgProcess) fgProcess.kill();
+  if (appsProcess) appsProcess.kill();
+  process.exit(0);
+}
+if (require.main === module) {
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+  log('homewatch started');
+  subscribeForeground();
+  watchApps();
+  setTimeout(pollForeground, 5000);
+  setInterval(pollForeground, 12000);
+}
+module.exports = {shouldRedirect: shouldRedirect};

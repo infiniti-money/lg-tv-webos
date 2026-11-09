@@ -423,3 +423,13 @@ sh /home/root/lg-tv-vibehack/compat-check.sh
 ```
 
 **Quan trọng:** không chạy `install.sh` từ nhánh `main` khi GitHub Releases chưa chứa gói `infiniti-tv-home.ipk`. Cơ chế gán Home và tự khởi động cần được thử trực tiếp vì phụ thuộc firmware và phiên bản LG Input Hook.
+
+### Đóng gói nhanh trên Windows 11
+
+Sau khi cài Node.js 20+, mở **Command Prompt** hoặc PowerShell tại thư mục `lg-tv-webos` rồi chạy:
+
+```cmd
+scripts\build-windows.cmd
+```
+
+Script tự chuyển đến thư mục dự án, kiểm tra các tệp tương thích webOS 3.x và dùng `npx.cmd` để gọi webOS CLI, tránh lỗi chặn `npm.ps1` trong PowerShell. Kết quả: `build\com.infinitimoney.tvhome_1.2.1_all.ipk` (tên tệp có thể khác khi thay phiên bản). Script **chỉ tạo bộ cài trên máy tính**, không kết nối hoặc thay Home của TV.

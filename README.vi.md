@@ -384,3 +384,11 @@ reboot
 ```
 
 Nếu muốn giữ Home LG ngay từ lúc cài, dùng tùy chọn `--no-home-button`. Khi gỡ, trình cài khôi phục ánh xạ đã sao lưu; nếu không thể khôi phục, nó dừng thay vì xóa dữ liệu sao lưu. Không chỉnh hoặc xóa `home-key-backup.json` bằng tay trước khi khôi phục. Nếu một công cụ khác đã sửa phím Home sau đó, việc khôi phục sẽ không ghi đè thay đổi của công cụ ấy và yêu cầu bạn kiểm tra thủ công. Sau khi thử Home Watcher và LG Input Hook trên model TV cụ thể, mới nên sử dụng thường xuyên.
+
+### Gán phím Home qua LG Input Hook
+
+Trên TV đã root, cài **LG Input Hook** từ Homebrew Channel và **mở ứng dụng ít nhất một lần** để kích hoạt. Trong LG Input Hook, chọn **Add keybind**, tìm mã nút Home trong phần log của remote (nhiều remote LG dùng mã `773`), chọn **Launch App** → **Infiniti TV Home** (`com.infinitimoney.tvhome`) rồi **Save changes**.
+
+Tính năng `home-control.sh enable` tự tạo cấu hình tương đương `{"773":{"action":"launch","id":"com.infinitimoney.tvhome"}}` khi tìm thấy LG Input Hook. Trước đó script lưu ánh xạ Home cũ vào `home-key-backup.json`; `disable` sẽ khôi phục lại. **Không dùng lệnh `luna://org.webosbrew.inputhook/setMapping`** nếu chưa xác thực API trên firmware của bạn. `initctl status inputhook` cũng không phải phép thử đủ tin cậy trên mọi webOS; hãy kiểm tra trực tiếp nhật ký trong ứng dụng.
+
+Sau khi cài gói `.ipk`, thử mở Infiniti TV Home từ danh sách ứng dụng trước khi kích hoạt Home Watcher và gán nút Home. Chỉ thay đổi khi đã xác minh khả năng quay về LG Home.

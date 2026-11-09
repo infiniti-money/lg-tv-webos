@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * LG TV Vibehack - runs ON the rooted TV.
+ * Infiniti TV Home - runs ON the rooted TV.
  * Reads the installed apps and HDMI inputs straight from webOS (no computer needed), copies their
  * icons into the launcher, and applies your personal settings and wallpaper.
  * Runs at every boot and after every install, so new or removed apps show up automatically.
@@ -13,7 +13,7 @@ var fs = require('fs');
 var path = require('path');
 var execFileSync = require('child_process').execFileSync;
 
-var APP_ID = 'com.gathin.tvhome';
+var APP_ID = 'com.infinitimoney.tvhome';
 var APP_DIR = '/media/developer/apps/usr/palm/applications/' + APP_ID;
 var DATA = '/home/root/lg-tv-vibehack';
 
@@ -140,7 +140,7 @@ function main() {
     console.error('No apps found (node ' + process.version + ', ' + points.length + ' launch points).');
     console.error('Tried listLaunchPoints and ' + APP_DIRS.join(', ') + '.');
     console.error('The app list was left unchanged. Please report this with your TV model and');
-    console.error('webOS version: https://github.com/hoangvya19/lg-tv-webos-vibehack/issues');
+    console.error('webOS version: https://github.com/infiniti-money/lg-tv-webos/issues');
     process.exit(1);
   }
 

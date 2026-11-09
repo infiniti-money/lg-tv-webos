@@ -920,6 +920,7 @@
     else focusPill(pills.length - 1);
   };
   window.INFINITI_CUSTOMIZE_CLOSED = function () { focusPill(pills.length - 1); };
+  window.INFINITI_WALLPAPER_OPEN = showWall;
   build();
   updateClock();
   setInterval(updateClock, 10000);

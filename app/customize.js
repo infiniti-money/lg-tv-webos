@@ -261,6 +261,10 @@
     saveAppearance({showWeek:!getAppearance().showWeek});
     applyAppearance(); renderStyle();
   });
+  document.getElementById('customizeWeatherCity').addEventListener('click', function () {
+    hide();
+    if (typeof root.INFINITI_WALLPAPER_OPEN === 'function') root.INFINITI_WALLPAPER_OPEN();
+  });
   document.getElementById('customizeResetStyle').addEventListener('click', function () {
     saveAppearance(defaults);
     applyAppearance(); renderStyle();

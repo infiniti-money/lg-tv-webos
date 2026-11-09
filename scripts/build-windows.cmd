@@ -30,8 +30,11 @@ if errorlevel 1 exit /b 1
 node.exe scripts\test-assistant.js
 if errorlevel 1 exit /b 1
 if not exist build mkdir build
+rem Remove stale versioned packages so the output never silently reuses an older IPK.
+del /q "build\com.infinitimoney.tvhome_*.ipk" >nul 2>&1
+del /q "build\infiniti-tv-home.ipk" >nul 2>&1
 echo [3/4] Packaging .ipk with LG webOS CLI without minification...
-call npx.cmd --yes --package @webos-tools/cli ares-package --no-minify app -o build
+call npx.cmd --yes --package @webos-tools/cli@3.2.6 ares-package --no-minify app -o build
 if errorlevel 1 exit /b 1
 set "IPK="
 for %%F in (build\com.infinitimoney.tvhome_*.ipk) do (

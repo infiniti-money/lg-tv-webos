@@ -47,7 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build
-          npx -y -p @webos-tools/cli ares-package --no-minify app -o build
+          npx -y -p @webos-tools/cli@3.2.6 ares-package --no-minify app -o build
           shopt -s nullglob
           files=(build/com.infinitimoney.tvhome_*.ipk)
           test "${#files[@]}" -eq 1

@@ -8,7 +8,7 @@ window.CONFIG = {
 
   // Apps never shown as tiles (inputs and Live TV are already in the Inputs menu).
   hiddenApps: [
-    'com.gathin.tvhome',
+    'com.infinitimoney.tvhome',
     'com.webos.app.livetv',
     'com.webos.app.hdmi1', 'com.webos.app.hdmi2', 'com.webos.app.hdmi3', 'com.webos.app.hdmi4',
     'com.webos.app.lgchannels', 'tv.amasian.webos.vn1.channels',   // LG Channels (global, Vietnam)

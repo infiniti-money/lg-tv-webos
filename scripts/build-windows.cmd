@@ -1,6 +1,7 @@
 @echo off
-setlocal
-rem Windows build helper for Infiniti TV Home; avoids npm.ps1 execution-policy errors.
+setlocal EnableExtensions EnableDelayedExpansion
+rem Infiniti TV Home 1.4.x for webOS 3.4.0. Produces stable IPK + SHA-256.
+rem Use Windows CMD (avoids npm.ps1 execution-policy errors).
 cd /d "%~dp0\.."
 if not exist "app\appinfo.json" (
   echo ERROR: app\appinfo.json not found.
@@ -16,17 +17,39 @@ if errorlevel 1 (
   echo ERROR: npx.cmd not found. Reinstall Node.js with npm.
   exit /b 1
 )
-echo [1/3] Checking webOS 3 compatibility...
+echo [1/4] Checking Chromium 38 / Node 0.12 compatibility...
 node.exe scripts\check-webos3.js
 if errorlevel 1 exit /b 1
-if not exist build mkdir build
-echo [2/3] Packaging with webOS CLI...
-call npx.cmd --yes --package @webos-tools/cli ares-package app -o build
+echo [2/4] Running offline tests...
+for %%F in (scripts\test-homewatch.js scripts\test-keymap.js scripts\test-lunar.js scripts\test-forecast.js scripts\test-customize.js scripts\test-app-structure.js) do (
+  node.exe "%%F"
+  if errorlevel 1 exit /b 1
+)
+node.exe scripts\test-ai-worker.mjs
 if errorlevel 1 exit /b 1
-echo [3/3] Built IPK files:
-dir /b build\com.infinitimoney.tvhome_*.ipk
-if errorlevel 1 (
-  echo ERROR: IPK not found after packaging.
+if not exist build mkdir build
+echo [3/4] Packaging .ipk with LG webOS CLI without minification...
+call npx.cmd --yes --package @webos-tools/cli ares-package --no-minify app -o build
+if errorlevel 1 exit /b 1
+set "IPK="
+for %%F in (build\com.infinitimoney.tvhome_*.ipk) do (
+  if exist "%%~fF" set "IPK=%%~fF"
+)
+if not defined IPK (
+  echo ERROR: Packaged IPK not found in build folder.
   exit /b 1
 )
-echo Done. Do not remap Home until the app has been tested on your TV.
+copy /y "!IPK!" "build\infiniti-tv-home.ipk" >nul
+if errorlevel 1 exit /b 1
+echo [4/4] Creating SHA-256 integrity file...
+powershell.exe -NoProfile -NonInteractive -Command "$h=(Get-FileHash -Algorithm SHA256 'build\infiniti-tv-home.ipk').Hash.ToLower(); [IO.File]::WriteAllText('build\infiniti-tv-home.ipk.sha256', $h+'  infiniti-tv-home.ipk'+[Environment]::NewLine,[Text.Encoding]::ASCII)"
+if errorlevel 1 (
+  echo ERROR: Failed to generate SHA-256 file.
+  exit /b 1
+)
+echo.
+echo Output: build\infiniti-tv-home.ipk
+echo         build\infiniti-tv-home.ipk.sha256
+echo The rooted Home key is NOT modified by packaging.
+echo Test on TV before using Home replacement.
+exit /b 0

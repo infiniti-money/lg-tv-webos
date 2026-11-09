@@ -26,6 +26,13 @@ jobs:
         run: |
           node -e "const a=require('./app/appinfo.json');if(a.id!=='com.infinitimoney.tvhome'||a.title!=='Infiniti TV Home')process.exit(1);console.log(a.id, a.version)"
 
+      - name: Check legacy JavaScript and shell syntax
+        run: |
+          set -e
+          node scripts/check-webos3.js
+          for file in app/app.js app/extras.js app/config.js app/qrcode.js tv/*.js; do node --check "$file"; done
+          for file in install.sh tv/*.sh; do sh -n "$file"; done
+
       - name: Package the launcher
         shell: bash
         run: |

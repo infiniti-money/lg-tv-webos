@@ -17,13 +17,6 @@
   // Tile size follows the column count (4 columns = the original 360x202 tiles).
   var TILE_W = Math.min(360, Math.round((1920 - 2 * 112) / COLUMNS * 0.85));
   var TILE_H = Math.round(TILE_W * 9 / 16);
-  (function () {
-    var r = Math.round(TILE_W * 32 / 360), st = document.documentElement.style;
-    st.setProperty('--tile-w', TILE_W + 'px');
-    st.setProperty('--tile-h', TILE_H + 'px');
-    st.setProperty('--tile-r', r + 'px');
-    st.setProperty('--glass-r', Math.round(r * 47 / 32) + 'px');
-  })();
   var CELL_W = (1920 - 2 * 112) / COLUMNS;
   var ROW_PITCH = TILE_H + 90;
   var DOCK_TOP = 708;           // tile top of the dock row: next row peeks in at the bottom
@@ -47,7 +40,7 @@
       noInputs: 'No inputs found', cantOpen: "Can't open ", ampm: ['am', 'pm'],
       moveHint: 'Arrows or pointer to move  ·  OK to place  ·  Back to cancel',
       noApps: 'No apps were found on this TV. Run the installer again over SSH; if it keeps happening, ' +
-        'please report your TV model and webOS version at github.com/hoangvya19/lg-tv-webos-vibehack/issues',
+        'please report your TV model and webOS version at github.com/infiniti-money/lg-tv-webos/issues',
       colsTitle: 'Tiles per row', arrange: 'Rearrange apps', done: 'Done',
       arrangeHint: 'Click an app to pick it up, point where it should go, click again to drop it.',
       wallTitle: 'Change wallpaper',
@@ -62,7 +55,7 @@
       noInputs: 'Không tìm thấy nguồn vào', cantOpen: 'Không mở được ', ampm: ['SA', 'CH'],
       moveHint: 'Mũi tên hoặc con trỏ để di chuyển  ·  OK để đặt  ·  Back để huỷ',
       noApps: 'Không tìm thấy ứng dụng nào trên TV này. Chạy lại lệnh cài qua SSH; nếu vẫn vậy, ' +
-        'báo giúp model TV và phiên bản webOS tại github.com/hoangvya19/lg-tv-webos-vibehack/issues',
+        'báo giúp model TV và phiên bản webOS tại github.com/infiniti-money/lg-tv-webos/issues',
       colsTitle: 'Số ô mỗi hàng', arrange: 'Sắp xếp ứng dụng', done: 'Xong',
       arrangeHint: 'Bấm vào app để nhấc lên, trỏ tới chỗ mới rồi bấm lần nữa để đặt.',
       wallTitle: 'Đổi hình nền',
@@ -79,6 +72,9 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var stage = $('stage'), tilesEl = $('tiles'), glass = $('glass'), hero = $('hero');
+  // webOS 3.x runs Chromium 38 and has no CSS custom property support.
+  // Set sizing directly on elements rather than relying on var(--tile-...).
+  glass.style.borderRadius = Math.round(TILE_W * 47 / 360) + 'px';
   var ambients = [$('ambientA'), $('ambientB')], ambientFront = 0, ambientColor = null;
   var pills = [$('btnInputs'), $('btnWifi'), $('btnWall'), $('btnSettings')];
   var panel = $('inputsPanel'), wallPanel = $('wallPanel'), pen = $('penBtn'), colsPanel = $('colsPanel');
@@ -185,8 +181,12 @@
     items = orderedApps().map(function (app) {
       var el = document.createElement('div');
       el.className = 'item';
+      el.style.width = TILE_W + 'px';
       var card = document.createElement('div');
       card.className = 'card';
+      card.style.width = TILE_W + 'px';
+      card.style.height = TILE_H + 'px';
+      card.style.borderRadius = Math.round(TILE_W * 32 / 360) + 'px';
       var img = document.createElement('img');
       var item = { app: app, el: el, card: card, color: null };
       img.onload = function () { paintTile(item, img); };
@@ -672,7 +672,11 @@
     var inputs = (window.TV_APPS && TV_APPS.inputs) || [];
     inputs.forEach(function (inp) { addInputRow(ICON_INPUT, inp.label, inp.appId); });
     if (CONFIG.liveTvApp) {
-      if (inputRows.length) panel.appendChild(Object.assign(document.createElement('div'), { className: 'separator' }));
+      if (inputRows.length) {
+        var separator = document.createElement('div');
+        separator.className = 'separator';
+        panel.appendChild(separator);
+      }
       addInputRow(ICON_LIVETV, L.liveTv, CONFIG.liveTvApp);
     }
     if (!inputRows.length) { toast(L.noInputs); return; }

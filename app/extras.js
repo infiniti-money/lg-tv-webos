@@ -1,6 +1,6 @@
 /*
- * LG TV Vibehack additions: wallpaper, ambient glow toggle and weather.
- * Plain ES5 on purpose: webOS 6 runs Chromium 79.
+ * Infiniti TV Home additions: wallpaper, ambient glow toggle and weather.
+ * ES5 for webOS 3.x Chromium 38 compatibility.
  */
 (function () {
   'use strict';

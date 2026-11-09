@@ -23,10 +23,10 @@ window.CONFIG = {
   columns: 6,
 
   // 'en' or 'vi'
-  language: 'en',
+  language: 'vi',
 
   // true = 14:45, false = 2:45 pm
-  clock24: false,
+  clock24: true,
 
   // Background image file inside the app folder (e.g. 'bg.jpg'). Empty = plain black.
   wallpaper: '',

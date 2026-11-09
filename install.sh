@@ -7,7 +7,7 @@
 # Options (add after `sh -s --`), e.g.
 #   curl -fsSL .../install.sh | sh -s -- --lang vi --city "Hanoi" --wallpaper https://example.com/photo.jpg
 #
-#   --lang en|vi            Interface language (default: en)
+#   --lang en|vi            Interface language (default: vi)
 #   --clock24 on|off        24-hour clock
 #   --columns N             Tiles per row, 3-10 (default: 6; the pencil next to the dock overrides it)
 #   --city "Name"           Turn on weather for this city (looked up on Open-Meteo)
@@ -104,14 +104,14 @@ fi
 # ---------------------------------------------------------------- files
 say "Downloading scripts"
 mkdir -p "$DATA/icons"
-for f in sync.js homewatch.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh home-control.sh; do
+for f in sync.js homewatch.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh home-control.sh compat-check.sh; do
   curl -fsSL "$RAW/tv/$f" -o "$DATA/$f" || die "Could not download $f. Is the TV online?"
 done
 chmod +x "$DATA"/*.sh "$DATA"/*.js
 ok "Scripts in $DATA"
 
 # ---------------------------------------------------------------- settings
-[ -f "$DATA/settings.json" ] || echo '{"language":"en","columns":6}' > "$DATA/settings.json"
+[ -f "$DATA/settings.json" ] || echo '{"language":"vi","clock24":true,"columns":6}' > "$DATA/settings.json"
 
 LAT=""; LON=""; PLACE=""
 if [ -n "$CITY" ]; then

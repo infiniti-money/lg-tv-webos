@@ -43,6 +43,10 @@ if [ "$MODE" = "--watch" ]; then
   done
   exit 0
 fi
+if [ "$MODE" = "--init-status" ]; then
+  status 'configured' "$(local_version)"
+  exit 0
+fi
 if [ "$MODE" = "--status" ]; then
   [ -f "$FLAG" ] && echo "Automatic app updates: ENABLED" || echo "Automatic app updates: DISABLED"
   [ -f "$LOG" ] && tail -n 15 "$LOG"
@@ -114,7 +118,34 @@ curl -fsSL --retry 2 --connect-timeout 10 --max-time 120 "$BASE/infiniti-tv-home
 curl -fsSL --retry 2 --connect-timeout 10 --max-time 30 "$BASE/infiniti-tv-home.ipk.sha256" -o "$TMP/infiniti-tv-home.ipk.sha256" || {
   log "Failed downloading v$LATEST checksum"; exit 1;
 }
-grep -Eq '^[0-9a-f]{64}  infiniti-tv-home\.ipk$' "$TMP/infiniti-tv-home.ipk.sha256" || {
+[ "$(wc -l < "$TMP/infiniti-tv-home.ipk.sha256")" -eq 1 ] || {
+  log 'Checksum manifest must have exactly one line'; exit 1;
+}
+grep -Eq '^[0-9a-f]{64}  infiniti-tv-home\.ipk
+  log 'Invalid checksum manifest'; exit 1;
+}
+(cd "$TMP" && sha256sum -c infiniti-tv-home.ipk.sha256 >/dev/null) || {
+  log "SHA-256 FAILED v$LATEST; no install"; exit 1;
+}
+[ -f "$FLAG" ] && [ -f "$ENABLED" ] && [ ! -f "$DATA/home-enabled" ] || {
+  log 'Update disabled during download'; exit 0;
+}
+ACTIVE=$(foreground)
+[ -n "$ACTIVE" ] && [ "$ACTIVE" != "$APP" ] || {
+  log 'Deferred: launcher became active'; exit 0;
+}
+log "Installing verified v$LATEST (was $CURRENT), without foreground launch"
+/usr/bin/node "$DATA/install-ipk-update.js" "$TMP/infiniti-tv-home.ipk" || {
+  log "Installation FAILED for v$LATEST; no uninstall attempted";
+  status 'installation failed' "$CURRENT"; exit 1;
+}
+if [ -f "$DATA/sync.js" ]; then
+  /usr/bin/node "$DATA/sync.js" >> "$LOG" 2>&1 || log 'Post-install app sync failed'
+fi
+status 'updated successfully' "$LATEST"
+log "Updated to v$LATEST; LG Home preserved"
+exit 0
+ "$TMP/infiniti-tv-home.ipk.sha256" || {
   log 'Invalid checksum manifest'; exit 1;
 }
 (cd "$TMP" && sha256sum -c infiniti-tv-home.ipk.sha256 >/dev/null) || {

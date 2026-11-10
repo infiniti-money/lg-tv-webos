@@ -68,26 +68,25 @@ function run(device) {
   log('Started non-exclusive HOME monitor on ' + device + ', event size ' + EVENT_BYTES);
   var buffer = new Buffer(EVENT_BYTES);
   var got = 0;
-  // Blocking read on a single device; no dd/od subprocess on every keypress.
-  // SIGTERM keeps default semantics so the monitor can be stopped while idle.
-  while (true) {
-    var n;
-    try { n = fs.readSync(fd, buffer, got, EVENT_BYTES - got, null); }
-    catch (e) {
-      log('Input device read failed: ' + e.message);
-      try { fs.closeSync(fd); } catch (ignored) {}
-      process.exit(1);
-    }
-    if (n <= 0) {
-      log('Input event stream ended');
-      try { fs.closeSync(fd); } catch (ignored) {}
-      process.exit(1);
-    }
-    got += n;
-    if (got !== EVENT_BYTES) continue;
-    got = 0;
-    onEvent(decode(buffer), Date.now());
+  // Async read is essential. A synchronous infinite read loop would starve
+  // execFile callbacks and permanently block further HOME launches.
+  // No dd/od processes are created for other key events.
+  function readNext() {
+    fs.read(fd, buffer, got, EVENT_BYTES - got, null, function(err, n) {
+      if (err || n <= 0) {
+        log('Input device stream ended: ' + (err ? err.message : 'EOF'));
+        try { fs.closeSync(fd); } catch (ignored) {}
+        process.exit(1);
+      }
+      got += n;
+      if (got === EVENT_BYTES) {
+        got = 0;
+        onEvent(decode(buffer), Date.now());
+      }
+      readNext();
+    });
   }
+  readNext();
 }
 if (require.main === module) {
   var device = process.argv[2] || DEFAULT_DEVICE;

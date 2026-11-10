@@ -40,6 +40,7 @@ jobs:
           node scripts/check-branding.js
           node scripts/test-homewatch.js
           node scripts/test-homekey-runtime.js
+          node scripts/test-homeevent.js
           node scripts/test-app-discovery.js
           node scripts/test-keymap.js
           node scripts/test-ai-worker.mjs

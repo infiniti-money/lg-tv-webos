@@ -17,10 +17,11 @@
     <div id="leftBlock">
       <div id="greeting"></div>
       <div id="timeRow">
-        <span id="clock"></span><span id="ampm"></span><span class="divider"></span><span id="date"></span>
+        <span id="clock"></span><span id="ampm"></span>
       </div>
-      <div id="lunarDate"></div>
-      <div id="weather"></div>
+      <div id="date" aria-label="Ngày dương lịch"></div>
+      <div id="lunarDate" aria-label="Ngày âm lịch Việt Nam"></div>
+      <div id="weather" aria-live="polite"></div>
     </div>
     <div id="topButtons">
       <div class="pill" id="btnInputs">
@@ -43,7 +44,10 @@
     </div>
   </header>
 
-  <div id="weekWeather" class="hidden" aria-label="Dự báo thời tiết 7 ngày"></div>
+  <section id="forecastArea" class="hidden" aria-label="Thời tiết 3 ngày">
+    <div class="forecastHeading">DỰ BÁO THỜI TIẾT · 3 NGÀY</div>
+    <div id="weekWeather" aria-label="Dự báo hôm nay, ngày mai và ngày kia"></div>
+  </section>
 
   <!-- Everything below the header scrolls together: dock band, tiles and the glass highlight. -->
   <div id="viewport">
@@ -76,33 +80,66 @@
 
   <div id="toast"></div>
 
-  <!-- In-launcher edit panel: never uninstalls system applications. -->
-  <div id="customizePanel" class="hidden" role="dialog" aria-label="Tùy chỉnh Infiniti TV Home">
+  <!-- Independent launcher settings pages, remote-friendly and scrollable on 1080p. -->
+  <div id="customizePanel" class="hidden" role="dialog" aria-modal="true" aria-label="Cài đặt Infiniti TV Home">
     <div class="customizeDialog">
-      <div class="customizeHead"><strong>Tùy chỉnh Infiniti TV Home</strong><button id="customizeClose" type="button">Đóng ×</button></div>
-      <div class="customizeTabs">
-        <button type="button" id="customizeAppsTab">Thêm / ẩn ứng dụng</button>
-        <button type="button" id="customizeStyleTab">Giao diện &amp; phông chữ</button>
+      <div class="customizeHead">
+        <div><div class="customizeEyebrow">INFINITI TV HOME</div><strong>Cài đặt giao diện</strong></div>
+        <button id="customizeClose" type="button">Đóng ×</button>
       </div>
-      <div id="customizeAppsView">
-        <p>Chọn ứng dụng để hiện hoặc ẩn trên màn hình Home. Ứng dụng vẫn được cài trên TV.</p>
-        <div id="customizeAppList"></div>
-        <button type="button" id="customizeResetApps">Khôi phục ứng dụng mặc định</button>
+      <div class="customizeTabs" role="navigation" aria-label="Chuyên mục cài đặt">
+        <button type="button" id="customizeStyleTab">Giao diện</button>
+        <button type="button" id="customizeWeatherTab">Thời tiết</button>
+        <button type="button" id="customizeCalendarTab">Âm · dương lịch</button>
+        <button type="button" id="customizeAppsTab">Ứng dụng</button>
       </div>
-      <div id="customizeStyleView" class="hidden">
-        <p>Chọn phong cách, phông chữ dễ đọc và cách hiển thị thời tiết.</p>
-        <h3>Chủ đề</h3><div id="customizeThemes" class="customizeChoice"></div>
-        <h3>Phông chữ</h3><div id="customizeFonts" class="customizeChoice"></div>
-        <h3>Tùy chọn</h3>
-        <div class="customizeChoice">
-          <button type="button" id="customizeLargeText">Cỡ chữ lớn</button>
-          <button type="button" id="customizeShowWeek">Dự báo 7 ngày</button>
-          <button type="button" id="customizeWeatherCity">Đổi thành phố / Hình nền</button>
-          <button type="button" id="customizeResetStyle">Đặt lại giao diện</button>
+      <div class="customizeContent">
+        <div id="customizeStyleView">
+          <p>Tối ưu riêng cho màn hình TV: dễ đọc từ xa và nhẹ khi dùng remote.</p>
+          <h3>Chủ đề màu sắc</h3><div id="customizeThemes" class="customizeChoice"></div>
+          <h3>Phông chữ</h3><div id="customizeFonts" class="customizeChoice"></div>
+          <h3>Hiển thị và chuyển động</h3>
+          <div class="customizeChoice">
+            <button type="button" id="customizeLargeText">Cỡ chữ lớn</button>
+            <button type="button" id="customizeMotion">Hiệu ứng chuyển động</button>
+            <button type="button" id="customizeShowWeek">Thời tiết 3 ngày</button>
+            <button type="button" id="customizeWallpaper">Đổi hình nền bằng điện thoại</button>
+            <button type="button" id="customizeResetStyle">Khôi phục giao diện</button>
+          </div>
+        </div>
+        <div id="customizeWeatherView" class="hidden">
+          <p>Chọn khu vực trên TV, không cần chỉnh sửa mã nguồn hoặc SSH. Lựa chọn sẽ được lưu trên TV.</p>
+          <div class="customizeSelectedCity" id="customizeWeatherChoice">Chưa chọn khu vực</div>
+          <h3>Khu vực nhanh</h3><div id="customizeWeatherPresets" class="customizeChoice"></div>
+          <h3>Tìm tỉnh, thành phố hoặc khu vực khác</h3>
+          <div class="customizeSearchRow">
+            <input id="customizeWeatherSearch" type="text" maxlength="90" autocomplete="off" placeholder="Ví dụ: Bắc Ninh, Hội An, Nha Trang" aria-label="Tên khu vực">
+            <button id="customizeWeatherSearchBtn" type="button">Tìm khu vực</button>
+          </div>
+          <div id="customizeWeatherResults" class="customizeChoice customizeSearchResults"></div>
+          <h3>Thiết lập dự báo</h3>
+          <div class="customizeChoice">
+            <button id="customizeWeatherEnable" type="button">Bật / Tắt thời tiết</button>
+            <button id="customizeWeatherUnit" type="button">Đơn vị: °C</button>
+          </div>
+          <p class="customizeHint">Dữ liệu Open-Meteo · Hiển thị hôm nay, ngày mai và ngày kia.</p>
+        </div>
+        <div id="customizeCalendarView" class="hidden">
+          <p>Ngày dương và âm lịch Việt Nam, năm Can Chi, hỗ trợ tháng nhuận.</p>
+          <div class="customizeChoice">
+            <button id="customizeSolar" type="button">Dương lịch đầy đủ</button>
+            <button id="customizeLunar" type="button">Âm lịch Việt Nam</button>
+          </div>
+          <p id="customizeCalendarNote" class="customizeHint"></p>
+        </div>
+        <div id="customizeAppsView" class="hidden">
+          <p>Thêm hoặc ẩn biểu tượng trên Infiniti TV Home. Không gỡ ứng dụng khỏi TV.</p>
+          <div id="customizeAppList"></div>
+          <button id="customizeResetApps" type="button">Khôi phục ứng dụng mặc định</button>
         </div>
       </div>
-      <div id="customizeStatus" role="status"></div>
-      <p class="customizeHint">Remote: các phím mũi tên, OK, Back · Phím đỏ để mở tùy chỉnh.</p>
+      <div id="customizeStatus" role="status" aria-live="polite"></div>
+      <p class="customizeHint">Mũi tên: di chuyển · OK: chọn · Back: đóng · Phím đỏ: mở cài đặt</p>
     </div>
   </div>
 

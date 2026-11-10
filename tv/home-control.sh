@@ -25,6 +25,14 @@ case "$action" in
     hook_installed && echo "LG Input Hook installed (must be opened once)" || echo "LG Input Hook absent (watcher fallback only)"
     [ -f "$BACKUP" ] && echo "Previous Home mapping backup exists" || echo "No saved Home mapping backup"
     /usr/bin/node "$DATA/keymap.js" status "$HOOK_CFG" "$BACKUP" "$KEY" "$APP_ID" "$CMD" 2>/dev/null || true
+    echo "NOTE: ACTIVE reflects saved JSON only, not a confirmed remote key event."
+    echo "After pressing Home: sh $DATA/home-control.sh diagnose"
+    exit 0 ;;
+  diagnose)
+    [ -f "$DATA/diagnose-home.sh" ] || {
+      echo "Diagnostic helper not installed; update the root-side scripts first." >&2; exit 1;
+    }
+    sh "$DATA/diagnose-home.sh"
     exit 0 ;;
   enable)
     [ -f "$DATA/homewatch.js" ] && [ -f "$DATA/keymap.js" ] || {
@@ -78,5 +86,5 @@ case "$action" in
     pkill -f "$DATA/homewatch.js" 2>/dev/null || true
     echo "Home replacement disabled. Restart LG Input Hook if the previous mapping is cached."
     ;;
-  *) echo "Usage: sh $0 enable|rebind|disable|status" >&2; exit 2 ;;
+  *) echo "Usage: sh $0 status|diagnose|enable|rebind|disable" >&2; exit 2 ;;
 esac

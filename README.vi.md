@@ -576,3 +576,15 @@ Kiểm tra trạng thái: `sh /home/root/lg-tv-vibehack/home-control.sh status`.
 Khôi phục: `sh /home/root/lg-tv-vibehack/home-control.sh disable` và `reboot`.
 
 Cài riêng file IPK **không cập nhật** bộ script root, vì thế không sửa được lỗi đồng bộ app hoặc phím Home.
+
+## Chẩn đoán nút Home vẫn mở LG Home trên webOS 3.x
+
+Nếu lệnh `home-control.sh status` báo `INFINITI ACTIVE` nhưng bấm Home vẫn hiện thanh LG, **không tiếp tục chạy `--rebind-home` hoặc xóa keybinds**. Chữ ACTIVE chỉ kiểm tra JSON. Trên webOS 3.x, LG Home là thanh `superRibbon` trong compositor, không phải app `com.webos.app.home`, nên `getForegroundAppInfo`/Home Watcher không thể luôn phát hiện.
+
+1. Thử launcher hoạt động trực tiếp: `luna-send -n 1 luna://com.webos.applicationManager/launch '{"id":"com.infinitimoney.tvhome"}'`.
+2. Trong LG Input Hook → log, bấm Home **một lần** và xác nhận mã nhận được (có thể là 773, 774 hoặc 125 tùy remote). Trên TV hiện tại phải có log sự kiện, không chỉ keymap trong tệp.
+3. Chạy `sh /home/root/lg-tv-vibehack/home-control.sh diagnose`. Bộ chẩn đoán đọc log `/tmp/lginput-hook*.log`, tiến trình hook, keymap 773/774/125, nhật ký Home Watcher và tệp `/tmp/infiniti-homekey.log`. Không ghi hay sửa dữ liệu.
+4. Nếu có log phím đúng mà **không có** `HOME Execute invoked`, hook chưa áp dụng binding hoặc không inject vào firmware. Mở ứng dụng Input Hook, kiểm tra hành động Execute, nhấn **Save changes**, khởi động lại và thử. Nếu log mã phím khác 773 thì cần sửa đúng phím sau khi xác minh.
+5. Nếu **có** `HOME Execute invoked` nhưng launcher không hiện, đọc dòng `Launch failed` trong log. Nếu launcher mở bằng lệnh Luna trực tiếp nhưng không mở từ hook, kiểm tra quyền thực thi và môi trường của Input Hook.
+
+**Không cam kết chặn tuyệt đối LG Home trên webOS 3.x nếu Input Hook không hoạt động.** Dự án giữ LG Home nguyên vẹn và không vá phân vùng hệ thống. Khôi phục bằng `sh /home/root/lg-tv-vibehack/home-control.sh disable`.

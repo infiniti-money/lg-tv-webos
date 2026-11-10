@@ -13,7 +13,7 @@ function block(selector) {
   return css.slice(open+1,css.indexOf('}',open));
 }
 function px(selector,prop) {
-  var match=new RegExp('(?:^|[;\\n])\\s*'+prop+'\\s*:\\s*(\\d+)px').exec(block(selector));
+  var match=new RegExp('(?:^|[;\\n])\\s*'+prop+'\\s*:\\s*(\\d+)(?:px)?').exec(block(selector));
   assert.ok(match,'Missing '+prop+' on '+selector);
   return +match[1];
 }

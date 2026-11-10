@@ -324,7 +324,7 @@ body.editing #glass { opacity: 0 !important; }
 
 #toast.shown { opacity: 1; }
 
-/* ---- LG TV Vibehack additions ---- */
+/* ---- Infiniti TV Home: current weather ---- */
 #weather {
   margin: 16px 0 0 8px;
   color: rgba(255, 255, 255, 0.78);
@@ -491,37 +491,87 @@ body.arranging .item:nth-child(even):not(.moving):not(.focused) .card { animatio
 #aiAnswer { font-size:31px; line-height:1.5; background:#16171d; border-radius:18px; padding:26px; overflow-y:auto; max-height:420px; min-height:145px; white-space:pre-wrap; }
 
 
-/* webOS 3.4.0: legacy flexbox only, no CSS custom properties or grid. */
-#lunarDate { margin:2px 0 0 8px; font-size:26px; color:#e9d5ab; letter-spacing:.02em; }
-#weekWeather { position:absolute; left:112px; right:112px; top:330px; height:180px; z-index:2; display:flex; }
-#weekWeather.hidden, body.forecast-hidden #weekWeather { display:none; }
-.weekDay { flex:1; min-width:0; margin-right:12px; border-radius:21px; border:1px solid rgba(255,255,255,.23); background:rgba(24,25,33,.85); padding:19px 12px; text-align:center; color:#fff; }
-.weekDay .weekLabel {font-size:24px; font-weight:600; color:#c9d9ff;}
-.weekDay .weekCondition {font-size:21px; padding:14px 0 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.weekDay .weekTemperature {font-size:27px; font-weight:600;}
-.weekDay .weekRain {font-size:21px; color:#89cefa; padding-top:7px;}
-.weekEmpty {font-size:26px; padding:22px; color:#f5d39b;}
-#topButtons {align-items:center;}
-#topButtons .pill { height:64px; margin-left:11px; padding:0 18px; font-size:23px; border-radius:34px; }
-#topButtons .pill svg { width:30px; height:30px; margin-right:9px; }
-#topButtons .pill.iconOnly { padding:0 18px; }
-#customizePanel {position:fixed; top:0; bottom:0; left:0; right:0; z-index:110; background:rgba(0,0,0,.9); padding:50px 75px;}
-#customizePanel.hidden, #customizeStyleView.hidden, #customizeAppsView.hidden {display:none;}
-.customizeDialog {margin:0 auto; width:1540px; max-height:960px; overflow:hidden; padding:30px 45px; border-radius:32px; border:2px solid #525967; background:#1c1f29; font-size:25px; color:white;}
-.customizeHead {display:flex; align-items:center; justify-content:space-between; font-size:40px;}
-.customizeTabs {display:flex; margin:20px 0;}
-.customizeDialog button {background:#343947; color:#fff; border:2px solid #636b7b; border-radius:14px; padding:13px 24px; font-size:23px; margin:4px 12px 4px 0; cursor:pointer;}
-.customizeDialog button.selected {background:#dcecff; color:#102337; border-color:#dcecff;}
-.customizeDialog button:focus {outline:5px solid #ffd388;}
-.customizeDialog p {margin:10px 0 18px; font-size:23px; color:#c9ccd8;}
-#customizeAppList {max-height:540px; overflow-y:auto; display:flex; flex-wrap:wrap; margin:10px 0 24px;}
-.customizeApp {display:flex; align-items:center; width:49%; min-height:69px; padding:5px 16px; margin-right:1%; border-bottom:1px solid #454a54;}
-.customizeApp span {flex:1; font-size:23px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:10px;}
-.customizeApp button {font-size:20px; padding:10px 13px; width:190px; margin:0;}
-#customizeStyleView h3 {font-size:26px; margin:24px 0 10px; color:#e6d5ab;}
-.customizeChoice {display:flex; flex-wrap:wrap;}
-#customizeStatus {min-height:40px; color:#a7dfbc; font-size:23px; margin:10px 0;}
-.customizeHint {font-size:21px!important; color:#9fa5b4!important;}
+/* TV-first 1080p layout, legacy flexbox; no CSS Grid or CSS custom properties. */
+header { top:38px; align-items:center; }
+#leftBlock { width:760px; max-width:760px; min-width:0; }
+#date { display:block; margin:4px 0 0 8px; font-size:27px; line-height:1.25;
+  letter-spacing:.02em; color:#e5e9f3; white-space:nowrap; text-transform:none; }
+#lunarDate { margin:3px 0 0 8px; font-size:25px; line-height:1.25;
+  color:#f0d6a6; letter-spacing:.015em; white-space:nowrap; }
+#weather { margin:12px 0 0 8px; max-width:790px; font-size:24px;
+  white-space:normal; line-height:1.32; }
+body.solar-hidden #date, body.lunar-hidden #lunarDate { display:none; }
+
+/* Three large cards instead of a long 7-day strip, so all text stays readable. */
+#forecastArea { position:absolute; left:112px; right:112px; top:322px;
+  height:198px; z-index:2; }
+#forecastArea.hidden, body.forecast-hidden #forecastArea { display:none; }
+.forecastHeading { font-size:21px; font-weight:600; color:#c9d9ec; letter-spacing:.15em;
+  margin:0 0 8px 5px; }
+#weekWeather { display:flex; height:159px; width:100%; }
+.weekDay { flex:1; min-width:0; margin-right:18px; border-radius:19px;
+  border:1px solid rgba(255,255,255,.23); background:rgba(20,24,34,.86);
+  padding:11px 19px; text-align:left; color:#fff; }
+.weekDay .weekLabel { font-size:26px; font-weight:600; color:#f5f7ff; }
+.weekDay .weekDate { font-size:19px; color:#aab9d1; margin-top:0; }
+.weekDay .weekCondition { font-size:23px; margin-top:7px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.weekDay .weekTemperature { font-size:28px; font-weight:600; margin-top:3px; }
+.weekDay .weekRain { font-size:20px; color:#a9d8ff; margin-top:2px; }
+.weekEmpty { font-size:24px; padding:20px; color:#f5d39b; }
+
+/* More space for the clock and the day block on 1920x1080. */
+#topButtons { align-items:center; flex-shrink:0; }
+#topButtons .pill { height:62px; margin-left:9px; padding:0 16px; font-size:22px;
+  border-radius:32px; }
+#topButtons .pill svg { width:28px; height:28px; margin-right:8px; }
+#topButtons .pill.iconOnly { padding:0 15px; }
+#topButtons .pill:focus { outline:3px solid #f5cc88; }
+
+/* Dedicated settings pages: footer remains visible while content scrolls. */
+#customizePanel { position:fixed; top:0; bottom:0; left:0; right:0; z-index:110;
+  background:rgba(3,7,15,.92); padding:42px 70px; }
+#customizePanel.hidden,
+#customizeStyleView.hidden,
+#customizeWeatherView.hidden,
+#customizeCalendarView.hidden,
+#customizeAppsView.hidden { display:none; }
+.customizeDialog { margin:0 auto; width:100%; max-width:1640px; height:100%; overflow:hidden;
+  padding:26px 37px; border-radius:28px; border:2px solid #49536b;
+  background:#151e30; font-size:25px; color:white; display:flex; flex-direction:column; }
+.customizeHead { display:flex; flex-shrink:0; align-items:center; justify-content:space-between;
+  font-size:37px; padding-bottom:12px; }
+.customizeEyebrow { font-size:18px; letter-spacing:.20em; font-weight:600; color:#8ebbd8; }
+.customizeTabs { display:flex; flex-shrink:0; margin:10px 0 20px; }
+.customizeDialog button { background:#25354b; color:#fff; border:2px solid #53657c;
+  border-radius:14px; padding:12px 21px; font-size:22px; line-height:1.15;
+  margin:5px 12px 5px 0; cursor:pointer; }
+.customizeDialog button.selected { background:#d9eeff; color:#132236; border-color:#d9eeff; }
+.customizeDialog button:focus { outline:4px solid #ffd388; outline-offset:1px; }
+.customizeDialog p { margin:7px 0 19px; font-size:22px; color:#cbd4e2; line-height:1.4; }
+.customizeContent { flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; padding:0 12px 12px 0; }
+.customizeContent h3 { font-size:25px; margin:18px 0 8px; color:#f1d8a5; }
+.customizeChoice { display:flex; flex-wrap:wrap; align-items:center; }
+.customizeChoice button { flex-shrink:0; }
+#customizeAppList { max-height:520px; overflow-y:auto; display:flex; flex-wrap:wrap;
+  margin:6px 0 18px; }
+.customizeApp { display:flex; align-items:center; width:49%; min-height:66px; padding:5px 12px;
+  margin-right:1%; border-bottom:1px solid #3b4c62; }
+.customizeApp span { flex:1; font-size:22px; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap; padding-right:12px; }
+.customizeApp button { font-size:19px; padding:10px 12px; width:190px; margin:0; }
+.customizeSelectedCity { padding:12px 19px; background:#223953; border-radius:15px;
+  border:1px solid #668db4; font-size:25px; margin-bottom:10px; }
+.customizeSearchRow { display:flex; align-items:center; }
+.customizeSearchRow input { flex:1; min-width:0; border:2px solid #53657c;
+  border-radius:12px; background:#0c192a; color:white; font-size:26px; padding:12px 18px;
+  margin-right:18px; }
+.customizeSearchRow input:focus { outline:4px solid #ffd388; }
+.customizeSearchResults button { font-size:20px; }
+#customizeStatus { flex-shrink:0; min-height:38px; max-height:68px; color:#a8e8c2;
+  font-size:22px; margin:10px 0 2px; overflow:hidden; }
+.customizeDialog > .customizeHint { flex-shrink:0; margin:0; }
+.customizeHint { font-size:20px!important; color:#acbed1!important; }
 body.theme-ocean #dockBand {background:#082a3b;}
 body.theme-ocean .pill {border-color:rgba(104,204,237,.6);}
 body.theme-ocean #glass {border-color:#6cd6ec;}
@@ -533,7 +583,30 @@ body.theme-amber #hero {color:#ffe0a6;}
 body.font-sans {font-family:Arial,'DejaVu Sans',sans-serif;}
 body.font-serif {font-family:Georgia,'Times New Roman',serif;}
 body.font-large .name {font-size:33px;}
-body.font-large #date {font-size:33px;}
-body.font-large #lunarDate {font-size:31px;}
-body.font-large .weekDay .weekLabel {font-size:27px;}
-body.font-large .weekDay .weekTemperature {font-size:31px;}
+body.font-large #date {font-size:31px;}
+body.font-large #lunarDate {font-size:29px;}
+body.font-large .weekDay .weekLabel {font-size:28px;}
+body.font-large .weekDay .weekTemperature {font-size:30px;}
+
+/* Limit expensive visual effects on old GPUs; user can also turn animations off. */
+#stage, #glass, #hero { -webkit-backface-visibility:hidden; backface-visibility:hidden; }
+body.motion-reduced .ambient { display:none; }
+body.motion-reduced #stage,
+body.motion-reduced #glass,
+body.motion-reduced #hero,
+body.motion-reduced .item,
+body.motion-reduced .card,
+body.motion-reduced .pill,
+body.motion-reduced header,
+body.motion-reduced #weather { transition:none!important; animation:none!important; }
+body.motion-reduced .item.moving .card,
+body.motion-reduced .item:not(.moving) .card { animation:none!important; }
+
+/* Browser preview and non-1080p panels: scale the 1920x1080 TV coordinate system
+   as a whole, rather than clipping the settings modal or dock tiles. */
+@media screen and (max-width:1600px) { body { -webkit-transform-origin:top left;
+  transform-origin:top left; -webkit-transform:scale(.8333); transform:scale(.8333); } }
+@media screen and (max-width:1366px) { body { -webkit-transform:scale(.711);
+  transform:scale(.711); } }
+@media screen and (max-width:1280px) { body { -webkit-transform:scale(.6666);
+  transform:scale(.6666); } }

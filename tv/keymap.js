@@ -45,12 +45,18 @@ function main() {
   if (action === 'enable') {
     if (saved) {
       if (own(current, app, cmd)) {
-        console.log('Home mapping already active and safely backed up');
-        return;
+        if (current.action === 'exec') {
+          console.log('Home mapping already active and safely backed up');
+          return;
+        }
+        // Upgrade the old Launch App mapping to Execute, without replacing
+        // the original user's backup or touching unrelated keybinds.
+        console.log('Upgrading old Home Launch App mapping to compatible Execute');
+      } else {
+        if (!originalUnchanged(conf, key, saved))
+          fail('Home mapping changed externally; refusing to overwrite it');
+        console.log('Recovering interrupted Home mapping activation');
       }
-      if (!originalUnchanged(conf, key, saved))
-        fail('Home mapping changed externally; refusing to overwrite it');
-      console.log('Recovering interrupted Home mapping activation');
     } else {
       if (own(current, app, cmd)) fail('Our mapping already exists but no original backup; manual recovery required');
       write(backup, {present: has, binding: has ? current : null});

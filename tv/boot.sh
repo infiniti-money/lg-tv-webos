@@ -9,6 +9,22 @@ if [ -f "$DIR/home-enabled" ] && [ -f "$DIR/homewatch.js" ]; then
     nohup setsid /usr/bin/node "$DIR/homewatch.js" --boot >> "$LOG" 2>&1 < /dev/null &
   fi
 fi
+# Optional physical key fallback, enabled only for a device verified by the user.
+# This observer does not consume Home; LG's ribbon can flash before the app opens.
+if [ -f "$DIR/home-enabled" ] && [ -f "$DIR/home-event-device" ] &&
+   [ -f "$DIR/home-event-monitor.js" ] &&
+   [ ! -e /var/lib/webosbrew/init.d/97-homekey ]; then
+  EVENT_DEVICE=$(cat "$DIR/home-event-device")
+  case "$EVENT_DEVICE" in
+    /dev/input/event[0-9]|/dev/input/event[0-9][0-9])
+      if [ -c "$EVENT_DEVICE" ] &&
+         ! ps | grep '[h]ome-event-monitor.js' | grep -v grep >/dev/null 2>&1; then
+        nohup setsid /usr/bin/node "$DIR/home-event-monitor.js" "$EVENT_DEVICE" >> /tmp/infiniti-homeevent.log 2>&1 < /dev/null &
+      fi
+      ;;
+    *) echo "Unsafe saved input event path ignored" >> "$LOG" ;;
+  esac
+fi
 # Start Infiniti as the preferred home at cold boot, after webOS app manager is ready.
 # Do not remove LG Home: the original launcher remains the rollback fallback.
 # Do not launch after disable, or when the package is missing.

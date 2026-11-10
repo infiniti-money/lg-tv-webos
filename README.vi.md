@@ -588,3 +588,36 @@ Nếu lệnh `home-control.sh status` báo `INFINITI ACTIVE` nhưng bấm Home v
 5. Nếu **có** `HOME Execute invoked` nhưng launcher không hiện, đọc dòng `Launch failed` trong log. Nếu launcher mở bằng lệnh Luna trực tiếp nhưng không mở từ hook, kiểm tra quyền thực thi và môi trường của Input Hook.
 
 **Không cam kết chặn tuyệt đối LG Home trên webOS 3.x nếu Input Hook không hoạt động.** Dự án giữ LG Home nguyên vẹn và không vá phân vùng hệ thống. Khôi phục bằng `sh /home/root/lg-tv-vibehack/home-control.sh disable`.
+
+## webOS 3.x: phím Home vật lý `0305` và phương án đọc `/dev/input/event3`
+
+Đã xác minh từ TV thực tế: `KEY down code=0305` = **Home (773)**, `0110` = **OK (272)** và `019c` = **Back (412)**. Đây là mã **Linux evdev**, có thể khác ID trong log LG Input Hook. Không đổi mã Home sang OK/Back.
+
+Nếu `keymap.js status` báo ACTIVE nhưng remote vẫn hiện LG Home, trước tiên hãy kiểm tra log **LG Input Hook** và thử hành động Execute hoặc Launch App. Chỉ đọc input trực tiếp nếu hook không bắt được phím. Trên webOS 3.x, LG Home là ribbon hệ thống; đọc `/dev/input/event3` **không nuốt** Home và **không thể đảm bảo ẩn LG Home tuyệt đối** — nó chỉ đưa Infiniti TV Home ra trước sau khi có sự kiện Home.
+
+Bản tùy chọn `tv/home-event-monitor.js` đọc các bản ghi `input_event` bằng Node ES5, tương thích cấu trúc 16 byte (ARM 32-bit) và 24 byte (64-bit), không chặn điều khiển gốc, không lưu những phím khác, giới hạn kích hoạt Home một lần mỗi 1,8 giây. Không tạo vô hạn tiến trình `dd`/`od` hoặc chạy nhiều lệnh khởi động song song.
+
+Để dùng tính năng này **khi đã thử và xác nhận Home xuất hiện trên `/dev/input/event3`**, đăng nhập SSH root, cập nhật sidecar từ nhánh `main` (bằng installer), rồi bảo đảm **không còn** script thử nghiệm `/var/lib/webosbrew/init.d/97-homekey` đang cùng chạy. Có thể lưu nó ngoài `init.d` để khôi phục về sau:
+
+```sh
+if [ -f /var/lib/webosbrew/init.d/97-homekey ]; then
+  mv /var/lib/webosbrew/init.d/97-homekey /home/root/lg-tv-vibehack/97-homekey.backup
+fi
+sh /home/root/lg-tv-vibehack/home-control.sh evdev-enable /dev/input/event3
+reboot
+```
+
+Kiểm tra sau khi khởi động:
+
+```sh
+sh /home/root/lg-tv-vibehack/home-control.sh status
+tail -n 30 /tmp/infiniti-homeevent.log
+```
+
+Nếu muốn tắt riêng fallback đọc input nhưng giữ ánh xạ Input Hook và launcher:
+
+```sh
+sh /home/root/lg-tv-vibehack/home-control.sh evdev-disable
+```
+
+Khôi phục toàn bộ nút Home về trạng thái trước đó: `sh /home/root/lg-tv-vibehack/home-control.sh disable` và khởi động lại. **Không xóa hoặc sửa LG Home hệ thống**, không thay đổi nội dung `/dev/input/event3`, không áp dụng thiết bị event3 trên TV khác khi chưa kiểm tra.

@@ -91,7 +91,40 @@ try {
   assert.notStrictEqual(call('enable').status, 0, 'reject malformed backup');
   assert.strictEqual(load(cfg)['773'].id, 'other.tv.app');
 
-  console.log('Key mapping rollback tests passed.');
+  // This is the real failure scenario from webOS 3.4: a saved Infiniti backup
+  // exists, but LG Input Hook or another launcher has changed Home key 773.
+  // A normal install must refuse to clobber that binding.
+  var external = {action:'launch',id:'com.another.launcher'};
+  fs.writeFileSync(cfg, JSON.stringify({'773':external,'42':{action:'ignore'}}));
+  fs.writeFileSync(bak, JSON.stringify({present:true,binding:original}));
+  assert.notStrictEqual(call('enable').status, 0,'external mapping cannot be overwritten silently');
+  var bad=cp.spawnSync(process.execPath,[js,'rebind',cfg,bak,'773',app,cmd],
+    {encoding:'utf8'});
+  assert.notStrictEqual(bad.status,0,'explicit confirmation required');
+  assert.strictEqual(load(cfg)['773'].id,'com.another.launcher');
+  var repair=cp.spawnSync(process.execPath,
+    [js,'rebind',cfg,bak,'773',app,cmd,'--confirm-rebind'],{encoding:'utf8'});
+  assert.strictEqual(repair.status,0,'explicit repair succeeds with recovery archive: '+repair.stderr);
+  assert.strictEqual(load(cfg)['773'].action,'exec');
+  assert.strictEqual(load(cfg)['773'].command,cmd);
+  assert.strictEqual(load(cfg)['42'].action,'ignore');
+  assert.strictEqual(load(bak).binding.id,'com.another.launcher',
+    'rollback target becomes exactly the current external binding');
+  var archives=fs.readdirSync(temp).filter(function (n) {
+    return /^home-backup[.]json[.]conflict-/.test(n);
+  });
+  assert.strictEqual(archives.length,1,'conflicting original and old backup archived');
+  var archive=load(path.join(temp,archives[0]));
+  assert.strictEqual(archive.previousBackup.binding.keycode,7);
+  assert.strictEqual(archive.current.binding.id,'com.another.launcher');
+  assert.strictEqual(call('disable').status,0,'restore external Home mapping when disabled');
+  assert.strictEqual(load(cfg)['773'].id,'com.another.launcher');
+  assert.strictEqual(load(cfg)['42'].action,'ignore');
+  assert.strictEqual(fs.existsSync(bak),false);
+  assert.strictEqual(fs.existsSync(path.join(temp,archives[0])),true,
+    'recovery archive must never be deleted by rollback');
+
+  console.log('Key mapping conflict-rebind, archive integrity and rollback tests passed.');
 } finally {
   fs.readdirSync(temp).forEach(function (name) { fs.unlinkSync(path.join(temp, name)); });
   fs.rmdirSync(temp);

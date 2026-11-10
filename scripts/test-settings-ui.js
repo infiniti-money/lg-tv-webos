@@ -27,7 +27,7 @@ Node.prototype.querySelectorAll = function (tag) {
   var found = [];
   function walk(node) {
     node.children.forEach(function (x) {
-      if (x.tagName === tag) found.push(x);
+      if (tag.split(/,\s*/).indexOf(x.tagName) !== -1) found.push(x);
       walk(x);
     });
   }
@@ -68,7 +68,8 @@ var groups = {
 Object.keys(groups).forEach(function (name) {
   var view=node(name); view.className='hidden'; panel.appendChild(view);
   groups[name].forEach(function (id) {
-    view.appendChild(node(id,/Btn$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps/.test(id)?'button':'div'));
+    view.appendChild(node(id,id==='customizeWeatherSearch'?'input':
+      /Btn$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps/.test(id)?'button':'div'));
   });
 });
 panel.appendChild(node('customizeStatus'));
@@ -108,6 +109,16 @@ assert.equal(presets.length,8,'offline presets should be visible');
 presets[0].click();
 assert.equal(window.INFINITI_PREFS.getWeather().place,'Hà Nội');
 assert.equal(weatherCalls,1);
+// A D-pad-only remote must be able to reach AND exit the weather search field.
+var arrow={type:'keydown',keyCode:39,preventDefault:function(){},
+  stopPropagation:function(){},stopImmediatePropagation:function(){}};
+var down={type:'keydown',keyCode:40,preventDefault:function(){},
+  stopPropagation:function(){},stopImmediatePropagation:function(){}};
+node('customizeWeatherPresets').querySelectorAll('button')[7].focus();
+docEvents.keydown(arrow);
+assert.equal(document.activeElement.id,'customizeWeatherSearch','Right should focus search input');
+docEvents.keydown(down);
+assert.equal(document.activeElement.id,'customizeWeatherSearchBtn','Down should exit search input');
 node('customizeWeatherSearch').value='Nha Trang';
 node('customizeWeatherSearchBtn').click();
 assert.equal(node('customizeWeatherResults').querySelectorAll('button').length,1);

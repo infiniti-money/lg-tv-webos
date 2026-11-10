@@ -18,6 +18,7 @@
 #   --dim 0-0.8             Darken the wallpaper so text stays readable (default: 0.35)
 #   --glow on|off           Coloured glow behind the focused app
 #   --no-home-button        Keep LG Home; disable and restore previous key mapping
+#   --rebind-home           Explicitly replace a conflicting Home key mapping, archive old value
 #   --uninstall             Remove everything this script installed
 set -e
 
@@ -58,7 +59,7 @@ luna_wait() {
 
 # ---------------------------------------------------------------- options
 LANG_OPT="vi"; CLOCK="on"; COLS=""; CITY=""; FAHR=""; NOWEATHER=""; WALL=""; NOWALL=""; DIM=""; GLOW=""
-HOME_BTN=1; UNINSTALL=""
+HOME_BTN=1; UNINSTALL=""; REBIND_HOME=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --lang) LANG_OPT="$2"; shift ;;
@@ -72,6 +73,7 @@ while [ $# -gt 0 ]; do
     --dim) DIM="$2"; shift ;;
     --glow) GLOW="$2"; shift ;;
     --no-home-button) HOME_BTN="" ;;
+    --rebind-home) REBIND_HOME=1 ;;
     --uninstall) UNINSTALL=1 ;;
     *) die "Unknown option: $1" ;;
   esac
@@ -186,7 +188,15 @@ cp "$DATA/boot.sh" "$INITD"
 chmod +x "$INITD"
 nohup setsid /usr/bin/node "$DATA/wallpaper-server.js" >> /tmp/lg-tv-vibehack.log 2>&1 < /dev/null &
 if [ -n "$HOME_BTN" ]; then
-  sh "$DATA/home-control.sh" enable || die "Could not safely activate Home replacement."
+  if ! sh "$DATA/home-control.sh" enable; then
+    if [ -n "$REBIND_HOME" ]; then
+      warn "Home binding conflict. Explicit --rebind-home was selected."
+      warn "The existing Home binding and older backup will be archived before changing key 773."
+      sh "$DATA/home-control.sh" rebind || die "Home repair failed; existing mapping remains protected."
+    else
+      die "Home key was changed externally. Configuration is preserved. After verifying Home key ID 773 in LG Input Hook, rerun installer with --rebind-home to archive the old mapping and rebind safely."
+    fi
+  fi
   nohup setsid /usr/bin/node "$DATA/homewatch.js" >> /tmp/lg-tv-vibehack.log 2>&1 < /dev/null &
   ok "Home replacement enabled. Reboot once for LG Input Hook."
 else

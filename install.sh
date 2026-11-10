@@ -17,8 +17,10 @@
 #   --no-wallpaper          Back to plain black
 #   --dim 0-0.8             Darken the wallpaper so text stays readable (default: 0.35)
 #   --glow on|off           Coloured glow behind the focused app
-#   --no-home-button        Keep LG Home; disable and restore previous key mapping
-#   --rebind-home           Explicitly replace a conflicting Home key mapping, archive old value
+#   --enable-home           EXPLICITLY map Home button; no boot/wake autolaunch
+#   --no-home-button        Deprecated alias for the safe default
+#   --rebind-home           Explicitly rebind a conflicting mapping (requires --enable-home)
+#   --uninstall             Remove Infiniti TV Home after safe recovery
 #   --uninstall             Remove everything this script installed
 set -e
 
@@ -59,7 +61,7 @@ luna_wait() {
 
 # ---------------------------------------------------------------- options
 LANG_OPT="vi"; CLOCK="on"; COLS=""; CITY=""; FAHR=""; NOWEATHER=""; WALL=""; NOWALL=""; DIM=""; GLOW=""
-HOME_BTN=1; UNINSTALL=""; REBIND_HOME=""
+HOME_BTN=""; UNINSTALL=""; REBIND_HOME=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --lang) LANG_OPT="$2"; shift ;;
@@ -73,6 +75,7 @@ while [ $# -gt 0 ]; do
     --dim) DIM="$2"; shift ;;
     --glow) GLOW="$2"; shift ;;
     --no-home-button) HOME_BTN="" ;;
+    --enable-home) HOME_BTN=1 ;;
     --rebind-home) REBIND_HOME=1 ;;
     --uninstall) UNINSTALL=1 ;;
     *) die "Unknown option: $1" ;;
@@ -84,6 +87,18 @@ done
 [ "$(id -u)" = "0" ] || die "Run this as root over SSH (ssh root@<TV IP>). The webOS Terminal app is not root."
 [ -d /var/lib/webosbrew ] || die "Homebrew Channel with root not found. Root the TV first (see README)."
 for c in node luna-send curl; do command -v "$c" >/dev/null 2>&1 || die "'$c' not found on this TV."; done
+if [ -n "$REBIND_HOME" ] && [ -z "$HOME_BTN" ]; then
+  die "--rebind-home requires --enable-home; safe mode is the default."
+fi
+
+# Make this the FIRST mutation, before package download/install. Previous
+# 97-homekey loops and legacy boot hooks caused 25s relaunch/black-screen reports.
+# The recovery works even without a previously installed Infiniti sidecar.
+say "Disarming legacy Home takeover before any installation"
+curl -fsSL "$RAW/tv/safe-recovery.sh" -o /tmp/infiniti-safe-recovery.sh ||
+  die "Cannot download recovery script; refusing to proceed with risky boot hooks."
+sh /tmp/infiniti-safe-recovery.sh ||
+  die "Safe recovery failed. Do not reboot until the reported files are secured."
 
 # ---------------------------------------------------------------- uninstall
 if [ -n "$UNINSTALL" ]; then
@@ -106,7 +121,7 @@ fi
 # ---------------------------------------------------------------- files
 say "Downloading scripts"
 mkdir -p "$DATA/icons"
-for f in sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh home-control.sh diagnose-home.sh compat-check.sh; do
+for f in sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh home-control.sh safe-recovery.sh diagnose-home.sh compat-check.sh; do
   curl -fsSL "$RAW/tv/$f" -o "$DATA/$f" || die "Could not download $f. Is the TV online?"
 done
 chmod +x "$DATA"/*.sh "$DATA"/*.js
@@ -182,11 +197,10 @@ ok "Launcher installed"
 say "Reading your apps"
 node "$DATA/sync.js" || die "App sync failed."
 
-# ---------------------------------------------------------------- safe boot and Home replacement
-# The wallpaper service and app sync run regardless of whether Home replacement is enabled.
-cp "$DATA/boot.sh" "$INITD"
-chmod +x "$INITD"
-nohup setsid /usr/bin/node "$DATA/wallpaper-server.js" >> /tmp/lg-tv-vibehack.log 2>&1 < /dev/null &
+# ---------------------------------------------------------------- optional manual Home button interception
+# Safe default: NO auto-boot hook, NO watcher, NO evdev reader, NO UI launch.
+# We keep only the app and read-only synched metadata until the user tests
+# normal LG power/standby cycles.
 if [ -n "$HOME_BTN" ]; then
   if ! sh "$DATA/home-control.sh" enable; then
     if [ -n "$REBIND_HOME" ]; then
@@ -197,13 +211,15 @@ if [ -n "$HOME_BTN" ]; then
       die "Home key was changed externally. Configuration is preserved. After verifying Home key ID 773 in LG Input Hook, rerun installer with --rebind-home to archive the old mapping and rebind safely."
     fi
   fi
-  nohup setsid /usr/bin/node "$DATA/homewatch.js" >> /tmp/lg-tv-vibehack.log 2>&1 < /dev/null &
-  ok "Home replacement enabled. Reboot once for LG Input Hook."
+  ok "Manual Home key mapping installed. No automatic launch on boot or wake."
+  warn "Open LG Input Hook and save the Home mapping. Verify power/standby before enabling other services."
 else
-  sh "$DATA/home-control.sh" disable || die "Could not safely disable Home replacement."
-  ok "LG Home preserved (Home replacement disabled)."
+  # The first recovery already removed all startup launchers. Do NOT
+  # reactivate them or force the launcher into the foreground here.
+  ok "SAFE MODE: LG Home remains primary; Infiniti is installed but not auto-opened."
 fi
 
-luna-send -n 1 luna://com.webos.applicationManager/launch "{\"id\":\"$APP_ID\",\"params\":{\"reload\":true}}" >/dev/null 2>&1 || true
 echo
-ok "Done! Reboot once to finish:  reboot"
+ok "Installation complete. Test LG power off/on twice BEFORE enabling Home interception."
+ok "To start Infiniti manually, select it from the TV app list."
+ok "Emergency rollback: sh $DATA/safe-recovery.sh"

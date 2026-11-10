@@ -96,8 +96,10 @@ try {
   assert.ok(install.indexOf('sh /tmp/infiniti-safe-recovery.sh') <
     install.indexOf('say "Installing the launcher (latest release)"'),
     'first uninstall old startup hooks before IPK install');
-  assert.ok(install.indexOf('cp "$DATA/boot.sh" "$INITD"')<0,
-    'installer must not register automatic boot hooks by default');
+  assert.ok(install.indexOf('if [ -n "$WALL_SERVICE" ]; then')>=0 &&
+    install.indexOf('cp "$DATA/boot.sh" "$INITD"') >
+      install.indexOf('if [ -n "$WALL_SERVICE" ]; then'),
+    'Installer may register a background hook only after explicit opt-in');
   assert.ok(install.indexOf('nohup setsid /usr/bin/node "$DATA/homewatch.js"')<0,
     'installer must not start a foreground hijacking watcher');
   assert.ok(install.indexOf('luna-send -n 1 luna://com.webos.applicationManager/launch "{')<0,

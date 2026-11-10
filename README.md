@@ -37,7 +37,7 @@
 
 - **Clean tvOS-style home:** a pinned dock, an app grid and one glass highlight that glides between tiles.
 - **Optional Home-button remap** (rooted TVs): the native LG Home is preserved by default; remapping requires explicit `--enable-home` after power/wake testing.
-- **Change the wallpaper from your phone** (rooted TVs): press the picture button, scan the QR code,
+- **Change wallpaper in Customize → Appearance → Wallpaper** (rooted TVs): open the QR code there,
   pick a photo and crop it in a TV-shaped frame that shows where the clock and apps will sit.
   Photos on a USB stick in the TV work too.
 - **Weather** for your city, free with no account ([Open-Meteo](https://open-meteo.com)).
@@ -54,6 +54,21 @@
   <img src="docs/media/home-button.gif" alt="Pressing Home goes straight to the launcher" width="420">
   <img src="docs/media/wallpaper-weather.jpg" alt="Wallpaper and weather" width="420">
 </p>
+
+## v1.5.4: rounded app icons, Wallpaper in Customize, opt-in automatic updates
+
+The transparent, horizontally scrolling single-row dock now has icons about 10–12% larger with softer rounded corners. On rooted TVs, choose **Customize → Appearance → Wallpaper** for the authenticated phone/USB QR editor. The redundant top toolbar picture button was removed.
+
+Automatic app updates are available after deliberately opting in with the root installer; they are **not enabled by installing the IPK alone**. The updater checks stable GitHub Releases approximately twice per day, starting 20 minutes after boot, verifies the IPK SHA-256 before installation, and skips updates when Infiniti is foreground or custom Home interception is active. It never force-opens an app or touches LG's native launcher. It also does **not** automatically replace installed root sidecar scripts.
+
+After recovering any prior black-screen issue and verifying two healthy power/standby/wake cycles, connect over SSH as root and run:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh -o /tmp/infiniti-install.sh
+sh /tmp/infiniti-install.sh --auto-update
+```
+
+To enable only the Wallpaper phone QR server without automatic updates, use `--wallpaper-service` instead. For logs use `sh /home/root/lg-tv-vibehack/auto-update.sh --status`. For emergency disarm use `sh /home/root/lg-tv-vibehack/safe-recovery.sh`. Avoid `--enable-home` until the affected physical TV is proven stable after standby/wake.
 
 ## Root or no root?
 
@@ -173,8 +188,7 @@ On a Mac: `TV_HOST=192.168.1.50 ./home-watch-mac.sh`.
 
 ### Rooted TV
 
-**Easiest: from your phone.** On the launcher, go up to the picture button (between the network
-button and Settings) and press OK. Scan the QR code with your phone camera (the phone must be on the
+**Easiest: from your phone.** Open **Customize → Appearance → Wallpaper** on Infiniti TV Home, then scan the QR code with your phone camera (the phone must be on the
 same Wi-Fi as the TV). The page that opens lets you:
 
 - **Choose a photo** from the phone, then drag and pinch it inside a 16:9 frame. The grid and dashed
@@ -281,7 +295,7 @@ from another tool. Run `sh /home/root/lg-tv-vibehack/home-control.sh status` to 
 </details>
 
 <details>
-<summary><b>The picture button says the wallpaper page is not running</b></summary>
+<summary><b>Wallpaper QR in Customize is unavailable</b></summary>
 
 The page starts about 30 seconds after the TV turns on; wait a moment and try again. Still failing:
 `ps -ef | grep wallpaper-server` should show a `node` process, and `tail -30 /tmp/lg-tv-vibehack.log`
@@ -292,7 +306,7 @@ shows why. Running the installer again restarts it.
 <summary><b>The phone can't open the QR code page</b></summary>
 
 The phone must be on the same network as the TV (not on mobile data). If the TV's address changed,
-press the picture button again for a new QR code. Tip: reserve the TV's IP address in your router.
+press **Refresh wallpaper QR** inside Customize for a new QR code. Tip: reserve the TV's IP address in your router.
 </details>
 
 <details>

@@ -53,8 +53,8 @@ function sleep(sec) { try { execFileSync('sleep', [String(sec)]); } catch (e) { 
 
 // For a minute or two after boot, webOS answers with an empty app list (seen on webOS 4.4), so ask
 // again until it has one. Without this, every boot overwrote apps.js with nothing.
-function fromLuna() {
-  var tries = parseInt(process.env.SYNC_TRIES || '', 10) || 12;
+function fromLuna(diskAvailable) {
+  var tries = parseInt(process.env.SYNC_TRIES || '', 10) || (diskAvailable ? 3 : 12);
   for (var i = 0; i < tries; i++) {
     var res = null;
     try {
@@ -137,7 +137,7 @@ function findLauncherDir() {
   return preferred[0];
 }
 function listPoints() {
-  var lunaPoints = fromLuna(), diskPoints = fromDisk();
+  var diskPoints = fromDisk(), lunaPoints = fromLuna(diskPoints.length > 0);
   var merged = mergePoints(lunaPoints, diskPoints);
   console.error('App discovery: Luna ' + lunaPoints.length + ', local packages ' +
     diskPoints.length + ', combined ' + merged.length + '.');
@@ -173,7 +173,7 @@ function main() {
   if (!fs.existsSync(iconDir)) fs.mkdirSync(iconDir);
   var apps = [];
   points.forEach(function (p) {
-    if (p.hidden) return;
+    if (!p || !p.id || p.hidden) return;
     var name = safeName(p.id);
     var custom = path.join(DATA, 'icons', name);
     var src = isFile(custom) ? custom : (isFile(p.largeIcon) ? p.largeIcon : p.icon);
@@ -181,7 +181,7 @@ function main() {
     if (!isFile(src)) src = path.join(APP_DIR, 'icon.png');
     if (!isFile(src)) return;
     try { copyFile(src, path.join(iconDir, name)); } catch (e) { return; }
-    apps.push({ id: p.id, title: p.title, icon: 'icons/' + name, iconColor: p.iconColor || p.bgColor || '' });
+    apps.push({ id: p.id, title: String(p.title || p.id), icon: 'icons/' + name, iconColor: p.iconColor || p.bgColor || '' });
   });
   // An empty list would leave an empty launcher on screen, so keep whatever is already there.
   if (!apps.length) {

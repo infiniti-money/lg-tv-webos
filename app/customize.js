@@ -6,6 +6,7 @@
   var VISIBILITY_KEY = 'tvhome.visibility.v1';
   var APPEARANCE_KEY = 'tvhome.appearance.v1';
   var WEATHER_KEY = 'tvhome.weather.v1';
+  var AI_KEY = 'tvhome.ai.v1';
   var cache = {};
   var defaults = {
     theme:'midnight', font:'lexend', largeText:false, showWeek:true,
@@ -91,6 +92,16 @@
     safeWrite(APPEARANCE_KEY, current);
     return current;
   }
+  // Default ON preserves existing installations; OFF is persisted locally.
+  // API secrets and access tokens are never saved by this setting.
+  function getAIEnabled() {
+    return safeRead(AI_KEY).enabled !== false;
+  }
+  function setAIEnabled(enabled) {
+    var value = enabled === true;
+    safeWrite(AI_KEY, {enabled:value});
+    return value;
+  }
   function getWeather() {
     var saved = safeRead(WEATHER_KEY);
     var original = (root.CONFIG || {}).weather || {};
@@ -123,6 +134,7 @@
     isVisible:isVisible, setVisible:setVisible, resetVisible:resetVisible,
     getAppearance:getAppearance, saveAppearance:saveAppearance,
     getWeather:getWeather, saveWeather:saveWeather,
+    getAIEnabled:getAIEnabled, setAIEnabled:setAIEnabled,
     validCoords:validCoords, isProtected:isProtected
   };
   root.INFINITI_PREFS = api;
@@ -134,11 +146,13 @@
   if (!panel) return;
   var tabs = {
     apps:$('customizeAppsTab'), style:$('customizeStyleTab'),
-    weather:$('customizeWeatherTab'), calendar:$('customizeCalendarTab')
+    weather:$('customizeWeatherTab'), calendar:$('customizeCalendarTab'),
+    ai:$('customizeAITab')
   };
   var views = {
     apps:$('customizeAppsView'), style:$('customizeStyleView'),
-    weather:$('customizeWeatherView'), calendar:$('customizeCalendarView')
+    weather:$('customizeWeatherView'), calendar:$('customizeCalendarView'),
+    ai:$('customizeAIView')
   };
   var appsList = $('customizeAppList'), themeBox = $('customizeThemes');
   var fontBox = $('customizeFonts'), status = $('customizeStatus');
@@ -157,8 +171,16 @@
     if (a.reduceMotion) body.classList.add('motion-reduced');
     if (!a.showSolar) body.classList.add('solar-hidden');
     if (!a.showLunar) body.classList.add('lunar-hidden');
+    applyAI();
     if (typeof root.INFINITI_LAUNCHER_LAYOUT_REFRESH === 'function')
       root.INFINITI_LAUNCHER_LAYOUT_REFRESH();
+  }
+  function applyAI() {
+    document.body.classList.toggle('ai-disabled', !getAIEnabled());
+    if (!getAIEnabled() && typeof root.INFINITI_AI_SET_ENABLED === 'function')
+      root.INFINITI_AI_SET_ENABLED(false);
+    if (typeof root.INFINITI_AI_VISIBILITY_CHANGED === 'function')
+      root.INFINITI_AI_VISIBILITY_CHANGED();
   }
   function message(v) { status.textContent = v || ''; }
   function refreshLauncher() {
@@ -316,6 +338,12 @@
     };
     x.send();
   }
+  function renderAI() {
+    $('customizeAIToggle').textContent = 'Trợ lý AI tiếng Việt: ' + (getAIEnabled() ? 'Bật' : 'Tắt');
+    $('customizeAIState').textContent = getAIEnabled() ?
+      'AI được hiển thị trên Home. Tài khoản API và máy chủ AI phải được cấu hình riêng.' :
+      'AI đã tắt: ẩn nút trên Home, không gửi yêu cầu AI hoặc dùng micro.';
+  }
   function renderCalendar() {
     refreshToggles();
     var d = new Date();
@@ -333,6 +361,7 @@
     if (name === 'apps') renderApps();
     else if (name === 'style') renderStyle();
     else if (name === 'weather') renderWeather();
+    else if (name === 'ai') renderAI();
     else renderCalendar();
     message('');
   }
@@ -426,6 +455,11 @@
   $('customizeResetStyle').addEventListener('click', function () {
     saveAppearance(defaults); applyAppearance(); renderStyle();
     message('Đã khôi phục giao diện mặc định.');
+  });
+  $('customizeAIToggle').addEventListener('click', function () {
+    var enabled = setAIEnabled(!getAIEnabled());
+    applyAI(); renderAI();
+    message(enabled ? 'Đã bật trợ lý AI.' : 'Đã tắt trợ lý AI và ẩn nút trên Home.');
   });
   $('customizeWeatherSearchBtn').addEventListener('click', searchRegion);
   $('customizeWeatherEnable').addEventListener('click', function () {

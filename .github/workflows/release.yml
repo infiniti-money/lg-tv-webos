@@ -37,6 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/check-webos3.js
+          node scripts/check-branding.js
           node scripts/test-homewatch.js
           node scripts/test-keymap.js
           node scripts/test-ai-worker.mjs
@@ -47,6 +48,8 @@ jobs:
           node scripts/test-app-structure.js
           for file in app/app.js app/extras.js app/config.js app/assistant.js app/customize.js app/lunar.js app/forecast.js app/qrcode.js tv/*.js; do node --check "$file"; done
           for file in install.sh tv/*.sh; do sh -n "$file"; done
+          for file in home-watch-mac.sh install-noroot.sh; do bash -n "$file"; done
+          python3 -m py_compile home-watch.py sync-apps.py lgtv.py
 
       - name: Package without modern-JS minification
         shell: bash

@@ -77,6 +77,19 @@ jobs:
           (cd build && sha256sum infiniti-tv-home.ipk > infiniti-tv-home.ipk.sha256)
           ls -lh build
 
+      - name: Bundle recovery scripts and rooted sidecars
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/infiniti-root-tools/tv build/infiniti-root-tools/scripts
+          cp tv/* build/infiniti-root-tools/tv/
+          cp scripts/recover-lg-tv.ps1 build/infiniti-root-tools/scripts/
+          cp install.sh README.vi.md RELEASE_NOTES_v1.5.3.md build/infiniti-root-tools/
+          (cd build && zip -qr infiniti-tv-home-root-tools-v1.5.3.zip infiniti-root-tools)
+          (cd build && sha256sum infiniti-tv-home-root-tools-v1.5.3.zip > infiniti-tv-home-root-tools-v1.5.3.zip.sha256)
+          unzip -l build/infiniti-tv-home-root-tools-v1.5.3.zip | grep -q 'tv/safe-recovery.sh'
+          unzip -l build/infiniti-tv-home-root-tools-v1.5.3.zip | grep -q 'scripts/recover-lg-tv.ps1'
+
       - name: Upload IPK artifact
         uses: actions/upload-artifact@v4
         with:
@@ -84,6 +97,8 @@ jobs:
           path: |
             build/infiniti-tv-home.ipk
             build/infiniti-tv-home.ipk.sha256
+            build/infiniti-tv-home-root-tools-v1.5.3.zip
+            build/infiniti-tv-home-root-tools-v1.5.3.zip.sha256
           if-no-files-found: error
           retention-days: 30
 
@@ -131,5 +146,8 @@ jobs:
           files: |
             build/infiniti-tv-home.ipk
             build/infiniti-tv-home.ipk.sha256
+            build/infiniti-tv-home-root-tools-v1.5.3.zip
+            build/infiniti-tv-home-root-tools-v1.5.3.zip.sha256
           fail_on_unmatched_files: true
           generate_release_notes: true
+          body_path: RELEASE_NOTES_v1.5.3.md

@@ -2,7 +2,7 @@
 /*
  * Infiniti TV Home: app-catalog watcher only (legacy webOS 3.x / Node 0.12).
  *
- * SAFETY: This process NEVER invokes applicationManager/launch and NEVER
+ * SAFETY: This process NEVER calls Luna to start another app and NEVER
  * redirects native LG Home, Live TV, Homebrew Channel or Input Hook.
  * Even a manual start with the obsolete --boot flag must not hijack the UI.
  * Users who want Home mapping must explicitly configure LG Input Hook.

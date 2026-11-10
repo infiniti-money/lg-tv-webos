@@ -10,7 +10,7 @@ var noRootWatcher = fs.readFileSync('home-watch.py','utf8');
 assert.ok(/LAUNCHER = "com\.infinitimoney\.tvhome"/.test(noRootWatcher), 'no-root Home watcher must open the correct application');
 assert.ok(!/com\.gathin\.tvhome/.test(noRootWatcher), 'old app ID in no-root Home watcher');
 assert.strictEqual(appInfo.main, 'index.html');
-assert.ok(/^1\.4\./.test(appInfo.version), 'new feature version must be 1.4.x');
+assert.ok(/^1\.5\./.test(appInfo.version), 'new feature version must be 1.5.x');
 var ids = {}, matches = html.match(/id="[^"]+"/g) || [];
 matches.forEach(function (entry) {
   var id = entry.slice(4, -1);

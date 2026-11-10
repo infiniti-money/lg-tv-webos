@@ -18,7 +18,10 @@ matches.forEach(function (entry) {
   ids[id] = true;
 });
 ['customizePanel','customizeAppList','customizeThemes','customizeFonts',
- 'customizeWeatherCity','weekWeather','lunarDate','btnCustomize','aiPanel'].forEach(function (id) {
+ 'customizeWeatherTab','customizeCalendarTab','customizeWeatherPresets','customizeWeatherSearch',
+ 'customizeWeatherSearchBtn','customizeWeatherResults','customizeWeatherEnable',
+ 'customizeWeatherUnit','customizeMotion','customizeSolar','customizeLunar',
+ 'customizeWallpaper','forecastArea','weekWeather','date','lunarDate','btnCustomize','aiPanel'].forEach(function (id) {
   assert.ok(ids[id], 'missing widget: ' + id);
 });
 var scripts = [], re = /<script src="([^"]+)"/g, m;

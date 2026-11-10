@@ -34,7 +34,7 @@ assert.deepStrictEqual(points.map(function(x){return x.id;}),
   ['com.webos.app.browser','com.youtube.app','com.netflix.app','com.other.app'],
   'Only visible Luna apps and launchable installed third-party apps are shown');
 assert.strictEqual(points[0].title,'Trình duyệt','Luna title takes precedence');
-assert.strictEqual(sync.mergePoints([],disk).length,2,'No Luna: only installed user apps survive');
+assert.strictEqual(sync.mergePoints([],disk).length,3,'No Luna: installed apps without explicit Luna hide status are still eligible');
 assert.strictEqual(sync.mergePoints(luna,[]).length,2,'No disk: Luna visible apps survive');
 assert.strictEqual(sync.mergePoints([{id:'same',title:'a'},{id:'same',title:'b'}],[]).length,1,
   'duplicate IDs must be deduplicated');

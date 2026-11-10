@@ -18,4 +18,12 @@ assert.ok(control.indexOf('NOTE: ACTIVE reflects saved JSON only')>=0,
   'Status must not claim hardware remapping is confirmed');
 assert.ok(control.indexOf('diagnose)')>=0,'Read-only diagnose command must exist');
 assert.ok(installer.indexOf('diagnose-home.sh')>=0,'Root installer must distribute diagnosis tool');
-console.log('Legacy webOS Home mapping runtime diagnostics source checks passed.');
+var eventSource = fs.readFileSync('tv/home-event-monitor.js','utf8');
+var boot = fs.readFileSync('tv/boot.sh','utf8');
+assert.ok(eventSource.indexOf('var EV_KEY = 1, HOME = 773, KEY_DOWN = 1')>=0,
+  'Only HOME 0305 keydown should trigger the fallback');
+assert.ok(eventSource.indexOf('EVIOCGRAB')>=0 &&
+  eventSource.indexOf('EVIOCGRAB,')<0,'Monitor must not grab Linux input events');
+assert.ok(boot.indexOf('home-event-device')>=0,'Monitor startup must be explicit opt-in');
+assert.ok(control.indexOf('evdev-disable)')>=0,'Monitor must have reversible stop control');
+console.log('Legacy webOS Home mapping and physical HOME 0305 diagnostics passed.');

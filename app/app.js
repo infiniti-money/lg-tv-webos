@@ -262,7 +262,8 @@
 
     // The pencil sits just right of the dock band, centred on the dock row.
     pen.style.display = n ? 'flex' : 'none';
-    pen.style.left = Math.min(1920 - 84, tileLeft(0) - 28 + (n - 1) * CELL_W + TILE_W + 56 + 16) + 'px';
+    // Place the edit control after the final app in the same scrolling row.
+    pen.style.left = (n ? tileLeft(n - 1) + TILE_W + 45 : 1750) + 'px';
     pen.style.top = (DOCK_TOP + TILE_H / 2 - 36) + 'px';
   }
 
@@ -594,6 +595,10 @@
   function focusPen() {
     setZone('pen');
     hideHero();
+    // Keep the edit pencil visible even when the row contains many apps.
+    var penLeft = items.length ? tileLeft(items.length - 1) + TILE_W + 45 : 1750;
+    offset = Math.max(offset, penLeft + 80 - 1780);
+    stage.style.transform = 'translateX(' + (-offset) + 'px)';
     pen.classList.add('focused');
   }
 

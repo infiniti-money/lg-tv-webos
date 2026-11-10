@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /*
- * LG TV Vibehack - diagnostics. Runs ON the TV, changes nothing.
+ * Infiniti TV Home - diagnostics. Runs ON the TV, changes nothing.
  * Prints exactly what sync.js sees, so an empty app list can be explained.
  *
- *   curl -fsSL https://raw.githubusercontent.com/hoangvya19/lg-tv-webos-vibehack/main/tv/diag.js -o /tmp/diag.js && node /tmp/diag.js
+ *   curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/tv/diag.js -o /tmp/diag.js && node /tmp/diag.js
  */
 'use strict';
 var fs = require('fs');

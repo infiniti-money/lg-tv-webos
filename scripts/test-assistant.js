@@ -50,6 +50,20 @@ node('aiClose').events.click();
 assert.equal(node('aiSend').disabled,false,'re-enabled after abort/close');
 assert.equal(closed,1,'close notifies launcher to reset held OK state');
 ctx.window.INFINITI_AI_OPEN();
+node('aiToken').value='0123456789abcdef0123456789abcdef';
 node('aiSend').events.click();
-assert.equal(calls,2,'can submit again after reopening');
-console.log('AI dialog remote interception and abort/reopen tests passed.');
+assert.equal(calls,2,'can submit again after reopening with a newly entered token');
+// Turning off AI from Settings must abort any in-flight request, discard token
+// and prevent both the dialog and new network requests from opening.
+ctx.window.INFINITI_PREFS={getAIEnabled:function(){return false;}};
+ctx.window.INFINITI_AI_SET_ENABLED(false);
+assert.equal(ctx.window.INFINITI_AI_IS_OPEN(),false,'AI closes after switching off');
+assert.equal(node('aiToken').value,'','access token cleared when AI is disabled');
+node('aiSend').events.click();
+ctx.window.INFINITI_AI_OPEN();
+assert.equal(ctx.window.INFINITI_AI_IS_OPEN(),false,'disabled AI cannot reopen');
+assert.equal(calls,2,'disabled AI never submits an API request');
+ctx.window.INFINITI_PREFS={getAIEnabled:function(){return true;}};
+ctx.window.INFINITI_AI_OPEN();
+assert.equal(ctx.window.INFINITI_AI_IS_OPEN(),true,'AI can be re-enabled');
+console.log('AI dialog, remote, disabled-network, token cleanup and abort tests passed.');

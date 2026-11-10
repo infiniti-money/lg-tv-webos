@@ -39,6 +39,7 @@ jobs:
           node scripts/check-webos3.js
           node scripts/check-branding.js
           node scripts/test-homewatch.js
+          node scripts/test-app-discovery.js
           node scripts/test-keymap.js
           node scripts/test-ai-worker.mjs
           node scripts/test-assistant.js
@@ -79,7 +80,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      # Release v1.5.0 once from the deliberate main merge commit with the
+      # Release v1.5.1 once from the deliberate main merge commit with the
       # exact prefix below. All checks, packaging and artifact upload run first.
       # Manual workflow_dispatch publishing is retained as the fallback.
       # Future ordinary main pushes cannot trigger the release gate.
@@ -87,7 +88,7 @@ jobs:
         if: >-
           ${{ (github.event_name == 'workflow_dispatch' && inputs.publish_release) ||
               (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
-               startsWith(github.event.head_commit.message, 'release: publish verified v1.5.0')) }}
+               startsWith(github.event.head_commit.message, 'release: publish verified v1.5.1')) }}
         shell: bash
         run: |
           set -euo pipefail
@@ -95,7 +96,7 @@ jobs:
           VERSION=$(node -p "require('./app/appinfo.json').version")
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'ERROR: Invalid app version'; exit 1; }
           if [ "${{ github.event_name }}" = "push" ]; then
-            test "$VERSION" = "1.5.0" || { echo 'ERROR: One-shot publish only permits v1.5.0'; exit 1; }
+            test "$VERSION" = "1.5.1" || { echo 'ERROR: One-shot publish only permits v1.5.1'; exit 1; }
           fi
           TAG="v$VERSION"
           echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
@@ -116,7 +117,7 @@ jobs:
           ${{ startsWith(github.ref, 'refs/tags/v') ||
               (github.event_name == 'workflow_dispatch' && inputs.publish_release) ||
               (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
-               startsWith(github.event.head_commit.message, 'release: publish verified v1.5.0')) }}
+               startsWith(github.event.head_commit.message, 'release: publish verified v1.5.1')) }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG || github.ref_name }}

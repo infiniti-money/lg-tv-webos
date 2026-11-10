@@ -20,7 +20,7 @@ matches.forEach(function (entry) {
 ['customizePanel','customizeAppList','customizeThemes','customizeFonts',
  'customizeWeatherTab','customizeCalendarTab','customizeWeatherPresets','customizeWeatherSearch',
  'customizeWeatherSearchBtn','customizeWeatherResults','customizeWeatherEnable',
- 'customizeWeatherUnit','customizeMotion','customizeSolar','customizeLunar',
+ 'customizeWeatherUnit','customizeAITab','customizeAIView','customizeAIToggle','customizeAIState','customizeMotion','customizeSolar','customizeLunar',
  'customizeWallpaper','forecastArea','weekWeather','date','lunarDate','btnCustomize','aiPanel'].forEach(function (id) {
   assert.ok(ids[id], 'missing widget: ' + id);
 });

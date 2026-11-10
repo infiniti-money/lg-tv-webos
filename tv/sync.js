@@ -53,8 +53,8 @@ function sleep(sec) { try { execFileSync('sleep', [String(sec)]); } catch (e) { 
 
 // For a minute or two after boot, webOS answers with an empty app list (seen on webOS 4.4), so ask
 // again until it has one. Without this, every boot overwrote apps.js with nothing.
-function fromLuna() {
-  var tries = parseInt(process.env.SYNC_TRIES || '', 10) || 12;
+function fromLuna(diskAvailable) {
+  var tries = parseInt(process.env.SYNC_TRIES || '', 10) || (diskAvailable ? 3 : 12);
   for (var i = 0; i < tries; i++) {
     var res = null;
     try {
@@ -96,15 +96,56 @@ function fromDisk() {
   return out;
 }
 
-/** webOS first; on firmware where that stays empty, the app folders on disk. */
+/**
+ * Some LG firmware returns only a subset of installed packages from listLaunchPoints.
+ * Merge Luna and on-disk appinfo.json on EVERY sync, not only when Luna is empty.
+ * Luna title/visibility wins; local icon files win over unresolved Luna icon URLs.
+ * No app is installed or uninstalled by this read-only discovery.
+ */
+function mergePoints(lunaPoints, diskPoints) {
+  var map = {}, order = [];
+  function valid(p) { return p && typeof p.id === 'string' && p.id.length > 0 && p.id.length < 240; }
+  (diskPoints || []).forEach(function (p) {
+    if (!valid(p) || map[p.id]) return;
+    map[p.id] = p;
+    order.push(p.id);
+  });
+  (lunaPoints || []).forEach(function (p) {
+    if (!valid(p)) return;
+    var disk = map[p.id];
+    if (!disk) { map[p.id] = p; order.push(p.id); return; }
+    // Prefer a real local icon, because Luna usually returns an icon:// or
+    // https:// URI that cannot be copied by fs.readFileSync.
+    var chosen = {};
+    Object.keys(disk).forEach(function (key) { chosen[key] = disk[key]; });
+    Object.keys(p).forEach(function (key) { if (p[key] !== undefined && p[key] !== null) chosen[key] = p[key]; });
+    if (!isFile(chosen.largeIcon) && isFile(disk.largeIcon)) chosen.largeIcon = disk.largeIcon;
+    if (!isFile(chosen.icon) && isFile(disk.icon)) chosen.icon = disk.icon;
+    map[p.id] = chosen;
+  });
+  return order.map(function (id) { return map[id]; });
+}
+function findLauncherDir() {
+  var preferred = [
+    '/media/developer/apps/usr/palm/applications/' + APP_ID,
+    '/media/cryptofs/apps/usr/palm/applications/' + APP_ID,
+    '/usr/palm/applications/' + APP_ID
+  ];
+  for (var i = 0; i < preferred.length; i++) {
+    try { if (fs.statSync(preferred[i]).isDirectory()) return preferred[i]; } catch (e) {}
+  }
+  return preferred[0];
+}
 function listPoints() {
-  var points = fromLuna();
-  if (points.length) return { points: points, source: 'webOS' };
-  console.error('Falling back to reading the app folders on disk.');
-  return { points: fromDisk(), source: 'disk' };
+  var diskPoints = fromDisk(), lunaPoints = fromLuna(diskPoints.length > 0);
+  var merged = mergePoints(lunaPoints, diskPoints);
+  console.error('App discovery: Luna ' + lunaPoints.length + ', local packages ' +
+    diskPoints.length + ', combined ' + merged.length + '.');
+  return { points: merged, source: 'Luna+disk' };
 }
 
 function main() {
+  APP_DIR = findLauncherDir();
   var found = listPoints(), points = found.points;
 
   if (process.argv.indexOf('--list') !== -1) {
@@ -132,7 +173,7 @@ function main() {
   if (!fs.existsSync(iconDir)) fs.mkdirSync(iconDir);
   var apps = [];
   points.forEach(function (p) {
-    if (p.hidden) return;
+    if (!p || !p.id || p.hidden) return;
     var name = safeName(p.id);
     var custom = path.join(DATA, 'icons', name);
     var src = isFile(custom) ? custom : (isFile(p.largeIcon) ? p.largeIcon : p.icon);
@@ -140,7 +181,7 @@ function main() {
     if (!isFile(src)) src = path.join(APP_DIR, 'icon.png');
     if (!isFile(src)) return;
     try { copyFile(src, path.join(iconDir, name)); } catch (e) { return; }
-    apps.push({ id: p.id, title: p.title, icon: 'icons/' + name, iconColor: p.iconColor || p.bgColor || '' });
+    apps.push({ id: p.id, title: String(p.title || p.id), icon: 'icons/' + name, iconColor: p.iconColor || p.bgColor || '' });
   });
   // An empty list would leave an empty launcher on screen, so keep whatever is already there.
   if (!apps.length) {
@@ -171,4 +212,5 @@ function main() {
   console.log('Synced ' + apps.length + ' apps (from ' + found.source + ') and ' + inputs.length + ' inputs.');
 }
 
-main();
+if (require.main === module) main();
+module.exports = {mergePoints:mergePoints, listPoints:listPoints, findLauncherDir:findLauncherDir};

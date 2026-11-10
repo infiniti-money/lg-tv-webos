@@ -510,8 +510,11 @@ body.solar-hidden #date, body.lunar-hidden #lunarDate { display:none; }
   margin:0 0 8px 5px; }
 #weekWeather { display:flex; height:159px; width:100%; }
 .weekDay { flex:1; min-width:0; margin-right:18px; border-radius:19px;
-  border:1px solid rgba(255,255,255,.23); background:rgba(20,24,34,.86);
-  padding:11px 19px; text-align:left; color:#fff; }
+  border:1px solid rgba(255,255,255,.3); background:rgba(12,22,33,.13);
+  padding:11px 19px; text-align:left; color:#fff;
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  text-shadow:0 1px 4px rgba(0,0,0,.95);
+  box-shadow:inset 0 1px rgba(255,255,255,.12); }
 .weekDay .weekLabel { font-size:26px; font-weight:600; color:#f5f7ff; }
 .weekDay .weekDate { font-size:19px; color:#aab9d1; margin-top:0; }
 .weekDay .weekCondition { font-size:23px; margin-top:7px;
@@ -534,6 +537,7 @@ body.solar-hidden #date, body.lunar-hidden #lunarDate { display:none; }
 #customizePanel.hidden,
 #customizeStyleView.hidden,
 #customizeWeatherView.hidden,
+#customizeAIView.hidden,
 #customizeCalendarView.hidden,
 #customizeAppsView.hidden { display:none; }
 .customizeDialog { margin:0 auto; width:100%; max-width:1640px; height:100%; overflow:hidden;
@@ -610,3 +614,15 @@ body.motion-reduced .item:not(.moving) .card { animation:none!important; }
   transform:scale(.711); } }
 @media screen and (max-width:1280px) { body { -webkit-transform:scale(.6666);
   transform:scale(.6666); } }
+
+/* On-TV AI preference only affects the launcher, never system apps. */
+body.ai-disabled #btnAI {display:none!important;}
+#customizeAIState {margin-top:16px!important; color:#c5e6fa!important;}
+.customizeTabs button {padding-left:17px; padding-right:17px; font-size:20px;}
+
+/* Transparent weather glass: retain text contrast without a dark opaque tile.
+ * Chromium 38 ignores backdrop-filter and keeps the translucent fallback. */
+#forecastArea .forecastHeading { color:#fff; text-shadow:0 1px 5px rgba(0,0,0,.95); }
+#forecastArea .weekDate { color:#f2f5ff; }
+#forecastArea .weekRain { color:#d4ecff; }
+body.motion-reduced .weekDay { -webkit-backdrop-filter:none; backdrop-filter:none; }

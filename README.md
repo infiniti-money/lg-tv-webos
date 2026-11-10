@@ -398,3 +398,9 @@ Infiniti Money maintains this derivative. Original authors and licenses remain c
 ## On-TV appearance, weather region and calendar (v1.5.0)
 
 Open **Customize** (or remote red key 403) for four separate pages: **Appearance**, **Weather**, **Solar / Lunar calendar**, and **Apps**. Pick themes/fonts, reduce costly transitions, select a quick weather location or search for any region using Open-Meteo geocoding. The home screen shows exactly **three forecast days** (today, tomorrow, day after), including high/low temperature and rain probability. The full Gregorian date includes the year; Vietnamese lunar calendar shows lunar date, year Can Chi, and leap month when applicable. On-TV preferences use localStorage. Rooted TV's existing data paths are kept for migration safety. Physical TV visual acceptance and Home-key rollback verification are still required before release.
+
+## Infiniti TV Home v1.5.1 fixes
+
+The main application dock is **one horizontal row** with D-pad scrolling. The three-day forecast uses **translucent** cards. The dedicated AI settings tab has an on/off toggle, persisted locally; disabling AI hides its Home button, aborts pending requests and clears access tokens. On rooted TVs the sidecar app synchronizer merges both webOS launchpoints and on-disk appinfo.json packages and periodically refreshes them. LG Input Hook Home key 773 uses its **Execute** action (supported by older versions) to call the reversible launcher script. At cold boot the root service starts Infiniti Home, with LG Home **retained as a safe fallback**.
+
+Updating only the IPK does not update root-side helper scripts. After publishing v1.5.1, run `curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh | sh` **as root on the TV** and reboot. To restore LG Home: `sh /home/root/lg-tv-vibehack/home-control.sh disable` then reboot. Keep system LG Home installed; visual/hardware acceptance is required on your TV model.

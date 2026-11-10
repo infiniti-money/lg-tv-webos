@@ -160,5 +160,8 @@ if (require.main === module) {
   watchApps();
   setTimeout(pollForeground, 5000);
   setInterval(pollForeground, 12000);
+  // Some LG firmware never emits app-add/remove events; a bounded periodic
+  // discovery also finds packages that Input Hook itself does not list.
+  setInterval(function () { if (!shuttingDown) runSync(); }, 10 * 60 * 1000);
 }
 module.exports = {shouldRedirect: shouldRedirect};

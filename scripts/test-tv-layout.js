@@ -40,4 +40,10 @@ assert.ok(/lastArrowAt/.test(app),'Remote key repeat throttle missing');
 assert.ok(/getFullYear\(\)/.test(app),'Solar date must contain the year');
 assert.ok(/function resetDialogOk\(\)/.test(app),'Settings close must reset held OK state');
 assert.ok(/INFINITI_AI_CLOSED/.test(assistant),'AI close must restore launcher focus');
-console.log('Legacy LG TV 1080p/720p settings and forecast layout guards passed.');
+assert.ok(/function rowOf\(i\) \{ return 0; \}/.test(app),
+  'All Home apps must remain on exactly one horizontal row');
+assert.ok(/translateX\(/.test(app),'Single app row must scroll horizontally');
+assert.ok(/background:rgba\(12,22,33,\.13\)/.test(css),
+  'Weather cards must remain translucent, not opaque');
+assert.ok(/body\.ai-disabled #btnAI/.test(css),'AI must disappear from Home when disabled');
+console.log('Legacy LG TV layout, single app row, transparent weather and AI visibility passed.');

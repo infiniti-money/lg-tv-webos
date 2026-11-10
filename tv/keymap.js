@@ -45,19 +45,27 @@ function main() {
   if (action === 'enable') {
     if (saved) {
       if (own(current, app, cmd)) {
-        console.log('Home mapping already active and safely backed up');
-        return;
+        if (current.action === 'exec') {
+          console.log('Home mapping already active and safely backed up');
+          return;
+        }
+        // Upgrade the old Launch App mapping to Execute, without replacing
+        // the original user's backup or touching unrelated keybinds.
+        console.log('Upgrading old Home Launch App mapping to compatible Execute');
+      } else {
+        if (!originalUnchanged(conf, key, saved))
+          fail('Home mapping changed externally; refusing to overwrite it');
+        console.log('Recovering interrupted Home mapping activation');
       }
-      if (!originalUnchanged(conf, key, saved))
-        fail('Home mapping changed externally; refusing to overwrite it');
-      console.log('Recovering interrupted Home mapping activation');
     } else {
       if (own(current, app, cmd)) fail('Our mapping already exists but no original backup; manual recovery required');
       write(backup, {present: has, binding: has ? current : null});
     }
-    conf[key] = {action: 'launch', id: app};
+    // Input Hook 1.4 supports Execute on rooted LG TVs; Launch App is not
+    // available on every version. Keep the old 'launch' mapping recognizable.
+    conf[key] = {action: 'exec', command: cmd};
     write(cfg, conf);
-    console.log('Home mapping installed (previous binding backed up)');
+    console.log('Home key executes the safe Infiniti TV Home launcher (previous binding backed up)');
   } else {
     if (!saved) {
       if (own(current, app, cmd)) fail('Our Home mapping exists without backup; refusing unsafe restore');

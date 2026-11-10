@@ -9,6 +9,33 @@ if [ -f "$DIR/home-enabled" ] && [ -f "$DIR/homewatch.js" ]; then
     nohup setsid /usr/bin/node "$DIR/homewatch.js" --boot >> "$LOG" 2>&1 < /dev/null &
   fi
 fi
+# Start Infiniti as the preferred home at cold boot, after webOS app manager is ready.
+# Do not remove LG Home: the original launcher remains the rollback fallback.
+# Do not launch after disable, or when the package is missing.
+if [ -f "$DIR/home-enabled" ]; then
+  nohup setsid sh -c '
+    sleep 12
+    DATA=/home/root/lg-tv-vibehack
+    APP=com.infinitimoney.tvhome
+    [ -f "$DATA/home-enabled" ] || exit 0
+    if [ ! -d "/media/developer/apps/usr/palm/applications/$APP" ] &&
+       [ ! -d "/media/cryptofs/apps/usr/palm/applications/$APP" ]; then
+      echo "Infiniti launcher missing; keeping LG Home"
+      exit 0
+    fi
+    count=0
+    while [ "$count" -lt 5 ]; do
+      [ -f "$DATA/home-enabled" ] || exit 0
+      if /usr/bin/luna-send -n 1 luna://com.webos.applicationManager/launch '"'"'{"id":"com.infinitimoney.tvhome"}'"'"' >/dev/null 2>&1; then
+        echo "Infiniti TV Home started at boot"
+        exit 0
+      fi
+      count=$((count + 1))
+      sleep 3
+    done
+    echo "Launcher startup failed; leaving LG Home available"
+  ' >> "$LOG" 2>&1 < /dev/null &
+fi
 # Never block wallpaper startup when launch point sync fails. Avoid duplicate services.
 nohup setsid sh -c '
   sleep 30

@@ -8,9 +8,13 @@
   var opened = false, busy = false, recognition = null, activeRequest = null;
   var languageVi = (window.CONFIG || {}).language !== 'en';
 
+  function enabled() {
+    return !window.INFINITI_PREFS || window.INFINITI_PREFS.getAIEnabled();
+  }
   function msg(v) { status.textContent = v; }
   function isOpen() { return opened; }
   function show() {
+    if (!enabled()) return false;
     panel.classList.remove('hidden');
     opened = true;
     msg(languageVi ? 'Có thể nói qua bàn phím LG hoặc nhập câu hỏi.' :
@@ -24,9 +28,11 @@
     if (activeRequest) { var request = activeRequest; activeRequest = null; request.abort(); }
     busy = false;
     send.disabled = false;
+    access.value = ''; // never retain an AI access token across closing/disabling
     if (typeof window.INFINITI_AI_CLOSED === 'function') window.INFINITI_AI_CLOSED();
   }
   function submit() {
+    if (!enabled() || !opened) return;
     var q = (prompt.value || '').replace(/^\s+|\s+$/g, '');
     var endpoint = (window.CONFIG || {}).aiEndpoint || '';
     var token = access.value;
@@ -69,6 +75,7 @@
     x.send(JSON.stringify({question:q, language:'vi'}));
   }
   function listen() {
+    if (!enabled() || !opened) return;
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
       msg(languageVi ?
@@ -128,6 +135,10 @@
   send.addEventListener('click', submit);
   close.addEventListener('click', hide);
   voice.addEventListener('click', listen);
+  window.INFINITI_AI_SET_ENABLED = function (on) {
+    if (!on && opened) hide();
+    if (!on) { prompt.value = ''; access.value = ''; answer.textContent = ''; }
+  };
   window.INFINITI_AI_OPEN = show;
   window.INFINITI_AI_IS_OPEN = isOpen;
 })();

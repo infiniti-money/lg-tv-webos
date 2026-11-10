@@ -53,7 +53,7 @@ var document = {
   addEventListener:function (type,cb) { docEvents[type]=cb; }
 };
 var panel=node('customizePanel'); panel.className='hidden';
-['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab'].forEach(function (id) {
+['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizeAITab'].forEach(function (id) {
   panel.appendChild(node(id,'button'));
 });
 var groups = {
@@ -63,13 +63,14 @@ var groups = {
     'customizeWeatherSearch','customizeWeatherSearchBtn','customizeWeatherResults',
     'customizeWeatherEnable','customizeWeatherUnit'],
   customizeCalendarView:['customizeSolar','customizeLunar','customizeCalendarNote'],
-  customizeAppsView:['customizeAppList','customizeResetApps']
+  customizeAppsView:['customizeAppList','customizeResetApps'],
+  customizeAIView:['customizeAIToggle','customizeAIState']
 };
 Object.keys(groups).forEach(function (name) {
   var view=node(name); view.className='hidden'; panel.appendChild(view);
   groups[name].forEach(function (id) {
     view.appendChild(node(id,id==='customizeWeatherSearch'?'input':
-      /Btn$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps/.test(id)?'button':'div'));
+      /Btn$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeAIToggle/.test(id)?'button':'div'));
   });
 });
 panel.appendChild(node('customizeStatus'));
@@ -138,6 +139,13 @@ assert.equal(window.INFINITI_PREFS.getAppearance().showSolar,false);
 assert.equal(document.body.hasClass('solar-hidden'),true);
 node('customizeLunar').click();
 assert.equal(window.INFINITI_PREFS.getAppearance().showLunar,false);
+node('customizeAITab').click();
+assert.equal(node('customizeAIView').hasClass('hidden'),false);
+node('customizeAIToggle').click();
+assert.equal(window.INFINITI_PREFS.getAIEnabled(),false,'AI off persists');
+assert.equal(document.body.hasClass('ai-disabled'),true,'AI pill gets hidden');
+node('customizeAIToggle').click();
+assert.equal(window.INFINITI_PREFS.getAIEnabled(),true,'AI can be re-enabled');
 node('customizeStyleTab').click();
 node('customizeMotion').click();
 assert.equal(window.INFINITI_PREFS.getAppearance().reduceMotion,true);

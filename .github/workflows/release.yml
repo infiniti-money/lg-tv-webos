@@ -2,7 +2,9 @@
 name: Build Infiniti TV Home
 on:
   push:
-    branches: [main]
+    # Test feature branches even when pull_request events from app-authored
+    # changes are not automatically scheduled by GitHub.
+    branches: ['**']
     tags: ['v*']
   pull_request:
     branches: [main]

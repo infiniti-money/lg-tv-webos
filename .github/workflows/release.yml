@@ -46,6 +46,8 @@ jobs:
           node scripts/test-forecast.js
           node scripts/test-customize.js
           node scripts/test-app-structure.js
+          node scripts/test-settings-ui.js
+          node scripts/test-tv-layout.js
           for file in app/app.js app/extras.js app/config.js app/assistant.js app/customize.js app/lunar.js app/forecast.js app/qrcode.js tv/*.js; do node --check "$file"; done
           for file in install.sh tv/*.sh; do sh -n "$file"; done
           for file in home-watch-mac.sh install-noroot.sh; do bash -n "$file"; done

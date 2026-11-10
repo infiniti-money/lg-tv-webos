@@ -100,8 +100,8 @@
     var vn = new Date(Date.now() + 7 * 3600000);
     var date = convert(vn.getUTCDate(), vn.getUTCMonth() + 1, vn.getUTCFullYear());
     if (!date) { target.textContent = ''; return; }
-    target.textContent = 'Âm lịch: ' + date.day + '/' + date.month +
-      (date.leap ? ' (nhuận)' : '') + ' · ' + yearName(date.year);
+    target.textContent = 'Âm lịch: ' + date.day + '/' + date.month + '/' + date.year +
+      (date.leap ? ' (tháng nhuận)' : '') + ' · ' + yearName(date.year);
   }
   root.INFINITI_LUNAR = {convert: convert, yearName: yearName};
   if (typeof module !== 'undefined' && module.exports) module.exports = root.INFINITI_LUNAR;

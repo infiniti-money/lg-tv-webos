@@ -34,7 +34,7 @@
       date: function (d) {
         var m = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
           'October', 'November', 'December'];
-        return this.days[d.getDay()] + '  ' + d.getDate() + ' ' + m[d.getMonth()];
+        return this.days[d.getDay()] + ', ' + d.getDate() + ' ' + m[d.getMonth()] + ' ' + d.getFullYear();
       },
       inputs: 'Inputs', settings: 'Settings', wired: 'Ethernet', offline: 'Offline', liveTv: 'Live TV',
       noInputs: 'No inputs found', cantOpen: "Can't open ", ampm: ['am', 'pm'],
@@ -50,7 +50,7 @@
     vi: {
       greetings: [[5, 'Chúc ngủ ngon'], [11, 'Chào buổi sáng'], [13, 'Chào buổi trưa'], [18, 'Chào buổi chiều'], [22, 'Chào buổi tối'], [24, 'Chúc ngủ ngon']],
       days: ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'],
-      date: function (d) { return this.days[d.getDay()] + ', ' + d.getDate() + ' tháng ' + (d.getMonth() + 1); },
+      date: function (d) { return this.days[d.getDay()] + ', ' + d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear(); },
       inputs: 'Nguồn vào', settings: 'Cài đặt', wired: 'Wi-Fi', offline: 'Mất mạng', liveTv: 'Truyền hình',
       noInputs: 'Không tìm thấy nguồn vào', cantOpen: 'Không mở được ', ampm: ['SA', 'CH'],
       moveHint: 'Mũi tên hoặc con trỏ để di chuyển  ·  OK để đặt  ·  Back để huỷ',
@@ -85,6 +85,7 @@
   var arranging = false;        // "Rearrange apps" mode from the pencil: every tile wiggles
   var focused = 0, pillFocus = 0, inputFocus = 0, inputRows = [];
   var offset = 0, heroShown = false, glassShown = false;
+  var cachedHeaderBottom = null, lastArrowAt = 0;
   var editing = null;           // {item, snapshot} while a tile is being moved
   var pressTimer = null, pressedLong = false;   // long press with the pointer
 
@@ -398,8 +399,12 @@
     }
     stage.style.transform = 'translateY(' + (-offset) + 'px)';
     // Keep the header until the content (the dock band is topmost) would run into it.
-    var header = document.querySelector('header');
-    var headerBottom = header.offsetTop + header.offsetHeight;   // layout box: ignores the hide slide
+    // Avoid synchronous geometry reads for each remote key repeat; remeasure only after settings change.
+    if (cachedHeaderBottom === null) {
+      var header = document.querySelector('header');
+      cachedHeaderBottom = header.offsetTop + header.offsetHeight;
+    }
+    var headerBottom = cachedHeaderBottom;
     document.body.classList.toggle('scrolled', DOCK_TOP - 28 - offset < headerBottom + 24);
 
     var w = TILE_W * FOCUS_SCALE + 2 * GLASS_PAD, h = TILE_H * FOCUS_SCALE + 2 * GLASS_PAD;
@@ -768,6 +773,9 @@
 
   // On tiles OK acts on release, so a held OK can start rearranging instead of opening the app.
   document.addEventListener('keyup', function (e) {
+    // Leave remote and LG keyboard events to the active settings/AI dialog.
+    if (window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()) return;
+    if (window.INFINITI_AI_IS_OPEN && window.INFINITI_AI_IS_OPEN()) return;
     if (e.keyCode !== KEY.OK) return;
     okDown = false;
     if (!okTimer) return;
@@ -778,7 +786,15 @@
   });
 
   document.addEventListener('keydown', function (e) {
+    // Leave remote and LG keyboard events to the active settings/AI dialog.
+    if (window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()) return;
+    if (window.INFINITI_AI_IS_OPEN && window.INFINITI_AI_IS_OPEN()) return;
     var k = e.keyCode;
+    if (k >= KEY.LEFT && k <= KEY.DOWN) {
+      var now = Date.now();
+      if (now - lastArrowAt < 48) { e.preventDefault(); return; }
+      lastArrowAt = now;
+    }
     if (k === KEY.OK && okDown) { e.preventDefault(); return; }   // key repeat while held
     if (k === KEY.OK) okDown = true;
     if (editing) {
@@ -919,14 +935,30 @@
     if (items.length) focusTile(focused);
     else focusPill(pills.length - 1);
   };
-  window.INFINITI_CUSTOMIZE_CLOSED = function () { focusPill(pills.length - 1); };
+  window.INFINITI_LAUNCHER_LAYOUT_REFRESH = function () {
+    cachedHeaderBottom = null;
+  };
+  function resetDialogOk() {
+    // The dialog captures the OK keyup, so do not leave the launcher stuck in key-repeat mode.
+    okDown = false;
+    if (okTimer) { clearTimeout(okTimer); okTimer = null; }
+  }
+  window.INFINITI_CUSTOMIZE_CLOSED = function () {
+    resetDialogOk(); focusPill(pills.length - 1);
+  };
+  window.INFINITI_AI_CLOSED = function () {
+    resetDialogOk(); focusPill(4);
+  };
   window.INFINITI_WALLPAPER_OPEN = showWall;
   build();
   updateClock();
   setInterval(updateClock, 10000);
   // Some firmware never fires webOSRelaunch or visibilitychange for this app, so returning to the
   // launcher is not a reliable moment to look for new apps. Checking apps.js on a timer is.
-  setInterval(function () { refreshApps(function () { }); }, 20000);
+  setInterval(function () {
+    if (!document.hidden && !(window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()))
+      refreshApps(function () { });
+  }, 30000);
   document.documentElement.lang = CONFIG.language === 'vi' ? 'vi' : 'en';
   pills[0].querySelector('span').textContent = L.inputs;
   pills[3].querySelector('span').textContent = L.settings;

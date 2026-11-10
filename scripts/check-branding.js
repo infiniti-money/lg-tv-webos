@@ -10,7 +10,7 @@ var meta = JSON.parse(read('app/appinfo.json'));
 assert.strictEqual(meta.id, 'com.infinitimoney.tvhome');
 assert.strictEqual(meta.title, 'Infiniti TV Home');
 assert.strictEqual(meta.vendor, 'Infiniti Money');
-assert.ok(/^1\.4\.\d+$/.test(meta.version), 'Expected v1.4.x release');
+assert.ok(/^1\.5\.\d+$/.test(meta.version), 'Expected v1.5.x release');
 var en = read('README.md'), vi = read('README.vi.md'), notes = read('RELEASE.vi.md');
 var watcher = read('home-watch.py');
 var mac = read('home-watch-mac.sh');

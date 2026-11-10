@@ -24,6 +24,7 @@
     if (activeRequest) { var request = activeRequest; activeRequest = null; request.abort(); }
     busy = false;
     send.disabled = false;
+    if (typeof window.INFINITI_AI_CLOSED === 'function') window.INFINITI_AI_CLOSED();
   }
   function submit() {
     var q = (prompt.value || '').replace(/^\s+|\s+$/g, '');

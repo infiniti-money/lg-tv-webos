@@ -11,13 +11,18 @@ for (var i=1; i<=8; i++) {
   data.precipitation_probability_max.push(10*i);
 }
 var cards=p.prepare(data,true);
-assert.equal(cards.length,7);
-assert.equal(cards[0].label,'CN 1/11');
+assert.equal(cards.length,3);
+assert.equal(cards[0].label,'Hôm nay');
+assert.equal(cards[0].dateLabel,'CN 1/11');
+assert.equal(cards[1].label,'Ngày mai');
+assert.equal(cards[2].label,'Ngày kia');
 assert.equal(cards[0].high,30);
 assert.equal(cards[1].condition,'Mưa');
-assert.equal(cards[6].rain,70);
+assert.equal(cards[2].rain,30);
 assert.equal(p.prepare(null,true).length,0);
 data.temperature_2m_max[0]=null;
-assert.equal(p.prepare(data,true).length,6);
+assert.equal(p.prepare(data,true).length,2);
+assert.equal(p.prepare(data,false)[0].label,'Tomorrow');
+assert.equal(p.prepare({time:['2026-02-30'],temperature_2m_max:[32],temperature_2m_min:[20]},true).length,0);
 assert.equal(p.condition(95,true),'Dông');
-console.log('Seven-day weather forecast tests passed.');
+console.log('Three-day weather forecast tests passed.');

@@ -1,12 +1,9 @@
-/*
- * Infiniti TV Home additions: wallpaper, ambient glow toggle and weather.
- * ES5 for webOS 3.x Chromium 38 compatibility.
+/* Infiniti TV Home: lightweight wallpaper and changeable 3-day weather.
+ * ES5 for Chromium 38; weather selection is saved locally by customize.js.
  */
 (function () {
   'use strict';
   var C = window.CONFIG || {};
-
-  // ---- Wallpaper ----
   if (C.wallpaper) {
     var dim = typeof C.wallpaperDim === 'number' ? Math.max(0, Math.min(0.8, C.wallpaperDim)) : 0.35;
     var bg = 'linear-gradient(rgba(0,0,0,' + dim + '), rgba(0,0,0,' + dim + ')), url("' + C.wallpaper +
@@ -14,102 +11,125 @@
     document.documentElement.style.background = bg;
     document.body.style.background = bg;
   }
-  if (C.ambientGlow === false) document.body.className += ' no-glow';
+  if (C.ambientGlow === false) document.body.classList.add('no-glow');
 
-  // ---- Weather (Open-Meteo, no API key) ----
-  var W = C.weather || {};
   var el = document.getElementById('weather');
+  var area = document.getElementById('forecastArea');
   var week = document.getElementById('weekWeather');
-  if (!el || !W.enabled || !W.latitude || !W.longitude) {
-    if (week) week.classList.add('hidden');
-    return;
-  }
-
-  var vi = C.language === 'vi';
+  var active = null, sequence = 0, lastRegion = '';
+  var vi = C.language !== 'en';
   var NAMES = vi ? {
-    0: 'Trời quang', 1: 'Ít mây', 2: 'Có mây', 3: 'Nhiều mây', 45: 'Sương mù', 48: 'Sương mù',
-    51: 'Mưa phùn nhẹ', 53: 'Mưa phùn', 55: 'Mưa phùn dày', 61: 'Mưa nhẹ', 63: 'Mưa vừa', 65: 'Mưa to',
-    71: 'Tuyết nhẹ', 73: 'Tuyết', 75: 'Tuyết dày', 80: 'Mưa rào nhẹ', 81: 'Mưa rào', 82: 'Mưa rào lớn',
-    95: 'Dông', 96: 'Dông, mưa đá', 99: 'Dông, mưa đá'
+    0:'Trời quang',1:'Ít mây',2:'Có mây',3:'Nhiều mây',45:'Sương mù',48:'Sương mù',
+    51:'Mưa phùn',53:'Mưa phùn',55:'Mưa phùn dày',61:'Mưa nhẹ',63:'Mưa vừa',65:'Mưa to',
+    71:'Tuyết nhẹ',73:'Tuyết',75:'Tuyết dày',80:'Mưa rào',81:'Mưa rào',82:'Mưa rào lớn',
+    95:'Dông',96:'Dông, mưa đá',99:'Dông, mưa đá'
   } : {
-    0: 'Clear', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Cloudy', 45: 'Fog', 48: 'Fog',
-    51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle', 61: 'Light rain', 63: 'Rain', 65: 'Heavy rain',
-    71: 'Light snow', 73: 'Snow', 75: 'Heavy snow', 80: 'Light showers', 81: 'Showers', 82: 'Heavy showers',
-    95: 'Thunderstorm', 96: 'Thunderstorm, hail', 99: 'Thunderstorm, hail'
+    0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Cloudy',45:'Fog',48:'Fog',
+    51:'Drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',
+    71:'Light snow',73:'Snow',75:'Heavy snow',80:'Showers',81:'Showers',82:'Heavy showers',
+    95:'Storm',96:'Storm, hail',99:'Storm, hail'
   };
-  var fahrenheit = W.unit === 'fahrenheit';
-
-
-  function cell(parent, className, value) {
-    var box = document.createElement('div');
-    box.className = className;
-    box.textContent = value;
-    parent.appendChild(box);
+  function weather() {
+    var p = window.INFINITI_PREFS;
+    return p && p.getWeather ? p.getWeather() : C.weather || {};
   }
-  function renderWeek(daily) {
-    if (!week) return;
-    var list = window.INFINITI_FORECAST ?
-      window.INFINITI_FORECAST.prepare(daily, vi) : [];
+  function cell(parent, name, value) {
+    var node = document.createElement('div');
+    node.className = name;
+    node.textContent = value;
+    parent.appendChild(node);
+  }
+  function conditionIcon(text) {
+    if (/Nắng|Clear/.test(text)) return '☀';
+    if (/Mưa|Rain|Showers|Drizzle/.test(text)) return '☂';
+    if (/Dông|Storm/.test(text)) return '⚡';
+    return '☁';
+  }
+  function renderDays(daily) {
+    if (!area || !week) return;
+    var list = window.INFINITI_FORECAST ? window.INFINITI_FORECAST.prepare(daily, vi) : [];
     week.innerHTML = '';
     if (!list.length) {
-      cell(week, 'weekEmpty', vi ? 'Chưa có dữ liệu dự báo 7 ngày.' : 'No weekly forecast available.');
+      cell(week,'weekEmpty',vi ? 'Chưa có dữ liệu dự báo 3 ngày.' : 'Three-day forecast unavailable.');
     } else {
       for (var i=0; i<list.length; i++) {
-        var d = list[i], box = document.createElement('div');
-        box.className = 'weekDay';
-        cell(box, 'weekLabel', d.label);
-        cell(box, 'weekCondition', d.condition);
-        cell(box, 'weekTemperature', d.high + '° / ' + d.low + '°');
-        cell(box, 'weekRain', d.rain === null ? '—' : 'Mưa ' + d.rain + '%');
+        var d=list[i], box=document.createElement('div');
+        box.className='weekDay';
+        cell(box,'weekLabel',d.label);
+        cell(box,'weekDate',d.dateLabel);
+        cell(box,'weekCondition',conditionIcon(d.condition)+'  '+d.condition);
+        cell(box,'weekTemperature',d.high+'° / '+d.low+'°');
+        cell(box,'weekRain',d.rain === null ? '—' :
+          (vi ? 'Khả năng mưa ' : 'Rain ') + d.rain + '%');
         week.appendChild(box);
       }
     }
-    week.classList.remove('hidden');
+    area.classList.remove('hidden');
   }
   function load() {
-    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' +
-      encodeURIComponent(W.latitude) + '&longitude=' + encodeURIComponent(W.longitude) +
-      '&current=temperature_2m,weather_code' +
-      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
-      '&timezone=auto&forecast_days=7' +
-      (fahrenheit ? '&temperature_unit=fahrenheit' : '');
-    var x = new XMLHttpRequest();
-    x.open('GET', url, true);
-    x.timeout = 13000;
-    x.onload = function () {
-      if (x.status < 200 || x.status >= 300) {
-        if (week && !week.children.length) renderWeek(null);
-        return;
-      }
+    if (!el || !area || !week) return;
+    var w = weather(), valid = typeof w.latitude === 'number' && isFinite(w.latitude) &&
+      typeof w.longitude === 'number' && isFinite(w.longitude) &&
+      w.latitude >= -90 && w.latitude <= 90 && w.longitude >= -180 && w.longitude <= 180;
+    sequence++;
+    var serial=sequence;
+    if (active) { active.abort(); active=null; }
+    var region = w.enabled && valid ?
+      [w.latitude,w.longitude,w.unit].join(',') : '';
+    if (region !== lastRegion) {
+      // Never show the previous city's cards beneath a newly selected city.
+      week.innerHTML = '';
+      area.classList.add('hidden');
+      lastRegion = region;
+    }
+    if (!w.enabled || !valid) {
+      el.textContent='';
+      el.className='';
+      area.classList.add('hidden');
+      week.innerHTML='';
+      return;
+    }
+    var fahrenheit=w.unit === 'fahrenheit';
+    el.textContent=(w.place ? w.place+' · ' : '')+(vi ? 'Đang cập nhật thời tiết…' : 'Updating weather…');
+    el.className='shown';
+    var url='https://api.open-meteo.com/v1/forecast?latitude='+
+      encodeURIComponent(w.latitude)+'&longitude='+encodeURIComponent(w.longitude)+
+      '&current=temperature_2m,weather_code'+
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max'+
+      '&timezone=auto&forecast_days=3'+(fahrenheit ? '&temperature_unit=fahrenheit' : '');
+    var xhr=new XMLHttpRequest();
+    active=xhr;
+    xhr.open('GET',url,true);
+    xhr.timeout=15000;
+    xhr.onload=function () {
+      if (serial!==sequence) return;
+      active=null;
+      if (xhr.status<200 || xhr.status>=300) { failure(w); return; }
       try {
-        var data = JSON.parse(x.responseText), current = data.current || {}, daily = data.daily || {};
-        if (typeof current.temperature_2m === 'number') {
-          var unit = fahrenheit ? '°F' : '°C';
-          var str = Math.round(current.temperature_2m) + unit;
-          if (NAMES[current.weather_code]) str += ' · ' + NAMES[current.weather_code];
-          if (W.place) str += ' · ' + W.place;
-          if (daily.temperature_2m_max && daily.temperature_2m_max.length &&
-              daily.temperature_2m_min && daily.temperature_2m_min.length) {
-            str += '   ↑' + Math.round(daily.temperature_2m_max[0]) +
-              '° ↓' + Math.round(daily.temperature_2m_min[0]) + '°';
-          }
-          var rain = daily.precipitation_probability_max &&
-            daily.precipitation_probability_max.length ? daily.precipitation_probability_max[0] : null;
-          if (typeof rain === 'number') str += '  ☂ ' + rain + '%';
-          el.textContent = str;
-          el.className = 'shown';
+        var data=JSON.parse(xhr.responseText), current=data.current || {}, daily=data.daily || {};
+        var line=w.place || (vi ? 'Thời tiết khu vực' : 'Local weather');
+        if (typeof current.temperature_2m === 'number' && isFinite(current.temperature_2m)) {
+          line+=' · '+Math.round(current.temperature_2m)+(fahrenheit?'°F':'°C');
+          if (NAMES[current.weather_code]) line+=' · '+NAMES[current.weather_code];
         }
-        renderWeek(daily);
-      } catch (e) {
-        if (week && !week.children.length) renderWeek(null);
-      }
+        el.textContent=line;
+        renderDays(daily);
+      } catch (e) { failure(w); }
     };
-    x.onerror = function () {
-      if (week && !week.children.length) renderWeek(null);
+    xhr.onerror=xhr.ontimeout=function () {
+      if (serial!==sequence) return;
+      active=null;
+      failure(w);
     };
-    x.ontimeout = x.onerror;
-    x.send();
+    xhr.send();
   }
+  function failure(w) {
+    el.textContent=(w.place ? w.place+' · ' : '')+
+      (vi ? 'Không thể tải thời tiết. Vui lòng kiểm tra mạng.' : 'Weather unavailable. Check network.');
+    if (!week.children.length) renderDays(null);
+  }
+  // Available after startup, even when weather is initially disabled.
+  window.INFINITI_WEATHER_RELOAD=load;
   load();
-  setInterval(load, 30 * 60 * 1000);
+  setInterval(function () { if (!document.hidden) load(); }, 30*60*1000);
 })();

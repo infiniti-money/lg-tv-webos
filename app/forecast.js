@@ -3,6 +3,8 @@
   'use strict';
   var VI_DAYS = ['CN','T2','T3','T4','T5','T6','T7'];
   var EN_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var VI_LABELS = ['Hôm nay','Ngày mai','Ngày kia'];
+  var EN_LABELS = ['Today','Tomorrow','Day after'];
   function condition(code, vi) {
     var c = Number(code);
     if (c === 0) return vi ? 'Nắng' : 'Clear';
@@ -19,7 +21,7 @@
   function prepare(daily, vi) {
     if (!daily || !daily.time || !daily.temperature_2m_max ||
         !daily.temperature_2m_min) return [];
-    var result = [], len = Math.min(7, daily.time.length,
+    var result = [], len = Math.min(3, daily.time.length,
       daily.temperature_2m_max.length, daily.temperature_2m_min.length);
     for (var i = 0; i < len; i++) {
       var iso = String(daily.time[i] || '');
@@ -34,7 +36,8 @@
       var wmo = (daily.weather_code || [])[i];
       var rain = (daily.precipitation_probability_max || [])[i];
       result.push({
-        label:(vi ? VI_DAYS : EN_DAYS)[date.getDay()] + ' ' + (+match[3]) + '/' + (+match[2]),
+        label:(vi ? VI_LABELS : EN_LABELS)[i],
+        dateLabel:(vi ? VI_DAYS : EN_DAYS)[date.getDay()] + ' ' + (+match[3]) + '/' + (+match[2]),
         condition:condition(wmo, vi),
         high:Math.round(hi),
         low:Math.round(lo),

@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-rem Infiniti TV Home 1.4.x for webOS 3.4.0. Produces stable IPK + SHA-256.
+rem Infiniti TV Home 1.5.x for webOS 3.4.0. Produces stable IPK + SHA-256.
 rem Use Windows CMD (avoids npm.ps1 execution-policy errors).
 cd /d "%~dp0\.."
 if not exist "app\appinfo.json" (
@@ -23,7 +23,7 @@ node.exe scripts\check-branding.js
 if errorlevel 1 exit /b 1
 if errorlevel 1 exit /b 1
 echo [2/4] Running offline tests...
-for %%F in (scripts\test-homewatch.js scripts\test-keymap.js scripts\test-lunar.js scripts\test-forecast.js scripts\test-customize.js scripts\test-app-structure.js) do (
+for %%F in (scripts\test-homewatch.js scripts\test-keymap.js scripts\test-lunar.js scripts\test-forecast.js scripts\test-customize.js scripts\test-app-structure.js scripts\test-settings-ui.js scripts\test-weather-ui.js scripts\test-tv-layout.js) do (
   node.exe "%%F"
   if errorlevel 1 exit /b 1
 )

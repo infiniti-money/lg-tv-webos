@@ -394,3 +394,7 @@ app names are trademarks of their respective owners. This project is not affilia
 Infiniti Money maintains this derivative. Original authors and licenses remain credited in [LICENSE](LICENSE).
 
 [MIT](LICENSE). Includes code from tv-vibehack and webos-vibehack, also MIT.
+
+## On-TV appearance, weather region and calendar (v1.5.0)
+
+Open **Customize** (or remote red key 403) for four separate pages: **Appearance**, **Weather**, **Solar / Lunar calendar**, and **Apps**. Pick themes/fonts, reduce costly transitions, select a quick weather location or search for any region using Open-Meteo geocoding. The home screen shows exactly **three forecast days** (today, tomorrow, day after), including high/low temperature and rain probability. The full Gregorian date includes the year; Vietnamese lunar calendar shows lunar date, year Can Chi, and leap month when applicable. On-TV preferences use localStorage. Rooted TV's existing data paths are kept for migration safety. Physical TV visual acceptance and Home-key rollback verification are still required before release.

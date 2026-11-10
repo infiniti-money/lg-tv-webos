@@ -236,6 +236,10 @@ else
   ok "Safe mode: no background service registered. Use --wallpaper-service or --auto-update when ready."
 fi
 
+# Persist the status for Customize > Giao diện even before the first scheduled
+# network check. This only writes update-status.js, never installs or opens UI.
+sh "$DATA/auto-update.sh" --init-status || warn "Could not initialize auto-update status."
+
 # ---------------------------------------------------------------- optional manual Home button interception
 # Safe default: NO auto-boot hook, NO watcher, NO evdev reader, NO UI launch.
 # We keep only the app and read-only synched metadata until the user tests

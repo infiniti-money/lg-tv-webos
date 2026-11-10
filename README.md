@@ -36,7 +36,7 @@
 ## Features
 
 - **Clean tvOS-style home:** a pinned dock, an app grid and one glass highlight that glides between tiles.
-- **Real Home button** (rooted TVs): the remote's Home key opens this launcher, not LG's home.
+- **Optional Home-button remap** (rooted TVs): the native LG Home is preserved by default; remapping requires explicit `--enable-home` after power/wake testing.
 - **Change the wallpaper from your phone** (rooted TVs): press the picture button, scan the QR code,
   pick a photo and crop it in a TV-shaped frame that shows where the clock and apps will sit.
   Photos on a USB stick in the TV work too.
@@ -44,7 +44,7 @@
   Change the city from the same phone page, Vietnamese names with accents included.
 - **English or Vietnamese**, 12 h or 24 h clock.
 - **4 to 10 tiles per row:** press the pencil next to the dock and pick a number.
-- **Opens by itself when the TV turns on** (rooted TVs), even if the TV starts on Live TV.
+- **Safe by default:** never force-open Infiniti when the TV powers on or wakes from standby, to avoid blank-screen regressions on legacy webOS.
 - **Apps stay in sync by themselves** (rooted TVs): install or remove an app and the launcher updates at the next boot.
 - **Rearrange tiles** the easy way: pencil next to the dock → **Rearrange apps**, then click an app,
   point where it should go and click again. Or hold OK on a tile (works with the pointer and the arrows).
@@ -66,12 +66,12 @@ the Home button or start things at boot.
 | Wallpaper, weather, language, clock, columns | ✅ | ✅ |
 | Change wallpaper and weather city **from your phone** (QR code) | ✅ | ❌ edit `config.js` |
 | Install with **one command**, no computer needed | ✅ | ❌ needs a computer |
-| **Home button** opens the launcher | ✅ | ❌ (number-key shortcut instead) |
-| Opens by itself after turning the TV on | ✅ | ❌ |
+| **Home button** opens the launcher | ⚠️ explicit opt-in only after TV validation | ❌ (number-key shortcut instead) |
+| Opens by itself after turning the TV on | ❌ disabled for LG startup safety | ❌ |
 | App list updates by itself | ✅ | ❌ re-run the installer |
 | Keeps working forever | ✅ | ⚠️ Developer Mode expires, renew it in the app |
 | Block LG ads and tracking (with *Life's Good Without Spying*) | ✅ | ❌ |
-| Risk to the TV | Low | None |
+| Risk to the TV | Elevated if modifying Home/boot hooks; use safe defaults | Lower without root modifications |
 
 Not sure if your TV can be rooted? Check **[rootmy.tv](https://rootmy.tv)** and the
 **[webOS Homebrew rooting guide](https://www.webosbrew.org/rooting/)**. It depends on your firmware.
@@ -95,9 +95,7 @@ Find the TV's IP address: **Settings → Network → (Wi-Fi or Wired) → Advanc
 
 ### 2. (Optional) Install LG Input Hook
 
-For the **Home button** to open the launcher, install **LG Input Hook** from the Homebrew Channel
-and open it once. You can skip this; the installer works without it, but then Home briefly shows
-LG's home before switching to the launcher.
+To remap the **Home button**, first verify at least two successful power/standby/wake cycles with native LG Home. Then install LG Input Hook, open it, and run the installer with explicit `--enable-home`. Without this option, the installer preserves LG's Home and does not launch Infiniti automatically. Never activate the old `97-homekey` event-loop on a TV that has displayed a black screen.
 
 ### 3. Run one command
 
@@ -119,7 +117,7 @@ Then paste this and press Enter:
 curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh | sh
 ```
 
-When it says **Done**, type `reboot`. That's it. 🎉
+When the installer reports **SAFE MODE**, keep LG Home as primary and verify at least two power/standby/wake cycles before changing the Home button. Do not immediately force Infiniti at startup.
 
 <details>
 <summary><b>Same thing, with wallpaper, weather and Vietnamese in one go</b></summary>
@@ -413,6 +411,9 @@ When upgrading from a failed Home mapping: the installer refuses to overwrite an
 
 
 ## Black screen on power/wake: recover safely (webOS 3.x)
+
+**v1.5.3 safety note:** The rooted launcher does not auto-open at boot or wake. The obsolete foreground Home Watcher cannot redirect LG Home/Live TV even with `--boot`. Direct `evdev-enable` is disabled after black-screen reports. The recovery script now reports `RECOVERY_PARTIAL` (exit code 2) when Input Hook key restoration is unverified; do not interpret it as `RECOVERY_COMPLETE` (0). The release ships an additional root-tools ZIP because installing the IPK alone leaves prior root startup scripts unchanged.
+
 
 If your rooted LG TV goes black after Power, or Infiniti opens about 25 seconds after Homebrew, first disable the previously installed auto-launch hooks. An experimental \`97-homekey\` startup loop can overlap with our old \`lg-tv-vibehack\` boot script and Input Hook. No factory reset is required to test this hypothesis. This procedure is reversible and preserves LG's native Home, application settings, and the SSH server.
 

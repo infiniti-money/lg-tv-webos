@@ -40,8 +40,11 @@ try {
   var tmpScript=path.join(temp,'safe-recovery.sh');
   make(tmpScript,recovery);
   var a=cp.spawnSync('sh',[tmpScript],{encoding:'utf8',timeout:10000});
-  assert.strictEqual(a.status,0,a.stderr);
-  assert.ok(a.stdout.indexOf('RECOVERY_COMPLETE:')>=0,'success marker even when keymap conflicts');
+  assert.strictEqual(a.status,2,'Conflicted Home mapping must not be reported as complete recovery');
+  assert.ok(a.stderr.indexOf('RECOVERY_PARTIAL:')>=0,
+    'Explicit partial status when keymap cannot safely restore');
+  assert.ok(a.stdout.indexOf('BOOT_AUTOSTART_DISABLED:')>=0,
+    'Autostart still disabled when Home mapping needs manual inspection');
   assert.ok((a.stdout+a.stderr).indexOf('WARNING')>=0,'keymap conflict reported');
   ['home-enabled','home-event-device','boot-services-enabled'].forEach(function(f){
     assert.strictEqual(fs.existsSync(path.join(data,f)),false,'disarmed '+f);
@@ -63,9 +66,16 @@ try {
     'evidence should remain available');
   // Second invocation must be idempotent even when files were already moved.
   var again=cp.spawnSync('sh',[tmpScript],{encoding:'utf8',timeout:10000});
-  assert.strictEqual(again.status,0,again.stderr);
-  assert.ok(again.stdout.indexOf('RECOVERY_COMPLETE:')>=0);
+  assert.strictEqual(again.status,2,'Repeated failed keymap restore remains partial');
+  assert.ok(again.stderr.indexOf('RECOVERY_PARTIAL:')>=0);
   assert.ok(fs.readdirSync(snapshots).length>=2);
+
+  // A clean keymap restore produces the only valid COMPLETE marker.
+  make(path.join(data,'keymap.js'),'process.exit(0);');
+  var clean=cp.spawnSync('sh',[tmpScript],{encoding:'utf8',timeout:10000});
+  assert.strictEqual(clean.status,0,clean.stderr);
+  assert.ok(clean.stdout.indexOf('RECOVERY_COMPLETE:')>=0);
+  assert.strictEqual(clean.stdout.indexOf('RECOVERY_PARTIAL:'),-1);
   var testBoot=boot.replace('DIR=/home/root/lg-tv-vibehack','DIR='+data)
     .replace('LOG=/tmp/lg-tv-vibehack.log','LOG='+path.join(temp,'boot.log'));
   var bootScript=path.join(temp,'boot.sh');make(bootScript,testBoot);
@@ -95,11 +105,18 @@ try {
   assert.ok(home.indexOf('rm -f "$FLAG" "$DATA/home-event-device"') <
     home.indexOf('/usr/bin/node "$DATA/keymap.js" disable'),
     'Home disable must disarm first and attempt keymap restoration second');
+  assert.ok(home.indexOf('DISABLED FOR SAFETY: direct evdev Home watcher')>=0,
+    'Unsafe physical-key event monitor must not be newly activated');
+  var watcher=fs.readFileSync('tv/homewatch.js','utf8');
+  assert.ok(watcher.indexOf('applicationManager/launch')<0,
+    'Standalone old Home watcher must never force a foreground app');
+  assert.ok(watcher.indexOf('getForegroundAppInfo')<0,
+    'Legacy --boot must not subscribe to foreground changes');
   assert.ok(ps1.indexOf('ssh.exe')>=0 && ps1.indexOf('sh -s')>=0,
     'PowerShell recovery must pipe shell through SSH rather than parse it locally');
   assert.ok(ps1.indexOf('reboot"')>=0 && ps1.indexOf('root@$TV reboot')>=0,
     'Reboot must be a separate, user-triggered step');
-  console.log('Black-screen regression passed: safe boot, conflicting key rollback, 25s script archive, idempotency, installer PowerShell.');
+  console.log('Black-screen regression passed: safe boot, partial-vs-complete recovery, archived 25s hook, no foreground hijack or unsafe evdev, installer/PowerShell.');
 } finally {
   // Cleanup only our own mkdtemp directory.
   fs.rmSync(temp,{recursive:true,force:true});

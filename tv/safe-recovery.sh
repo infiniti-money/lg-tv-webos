@@ -49,12 +49,19 @@ for item in "$I/lg-tv-vibehack" "$I/97-homekey"; do
   fi
 done
 
-# Restoration is best-effort: failure must NOT keep launcher autostart active.
-if [ -f "$D/keymap.js" ] && [ -f /home/root/.config/lginputhook/keybinds.json ]; then
-  /usr/bin/node "$D/keymap.js" disable     /home/root/.config/lginputhook/keybinds.json     "$D/home-key-backup.json" 773 com.infinitimoney.tvhome     "$D/golauncher.sh" || {
-      echo "WARNING: Input Hook keymap conflicted. Saved a copy; no automatic launcher will run." >&2
-      WARN=1
-    }
+# A failed or unavailable Input Hook restore means the TV may keep an old
+# cached binding. This must be reported as PARTIAL, never complete success.
+# Disarming autostart is independent and has already happened above.
+CFG=/home/root/.config/lginputhook/keybinds.json
+BACKUP="$D/home-key-backup.json"
+if [ -e "$CFG" ] || [ -e "$BACKUP" ]; then
+  if [ ! -f "$D/keymap.js" ]; then
+    echo "WARNING: keymap.js missing; cannot verify or restore Home key." >&2
+    WARN=1
+  elif ! /usr/bin/node "$D/keymap.js" disable "$CFG" "$BACKUP" 773 com.infinitimoney.tvhome "$D/golauncher.sh"; then
+    echo "WARNING: Input Hook keymap could not be restored. Backup kept for manual inspection." >&2
+    WARN=1
+  fi
 fi
 
 # Stop live watchers. A pre-existing 97-homekey shell loop may stay running
@@ -67,11 +74,15 @@ fi
 sync
 if [ "$FAIL" -ne 0 ]; then
   echo "RECOVERY_INCOMPLETE: $R" >&2
+  echo "At least one startup file was not safely disarmed. Do NOT reboot yet." >&2
   exit 1
 fi
-echo "RECOVERY_COMPLETE: $R"
 if [ "$WARN" -ne 0 ]; then
-  echo "WARNING: Some backups or Home key restoration need manual review."
+  echo "BOOT_AUTOSTART_DISABLED: $R"
+  echo "RECOVERY_PARTIAL: $R" >&2
+  echo "Review Input Hook mapping / backups before considering a reboot." >&2
+  exit 2
 fi
-echo "Reboot the TV once to stop any old 97-homekey loop."
+echo "RECOVERY_COMPLETE: $R"
+echo "Autostart scripts disarmed. Reboot once only after reviewing the output."
 exit 0

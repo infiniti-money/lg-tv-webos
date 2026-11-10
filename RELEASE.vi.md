@@ -1,65 +1,51 @@
-# Phát hành Infiniti TV Home v1.5.2
+# Phát hành Infiniti TV Home v1.5.3 — Chế độ an toàn cho LG webOS 3.x
 
-Ứng dụng LG webOS 3.4.0 đóng gói thành `infiniti-tv-home.ipk`. Không phát hành bản chính thức nếu CI đóng gói hoặc kiểm tra SHA-256 thất bại. Chỉ tải gói từ GitHub Releases của `infiniti-money/lg-tv-webos`; không dùng link hoặc địa chỉ ủng hộ từ repository nguồn.
+Phiên bản **v1.5.3** tập trung loại bỏ tranh chấp giao diện Home trên LG webOS 3.x đã root, đặc biệt khi nhấn Power/đánh thức TV. **Chưa được chứng nhận thực nghiệm trên TV từng gặp màn hình đen**: kiểm thử GitHub Actions không tương đương kiểm thử nguồn, standby, remote và HDMI thực tế.
 
-## Chạy thủ công trên GitHub
+## Tải về
 
-1. Mở https://github.com/infiniti-money/lg-tv-webos/actions/workflows/release.yml
-2. Chọn **Run workflow** → **Branch: main**.
-3. Đánh dấu **Create version tag and publish the verified IPK to GitHub Releases**.
-4. Nhấn **Run workflow**. Workflow sẽ kiểm thử cú pháp, ES5 và hồi quy; tạo gói IPK, kiểm tra cấu trúc và sinh SHA-256; tải artifact lên GitHub; cuối cùng tạo tag theo phiên bản trong `app/appinfo.json` và công bố Release.
-5. Chỉ sau khi job thành công, kiểm tra https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.5.2, xác nhận hai tệp `infiniti-tv-home.ipk` và `infiniti-tv-home.ipk.sha256`.
+Sau khi tất cả bước của GitHub Actions hoàn thành thành công, xem:
+https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.5.3
 
-**Nếu chỉ muốn kiểm tra hoặc tải artifact thử nghiệm:** bỏ dấu chọn phát hành trước khi chạy; workflow không tạo tag/Release.
+Release chứa bốn tệp:
 
-**Nếu không có nút Run workflow:** vào **Settings → Actions → General**, kiểm tra GitHub Actions được bật, rồi quay lại workflow. Commit do GitHub App tạo có thể không kích hoạt sự kiện `push`; lúc đó cần chạy thủ công. Không giả định mã nguồn gộp thành công đồng nghĩa build đã chạy.
+- `infiniti-tv-home.ipk` và `infiniti-tv-home.ipk.sha256`: ứng dụng và checksum.
+- `infiniti-tv-home-root-tools-v1.5.3.zip` và `.zip.sha256`: bộ khôi phục PowerShell, `tv/*.sh`, `tv/*.js`, installer, hướng dẫn tiếng Việt.
 
-## Nâng cấp giao diện v1.5.2
+**Cài một mình file IPK không sửa các script root đã chạy trên TV.** Khi TV còn lỗi màn hình đen, ưu tiên script cứu hộ trước khi cài hoặc nâng cấp bất kỳ thứ gì.
 
-- Trang **Cài đặt giao diện** riêng có các mục Giao diện, Thời tiết, Âm–dương lịch và Ứng dụng.
-- Thời tiết Open-Meteo còn **3 ngày**: hôm nay, ngày mai, ngày kia; chọn nhanh khu vực hoặc tìm thành phố/khu vực qua API geocoding.
-- Dương lịch hiển thị đầy đủ thứ, ngày/tháng/năm; âm lịch hiển thị ngày/tháng/năm âm, Can Chi năm và tháng nhuận.
-- Giảm chuyển động tùy chọn, hạn chế đọc lại kích thước header và kiểm soát tốc độ lặp phím điều khiển.
-- Giữ tương thích Chromium 38 (ES5), tệp dữ liệu và Home rollback cũ.
+## Sửa lỗi trọng tâm
 
-## Kiểm tra trên TV
+1. `boot.sh`: không ép mở Infiniti khi bật nguồn hoặc thức dậy, không gọi Home watcher hay monitor phím.
+2. `homewatch.js`: bỏ **hoàn toàn** chức năng cướp foreground, kể cả tham số cũ `--boot`; chỉ giữ đọc danh sách ứng dụng.
+3. `home-control.sh`: chặn `evdev-enable`, vì đọc trực tiếp `/dev/input/event3` không chặn được LG Home, có thể khiến Home mở chồng và chạy trùng; vẫn hỗ trợ `evdev-disable`.
+4. `install.sh`: cài với **LG Home mặc định**, không tự ghi đè phím Home hoặc tự chạy UI. Tùy chọn `--enable-home` chỉ dùng khi chủ động thử nghiệm đã kiểm tra hai lần tắt/bật.
+5. `safe-recovery.sh`: sao lưu log và cấu hình, chuyển `lg-tv-vibehack`, `97-homekey` ra khỏi thư mục startup; cấm tự khởi động trước khi thử restore keymap.
+6. Mã thoát cứu hộ được phân loại:
+   - `RECOVERY_COMPLETE` / 0: không có lỗi được phát hiện khi giải giáp boot và khôi phục keymap.
+   - `RECOVERY_PARTIAL` / 2: đã vô hiệu hóa các startup đã biết, nhưng ánh xạ Home hoặc backup chưa phục hồi/kiểm chứng đầy đủ.
+   - `RECOVERY_INCOMPLETE` / 1: chưa vô hiệu hóa được toàn bộ các startup đã biết.
+7. Có công cụ PowerShell 7 truyền mã shell qua SSH, tránh dán `for/if` Linux vào PowerShell.
 
-Cài trên TV LG đã bật Developer Mode hoặc đã root theo hướng dẫn. Kiểm tra khởi động, remote OK/Back, 3 ngày thời tiết, âm lịch, tùy chỉnh app, phát âm tiếng Việt qua bàn phím LG và Home rollback. Quyền điều khiển micro trực tiếp tùy firmware; AI chỉ có phản hồi khi đã cấu hình Cloudflare Worker, API key và access token.
+## Cứu hộ TV đang bị đen màn hình (Windows PowerShell 7)
 
-Đối chiếu tệp IPK bằng SHA-256 trước khi cài. **Không tự kích hoạt thay thế phím Home trên TV sản xuất khi chưa thử khôi phục Home gốc.**
+Xem nội dung script cứu hộ trên GitHub trước khi chạy. Nếu TV còn SSH và đang dùng IP/SSH key tương ứng:
 
-## Bản sửa lỗi v1.5.2 (webOS 3.x)
-
-- Đồng bộ gói ứng dụng từ Luna + thư mục cài đặt cùng lúc, kể cả khi Luna chỉ trả một phần danh sách. Phát hiện ứng dụng cài tại các vị trí developer/cryptofs và đồng bộ định kỳ mỗi 10 phút.
-- LG Input Hook 1.4: cấu hình nút Home (773) bằng **Execute** lệnh `/home/root/lg-tv-vibehack/golauncher.sh`, tương thích hơn tùy chọn Launch App; giữ backup keymap và phục hồi nguyên trạng sau khi tắt.
-- Tự động khởi động Infiniti TV Home ở lần bật TV (chờ ứng dụng webOS sẵn sàng); LG Home vẫn nằm trong hệ thống làm phương án khôi phục. Không xóa app hệ thống.
-- Danh sách ứng dụng chỉ còn **một hàng cuộn ngang**; remote trái/phải chọn app, nút chỉnh sửa ở cuối hàng.
-- Thời tiết 3 ngày sử dụng **nền kính trong suốt** có đường viền sáng và chữ dễ đọc trên hình nền.
-- Trang **Trợ lý AI** trong Tùy chỉnh cho phép bật/tắt và lưu cấu hình; tắt sẽ ẩn nút AI, ngăn gửi yêu cầu và tắt micro/huỷ yêu cầu đang xử lý; không lưu token truy cập.
-
-**Lưu ý:** Nâng cấp IPK đơn lẻ chỉ cập nhật giao diện. Để kích hoạt Home khi bật TV và sửa đồng bộ app, phải chạy lại `install.sh` qua SSH root để cập nhật các sidecar `tv/*.sh` và `tv/*.js` trên TV, sau đó khởi động lại. Bản nghiệm thu CI không thay thế thử remote và Input Hook trên TV LG thật.
-
-## Bản sửa lỗi v1.5.2 — Chỉ ứng dụng sử dụng được, dock gọn, sửa xung đột Home
-
-- Bộ đồng bộ trước đây lấy cả khoảng 185 gói trên hệ thống khi Luna chỉ trả 20 ứng dụng. Nay chỉ dùng launchpoint thực sự được hiển thị và các ứng dụng đã cài tại `/media/developer` hoặc `/media/cryptofs` có giao diện, tiêu đề và icon. Không đưa service/daemon/ứng dụng nội bộ vào Home.
-- Dock chỉ **một hàng biểu tượng nhỏ**, nền hoàn toàn trong suốt, sát đáy màn hình (chừa vùng an toàn overscan), nhãn ứng dụng bên dưới; điều hướng ngang bằng remote.
-- Sửa xung đột `Home mapping changed externally`: không tự ghi đè. Người dùng phải chủ động dùng `--rebind-home`. Công cụ sẽ lưu cả ánh xạ hiện tại và bản backup trước đây thành tệp khôi phục riêng; tắt Home replacement sẽ trả lại đúng ánh xạ gần nhất trước khi sửa.
-- Giữ nguyên ứng dụng Home của LG trong hệ thống và khả năng rollback; không xóa hay sửa file hệ thống LG Home. Cần mở LG Input Hook một lần để hook hoạt động trên TV.
-- Khi chỉ cài IPK, phần Home key và sync root sẽ **không được cập nhật**. Cần chạy lại installer root từ nhánh main sau khi Release mới xuất bản.
-
-Ví dụ cài đặt trên **TV đã root**, sau khi xác nhận Home key ID 773 trong log của LG Input Hook:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh -o /tmp/infiniti-install.sh
-sh /tmp/infiniti-install.sh --rebind-home
-reboot
+```powershell
+$p = Join-Path $env:TEMP 'recover-lg-tv.ps1'; Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/scripts/recover-lg-tv.ps1' -OutFile $p; pwsh -NoProfile -File $p -TV 192.168.2.154
 ```
 
-Phục hồi cấu hình Home cũ:
+Công cụ **không tự reboot**. Chỉ khởi động lại sau khi kiểm tra kết quả, đặc biệt nếu hiện `RECOVERY_PARTIAL` hay `RECOVERY_INCOMPLETE`.
 
-```sh
-sh /home/root/lg-tv-vibehack/home-control.sh disable
-reboot
-```
+Sau kết quả `RECOVERY_COMPLETE`, khởi động lại một lần để ngừng vòng lặp Home cũ đã chạy trong RAM. Kiểm tra Home LG hiển thị và bật/tắt nguồn ít nhất **hai chu kỳ**. Không bật `--enable-home` cho đến khi hoàn tất nghiệm thu thực tế.
 
-**Lưu ý:** Lệnh `--rebind-home` cố ý thay mapping Home hiện tại (sau khi lưu backup). Không sử dụng nếu chưa kiểm tra phím Home/ứng dụng đang sở hữu keybind. Kiểm thử CI không thay thế nghiệm thu TV thực tế.
+**Không xóa LG Home, không sửa phân vùng hệ thống, không dùng lệnh factory-reset chưa xác minh.**
+
+## Quy trình phát hành trên GitHub
+
+- PR → chạy kiểm tra cú pháp shell, ES5, test tình huống recovery và mã Home, đóng gói.
+- Gộp vào main bằng commit có tiền tố `release: publish verified v1.5.3`.
+- CI main phải thành công mới tạo tag `v1.5.3` và phát hành IPK + bộ root-tools được kiểm SHA-256.
+- Nếu Actions không phát hành tự động, kiểm tra CI và `workflow_dispatch` ở nhánh main; không tạo tag trùng hoặc tự công bố khi CI chưa xanh.
+
+Ghi chú: Các hướng dẫn cũ của v1.5.2 về `--rebind-home` không còn phù hợp để bật mặc định trên một TV đã từng đen màn hình; phải đọc lại hướng dẫn v1.5.3 trước khi can thiệp phím Home.

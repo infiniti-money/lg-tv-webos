@@ -291,12 +291,13 @@
     } catch (e) { /* tainted canvas: fall back to the app's colour */ }
 
     var glyphColor = null;
-    if (edge && edge[3] > 200) {
-      item.card.style.background = 'rgb(' + edge[0] + ',' + edge[1] + ',' + edge[2] + ')';
-    } else {
+    // Keep the dock completely transparent: no per-app coloured rectangle,
+    // even if the source icon has an opaque edge or the app uses a white glyph.
+    item.card.style.background = 'transparent';
+    if (!edge || edge[3] <= 200) {
       item.card.classList.add('glyph');
-      item.card.style.background = glyphBackground(item.app.iconColor);
-      glyphColor = glyphBackground(item.app.iconColor) === '#2c2c2e' ? null : parseColor(item.app.iconColor);
+      glyphColor = glyphBackground(item.app.iconColor) === '#2c2c2e' ?
+        null : parseColor(item.app.iconColor);
     }
     // A white glyph says nothing about the app: glow in the tile's colour instead.
     item.color = glyphColor || (px ? vividColor(px) : parseColor(item.app.iconColor));

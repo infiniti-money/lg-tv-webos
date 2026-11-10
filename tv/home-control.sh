@@ -27,6 +27,11 @@ case "$action" in
     /usr/bin/node "$DATA/keymap.js" status "$HOOK_CFG" "$BACKUP" "$KEY" "$APP_ID" "$CMD" 2>/dev/null || true
     echo "NOTE: ACTIVE reflects saved JSON only, not a confirmed remote key event."
     echo "After pressing Home: sh $DATA/home-control.sh diagnose"
+    if [ -f "$DATA/home-event-device" ]; then
+      echo "Fallback input monitor configured: $(cat "$DATA/home-event-device") (LG ribbon may still appear briefly)"
+    else
+      echo "Fallback input monitor: disabled"
+    fi
     exit 0 ;;
   diagnose)
     [ -f "$DATA/diagnose-home.sh" ] || {
@@ -74,6 +79,34 @@ case "$action" in
     echo "Home key recovery applied. Previous mapping backed up. Open LG Input Hook and reboot."
     echo "Rollback: sh $DATA/home-control.sh disable"
     ;;
+  evdev-enable)
+    # Device should be verified from actual key codes first. This fallback
+    # observes the key; it does not consume/suppress LG's Home ribbon.
+    device="${2:-}"
+    case "$device" in
+      /dev/input/event[0-9]|/dev/input/event[0-9][0-9]) ;;
+      *) echo "Specify verified event device, e.g. /dev/input/event3" >&2; exit 2 ;;
+    esac
+    [ -c "$device" ] || { echo "Not a character input device: $device" >&2; exit 1; }
+    [ -f "$DATA/home-enabled" ] || { echo "Home replacement flag is disabled." >&2; exit 1; }
+    [ -f "$DATA/home-event-monitor.js" ] || {
+      echo "Missing event monitor; run the root installer to update helpers." >&2; exit 1;
+    }
+    if [ -e /var/lib/webosbrew/init.d/97-homekey ]; then
+      echo "Existing custom 97-homekey watcher detected. Back it up and disable it first to avoid duplicate launches." >&2
+      exit 1
+    fi
+    printf '%s\n' "$device" > "$DATA/home-event-device"
+    pkill -f "$DATA/home-event-monitor.js" 2>/dev/null || true
+    nohup setsid /usr/bin/node "$DATA/home-event-monitor.js" "$device" >> /tmp/infiniti-homeevent.log 2>&1 < /dev/null &
+    echo "Optional physical Home monitor active for $device."
+    echo "This overlays Infiniti after Home, but does not prevent LG Home from appearing."
+    ;;
+  evdev-disable)
+    rm -f "$DATA/home-event-device"
+    pkill -f "$DATA/home-event-monitor.js" 2>/dev/null || true
+    echo "Optional physical Home monitor disabled."
+    ;;
   disable)
     # Never stop the fallback watcher before the original key mapping is restored.
     if [ -f "$HOOK_CFG" ] || [ -f "$BACKUP" ]; then
@@ -84,7 +117,9 @@ case "$action" in
     fi
     rm -f "$FLAG"
     pkill -f "$DATA/homewatch.js" 2>/dev/null || true
+    pkill -f "$DATA/home-event-monitor.js" 2>/dev/null || true
+    rm -f "$DATA/home-event-device"
     echo "Home replacement disabled. Restart LG Input Hook if the previous mapping is cached."
     ;;
-  *) echo "Usage: sh $0 status|diagnose|enable|rebind|disable" >&2; exit 2 ;;
+  *) echo "Usage: sh $0 status|diagnose|enable|rebind|evdev-enable /dev/input/eventN|evdev-disable|disable" >&2; exit 2 ;;
 esac

@@ -43,9 +43,10 @@ function atomicWrite(file, content) {
 // Sources for installed packages. System directories contain invisible LG
 // services: only include system apps when they have a visible Luna launchpoint.
 var APP_DIRS = [
-  '/usr/palm/applications',
-  '/media/cryptofs/apps/usr/palm/applications',
+  // Prefer user-installed overrides before any built-in package of the same ID.
   '/media/developer/apps/usr/palm/applications',
+  '/media/cryptofs/apps/usr/palm/applications',
+  '/usr/palm/applications',
   '/mnt/otycabi/usr/palm/applications',
   '/mnt/otncabi/usr/palm/applications'
 ];

@@ -22,8 +22,9 @@ var eventSource = fs.readFileSync('tv/home-event-monitor.js','utf8');
 var boot = fs.readFileSync('tv/boot.sh','utf8');
 assert.ok(eventSource.indexOf('var EV_KEY = 1, HOME = 773, KEY_DOWN = 1')>=0,
   'Only HOME 0305 keydown should trigger the fallback');
-assert.ok(eventSource.indexOf('EVIOCGRAB')>=0 &&
-  eventSource.indexOf('EVIOCGRAB,')<0,'Monitor must not grab Linux input events');
+assert.ok(eventSource.indexOf("fs.openSync(device, 'r')")>=0 &&
+  eventSource.indexOf('ioctl(')<0 && eventSource.indexOf("fs.openSync(device, 'w')")<0,
+  'Monitor must only read events, not grab or write to Linux input devices');
 assert.ok(boot.indexOf('home-event-device')>=0,'Monitor startup must be explicit opt-in');
 assert.ok(control.indexOf('evdev-disable)')>=0,'Monitor must have reversible stop control');
 console.log('Legacy webOS Home mapping and physical HOME 0305 diagnostics passed.');

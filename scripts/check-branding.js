@@ -28,7 +28,7 @@ assert.ok(diag.indexOf('raw.githubusercontent.com/infiniti-money/lg-tv-webos/mai
   assert.ok(s.indexOf('hoangvya19/lg-tv-webos-vibehack') === -1,
     'Stale upstream download, badge or release URL');
   assert.ok(s.indexOf('0x11a0cd4c3e0135d2af5dc0ad0d44bc535fe4645b') === -1,
-    'Do not publish the old owner's cryptocurrency donation address');
+    'Old cryptocurrency donation address must not be published');
 });
 [en, vi].forEach(function (s) {
   assert.ok(s.indexOf('https://github.com/infiniti-money/lg-tv-webos') !== -1,

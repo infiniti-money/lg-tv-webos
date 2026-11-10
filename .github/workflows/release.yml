@@ -58,7 +58,7 @@ jobs:
           for file in home-watch-mac.sh install-noroot.sh; do bash -n "$file"; done
           # PowerShell syntax check when pwsh is available on the GitHub runner.
           if command -v pwsh >/dev/null 2>&1; then
-            pwsh -NoProfile -Command '\$errors = \$null; [System.Management.Automation.Language.Parser]::ParseFile("scripts/recover-lg-tv.ps1", [ref]\$null, [ref]\$errors) | Out-Null; if (\$errors.Count) { \$errors | Format-List; exit 1 }'
+            pwsh -NoProfile -Command '$errors = $null; [System.Management.Automation.Language.Parser]::ParseFile("scripts/recover-lg-tv.ps1", [ref]$null, [ref]$errors) | Out-Null; if ($errors.Count) { $errors | Format-List; exit 1 }'
           fi
           python3 -m py_compile home-watch.py sync-apps.py lgtv.py
 

@@ -626,3 +626,36 @@ body.ai-disabled #btnAI {display:none!important;}
 #forecastArea .weekDate { color:#f2f5ff; }
 #forecastArea .weekRain { color:#d4ecff; }
 body.motion-reduced .weekDay { -webkit-backdrop-filter:none; backdrop-filter:none; }
+
+/* v1.5.2 – transparent, compact single-row app dock at the TV bottom.
+ * Deliberately no backdrop blur: Chromium 38 uses GPU-friendly opacity.
+ * Only the dock is transparent; the app background still shows its wallpaper. */
+#dockBand, body.theme-ocean #dockBand, body.theme-amber #dockBand {
+  display:none!important; background:transparent!important; border:0!important; box-shadow:none!important;
+}
+.item .card { background:transparent; border-radius:18px!important; box-shadow:none; }
+.item .card::after { border-radius:18px; box-shadow:none; }
+.card img { object-fit:contain; max-width:100%; }
+.card.glyph img { height:82%; }
+.item.dock .name {
+  display:block; height:30px; margin-top:5px; opacity:.88; transform:none;
+  font-size:18px; letter-spacing:0; line-height:25px; text-align:center;
+  color:#fff; text-shadow:0 2px 5px rgba(0,0,0,.9);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.item.focused .name, .item.dock.focused .name {
+  opacity:1; color:#fff; transform:none; font-weight:600;
+}
+.item.focused .card { transform:scale(1.06); }
+#glass {
+  background:rgba(255,255,255,.05); border:2px solid rgba(255,255,255,.85);
+  border-radius:20px!important; box-shadow:0 1px 7px rgba(0,0,0,.6);
+}
+#glass::before { background:none; }
+#hero { font-size:46px; left:125px; max-width:1500px; overflow:hidden; text-overflow:ellipsis; }
+#penBtn {
+  width:52px; height:52px; border-radius:26px;
+  background:rgba(10,20,30,.15); border:1px solid rgba(255,255,255,.48);
+}
+#penBtn svg { width:27px; height:27px; }
+body.font-large .item.dock .name { font-size:21px; }

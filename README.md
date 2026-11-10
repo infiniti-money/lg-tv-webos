@@ -6,7 +6,7 @@
 
 *LG TV-vibehack · webOS-vibehack · LG-vibehack: a webOS launcher that replaces LG's ad-filled home.*
 
-[![Release](https://img.shields.io/github/v/release/hoangvya19/lg-tv-webos-vibehack?style=flat-square)](https://github.com/infiniti-money/lg-tv-webos/releases)
+[![Release](https://img.shields.io/github/v/release/infiniti-money/lg-tv-webos?style=flat-square)](https://github.com/infiniti-money/lg-tv-webos/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![webOS](https://img.shields.io/badge/webOS-6%2B-a50034?style=flat-square)](#tested-tvs)
 [![Root](https://img.shields.io/badge/root-optional-555?style=flat-square)](#root-or-no-root)
@@ -275,8 +275,11 @@ Normal. webOS starts its own screen first; the launcher takes over as soon as we
 <summary><b>Home does nothing at all</b></summary>
 
 LG Input Hook caught the key but the command failed. Check:
-`cat /home/root/.config/lginputhook/keybinds.json`. It should contain
-`/home/root/lg-tv-vibehack/golauncher.sh`. Run the installer again to fix it.
+Run `cat /home/root/.config/lginputhook/keybinds.json` and check the Home key `773` maps to
+`{"action":"launch","id":"com.infinitimoney.tvhome"}`. If it does not, inspect
+`/home/root/lg-tv-vibehack/home-key-backup.json` before retrying. The installer now safely
+recovers a backup left behind by an interrupted activation, but refuses to overwrite edits
+from another tool. Run `sh /home/root/lg-tv-vibehack/home-control.sh status` to diagnose.
 </details>
 
 <details>

@@ -22,7 +22,7 @@
 #   --rebind-home           Explicitly rebind a conflicting mapping (requires --enable-home)
 #   --auto-update           Enable delayed, SHA-256-verified app updates + wallpaper server
 #   --wallpaper-service     Enable wallpaper QR phone server only (no app update)
-#   --no-auto-update        Disable auto updates; retain wallpaper service when enabled
+#   --no-auto-update        Disable auto updates; safe mode also stops background services by default
 #   --uninstall             Remove Infiniti TV Home after safe recovery
 #   --uninstall             Remove everything this script installed
 set -e

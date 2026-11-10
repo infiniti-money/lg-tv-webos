@@ -20,7 +20,7 @@ import time
 
 import lgtv
 
-LAUNCHER = "com.gathin.tvhome"
+LAUNCHER = "com.infinitimoney.tvhome"
 LG_HOME = "com.webos.app.home"
 ESCAPE_SECONDS = 3.0
 

@@ -6,6 +6,7 @@ var fs=require('fs'), assert=require('assert');
 var css=fs.readFileSync('app/style.css','utf8');
 var html=fs.readFileSync('app/index.html','utf8');
 var app=fs.readFileSync('app/app.js','utf8');
+var assistant=fs.readFileSync('app/assistant.js','utf8');
 function block(selector) {
   var start=css.indexOf(selector+' {');
   assert.ok(start>=0,'Missing CSS block: '+selector);
@@ -37,4 +38,6 @@ assert.ok(/body\.motion-reduced #stage/.test(css),'Missing lightweight transitio
 assert.ok(/cachedHeaderBottom/.test(app),'Remote navigation still forces layout per focus');
 assert.ok(/lastArrowAt/.test(app),'Remote key repeat throttle missing');
 assert.ok(/getFullYear\(\)/.test(app),'Solar date must contain the year');
+assert.ok(/function resetDialogOk\(\)/.test(app),'Settings close must reset held OK state');
+assert.ok(/INFINITI_AI_CLOSED/.test(assistant),'AI close must restore launcher focus');
 console.log('Legacy LG TV 1080p/720p settings and forecast layout guards passed.');

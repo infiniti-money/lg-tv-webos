@@ -7,6 +7,12 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Create version tag and publish the verified IPK to GitHub Releases'
+        type: boolean
+        required: true
+        default: false
 
 permissions:
   contents: write
@@ -67,11 +73,38 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      # Manual publishing from main is required when an integration's GitHub App
+      # commit does not generate a new Actions push event.
+      # IMPORTANT: tag only after all checks, packaging and artifact upload pass.
+      - name: Create verified version tag (manual release)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main" || { echo 'ERROR: Only main can be released'; exit 1; }
+          VERSION=$(node -p "require('./app/appinfo.json').version")
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'ERROR: Invalid app version'; exit 1; }
+          TAG="v$VERSION"
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+          existing=$(git ls-remote --tags origin "refs/tags/$TAG^{}" | awk '{print $1}')
+          if [ -z "$existing" ]; then
+            existing=$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')
+          fi
+          if [ -n "$existing" ]; then
+            test "$existing" = "$GITHUB_SHA" || { echo "ERROR: $TAG points to another commit: $existing"; exit 1; }
+            echo "Existing $TAG points to this commit; retrying release upload"
+          else
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$TAG"
+          fi
+
       - name: Publish tagged release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish_release) }}
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_TAG || github.ref_name }}
           files: |
             build/infiniti-tv-home.ipk
             build/infiniti-tv-home.ipk.sha256
+          fail_on_unmatched_files: true
           generate_release_notes: true

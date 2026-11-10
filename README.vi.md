@@ -470,7 +470,7 @@ Chu trình: tiếng nói -> LG/Web Speech chuyển thành chữ -> bấm Gửi A
 Trợ lý chưa có quyền điều khiển TV hoặc mở ứng dụng bằng câu lệnh AI.
 Cần thử thật trên TV, đặc biệt nút micro, bàn phím, TLS/CORS và Magic Remote.
 
-## Nâng cấp 1.4.x: tùy chỉnh, thời tiết 7 ngày, âm lịch
+## Nâng cấp 1.5.0: tùy chỉnh, thời tiết 3 ngày, âm lịch
 
 **Quản lý ứng dụng trên Home:** chọn nút Tùy chỉnh ở góc trên phải, hoặc nhấn
 phím ĐỎ của remote (nếu TV gửi keycode 403). Chọn tab Thêm / ẩn ứng dụng.
@@ -481,12 +481,12 @@ Nhấn Khôi phục ứng dụng mặc định để xóa các lựa chọn ẩn
 
 **Tùy biến giao diện:** trong tab Giao diện & phông chữ, chọn Đêm đen,
 Đại dương, Ánh vàng. Phông chữ có Lexend (đã đóng gói và có dấu tiếng Việt),
-Arial, Georgia; bật hoặc tắt cỡ chữ lớn và thanh dự báo 7 ngày.
+Arial, Georgia; bật hoặc tắt cỡ chữ lớn và thanh dự báo 3 ngày.
 Người dùng có thể thay hình nền qua trang điện thoại của nút Hình nền.
 Lựa chọn được lưu trong localStorage của riêng ứng dụng để giữ lại sau reboot
 (trừ khi bộ nhớ ứng dụng bị xóa).
 
-**Dự báo 7 ngày:** dùng Open-Meteo Forecast API với `forecast_days=7`,
+**Dự báo 3 ngày:** dùng Open-Meteo Forecast API với `forecast_days=3`,
 các trường `daily.weather_code`, `temperature_2m_max`, `temperature_2m_min`,
 `precipitation_probability_max`. Chọn thành phố bằng trình cài `--city` hoặc
 trang điện thoại hình nền. Thanh dự báo tự ẩn khi chưa bật thời tiết, và
@@ -517,3 +517,15 @@ File IPK chỉ chứa giao diện; chức năng root (Home Watcher, Input Hook) 
 được cài riêng bằng `install.sh` sau khi tạo Release và SHA-256 hợp lệ.
 
 Trong mục **Tùy chỉnh > Giao diện & phông chữ**, nút **Đổi thành phố / Hình nền** mở mã QR để thiết lập thành phố dự báo thời tiết hoặc hình nền bằng điện thoại (yêu cầu máy chủ hình nền trên TV root đang chạy).
+## Cài đặt giao diện v1.5.0 trên TV
+
+Mở **Tùy chỉnh** (hoặc nhấn phím đỏ 403 nếu remote hỗ trợ). Hộp cài đặt có bốn trang:
+
+- **Giao diện:** đổi chủ đề, phông chữ, cỡ chữ, hình nền bằng điện thoại, bật chế độ giảm hiệu ứng chuyển động cho TV cấu hình thấp.
+- **Thời tiết:** chọn nhanh Hà Nội, Hải Phòng, Hưng Yên, Đà Nẵng, Huế, TP. Hồ Chí Minh, Cần Thơ, Đà Lạt; hoặc dùng ô tìm kiếm tên khu vực để tra Open-Meteo. Chọn kết quả để lưu trên TV và cập nhật ngay. Có nút bật/tắt và °C/°F.
+- **Âm · dương lịch:** chọn hiển thị dương lịch đầy đủ (thứ, ngày, tháng, năm) và âm lịch Việt Nam (ngày, tháng, năm, Can Chi, tháng nhuận). Dương lịch lấy ngày TV; âm lịch quy đổi theo UTC+7.
+- **Ứng dụng:** thêm/ẩn biểu tượng khỏi Home, không gỡ ứng dụng thật.
+
+Thanh thời tiết có **3 thẻ** cho hôm nay, ngày mai, ngày kia, gồm điều kiện thời tiết, nhiệt độ cao/thấp và xác suất mưa. Lựa chọn khu vực và giao diện được lưu bằng localStorage trong ứng dụng, không cần root. Trên TV cũ, nên chọn **Hiệu ứng chuyển động: Giảm** khi thấy giật hình. Khi dùng bàn phím ảo LG ở ô tìm kiếm, nhấn OK để bắt đầu tìm; chọn kết quả bằng remote. Các lựa chọn trên TV có thể ưu tiên hơn vị trí thời tiết đã lưu từ trình cài root. Nếu xóa dữ liệu ứng dụng, thiết lập riêng trên TV sẽ mất.
+
+**Giới hạn nghiệm thu:** kiểm thử mã nguồn và CSS không thay thế thử thực tế trên TV LG. Trước khi phát hành chính thức, kiểm tra 1920×1080, phím Back, tìm khu vực, chuyển trang, vỡ dòng tiếng Việt, chế độ giảm chuyển động và khôi phục Home.

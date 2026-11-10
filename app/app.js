@@ -773,6 +773,9 @@
 
   // On tiles OK acts on release, so a held OK can start rearranging instead of opening the app.
   document.addEventListener('keyup', function (e) {
+    // Leave remote and LG keyboard events to the active settings/AI dialog.
+    if (window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()) return;
+    if (window.INFINITI_AI_IS_OPEN && window.INFINITI_AI_IS_OPEN()) return;
     if (e.keyCode !== KEY.OK) return;
     okDown = false;
     if (!okTimer) return;
@@ -783,6 +786,9 @@
   });
 
   document.addEventListener('keydown', function (e) {
+    // Leave remote and LG keyboard events to the active settings/AI dialog.
+    if (window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()) return;
+    if (window.INFINITI_AI_IS_OPEN && window.INFINITI_AI_IS_OPEN()) return;
     var k = e.keyCode;
     if (k >= KEY.LEFT && k <= KEY.DOWN) {
       var now = Date.now();

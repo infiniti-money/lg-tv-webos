@@ -7,23 +7,21 @@
 (function () {
   'use strict';
 
-  // Tiles per row: picked on the TV with the pencil next to the dock (kept in localStorage), else config.
+  // Compact icon size selected via the pencil; always a single horizontal dock row.
   var COLS_KEY = 'tvhome.columns', COLS_CHOICES = [4, 5, 6, 7, 8, 9, 10];
   var COLUMNS = (function () {
     var n = 0;
     try { n = parseInt(localStorage.getItem(COLS_KEY), 10); } catch (e) { /* storage unavailable */ }
     return n >= 3 && n <= 10 ? n : Math.max(1, CONFIG.columns || 4);
   })();
-  // Tile size follows the column count (4 columns = the original 360x202 tiles).
-  var TILE_W = Math.min(360, Math.round((1920 - 2 * 112) / COLUMNS * 0.85));
-  var TILE_H = Math.round(TILE_W * 9 / 16);
-  var CELL_W = (1920 - 2 * 112) / COLUMNS;
-  var ROW_PITCH = TILE_H + 90;
-  var DOCK_TOP = 708;           // tile top of the dock row: next row peeks in at the bottom
-  var DOCK_GAP = 36;            // extra space below the dock
-  var FOCUS_SCALE = 1.1;
-  var GLASS_PAD = 12;           // room for the glass glow around the scaled tile
-  var VIEW_TOP = 80, VIEW_BOTTOM = 1060;    // area grid rows scroll into (the header hides below the dock)
+  // Compact, transparent single-row dock. COLUMNS now controls icon size,
+  // not the number of rows or how many installed apps can be reached.
+  var TILE_W = Math.max(86, Math.min(146, Math.round(188 - COLUMNS * 11)));
+  var TILE_H = Math.round(TILE_W * 0.82);
+  var CELL_W = TILE_W + 24;
+  var DOCK_TOP = 1030 - TILE_H - 34;
+  var FOCUS_SCALE = 1.06;
+  var GLASS_PAD = 5;
 
   var KEY = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, OK: 13, BACK: 461, ESC: 27 };
 
@@ -41,7 +39,7 @@
       moveHint: 'Arrows or pointer to move  ·  OK to place  ·  Back to cancel',
       noApps: 'No apps were found on this TV. Run the installer again over SSH; if it keeps happening, ' +
         'please report your TV model and webOS version at github.com/infiniti-money/lg-tv-webos/issues',
-      colsTitle: 'Tiles per row', arrange: 'Rearrange apps', done: 'Done',
+      colsTitle: 'Icon size (higher = smaller)', arrange: 'Rearrange apps', done: 'Done',
       arrangeHint: 'Click an app to pick it up, point where it should go, click again to drop it.',
       wallTitle: 'Change wallpaper',
       wallScan: 'Scan this code with your phone camera, then pick a photo.',
@@ -56,7 +54,7 @@
       moveHint: 'Mũi tên hoặc con trỏ để di chuyển  ·  OK để đặt  ·  Back để huỷ',
       noApps: 'Không tìm thấy ứng dụng nào trên TV này. Chạy lại lệnh cài qua SSH; nếu vẫn vậy, ' +
         'báo giúp model TV và phiên bản webOS tại github.com/infiniti-money/lg-tv-webos/issues',
-      colsTitle: 'Số ô mỗi hàng', arrange: 'Sắp xếp ứng dụng', done: 'Xong',
+      colsTitle: 'Cỡ biểu tượng (số lớn = nhỏ hơn)', arrange: 'Sắp xếp ứng dụng', done: 'Xong',
       arrangeHint: 'Bấm vào app để nhấc lên, trỏ tới chỗ mới rồi bấm lần nữa để đặt.',
       wallTitle: 'Đổi hình nền',
       wallScan: 'Quét mã này bằng camera điện thoại rồi chọn ảnh.',
@@ -254,7 +252,7 @@
 
     var band = $('dockBand');
     var n = items.length;
-    band.style.display = n ? 'block' : 'none';
+    band.style.display = 'none'; // transparent dock: never draw an opaque strip
     band.style.left = (tileLeft(0) - 28) + 'px';
     band.style.top = (DOCK_TOP - 28) + 'px';
     band.style.width = ((n - 1) * CELL_W + TILE_W + 56) + 'px';
@@ -264,7 +262,7 @@
     pen.style.display = n ? 'flex' : 'none';
     // Place the edit control after the final app in the same scrolling row.
     pen.style.left = (n ? tileLeft(n - 1) + TILE_W + 45 : 1750) + 'px';
-    pen.style.top = (DOCK_TOP + TILE_H / 2 - 36) + 'px';
+    pen.style.top = (DOCK_TOP + TILE_H / 2 - 26) + 'px';
   }
 
   /** Index of the last tile in the dock row. */
@@ -293,12 +291,13 @@
     } catch (e) { /* tainted canvas: fall back to the app's colour */ }
 
     var glyphColor = null;
-    if (edge && edge[3] > 200) {
-      item.card.style.background = 'rgb(' + edge[0] + ',' + edge[1] + ',' + edge[2] + ')';
-    } else {
+    // Keep the dock completely transparent: no per-app coloured rectangle,
+    // even if the source icon has an opaque edge or the app uses a white glyph.
+    item.card.style.background = 'transparent';
+    if (!edge || edge[3] <= 200) {
       item.card.classList.add('glyph');
-      item.card.style.background = glyphBackground(item.app.iconColor);
-      glyphColor = glyphBackground(item.app.iconColor) === '#2c2c2e' ? null : parseColor(item.app.iconColor);
+      glyphColor = glyphBackground(item.app.iconColor) === '#2c2c2e' ?
+        null : parseColor(item.app.iconColor);
     }
     // A white glyph says nothing about the app: glow in the tile's colour instead.
     item.color = glyphColor || (px ? vividColor(px) : parseColor(item.app.iconColor));
@@ -426,7 +425,7 @@
 
   function showHero(item) {
     var label = item.app.title;
-    hero.style.top = (DOCK_TOP - 28 - 52 - 96) + 'px';
+    hero.style.top = (DOCK_TOP - 110) + 'px';
     if (!heroShown) {
       hero.textContent = label;
       hero.style.transform = 'none';

@@ -553,3 +553,26 @@ reboot
 ```
 
 **Không được xóa thư mục LG Home hệ thống.** Nếu firmware không hỗ trợ keyhook hoặc phím Home dùng mã khác, LG Home có thể xuất hiện thoáng qua trước khi watcher mở Infiniti TV Home; kiểm tra log trong LG Input Hook để xác nhận mã phím đúng.
+
+## V1.5.2 — Chỉ ứng dụng đã cài, dock trong suốt và sửa xung đột Home
+
+Nếu nhật ký báo `App discovery: Luna 20, local packages 185`, đó là số lượng *gói hệ thống*, không phải 185 ứng dụng nên đưa lên Home. Từ v1.5.2, chỉ ứng dụng có launchpoint hiển thị hoặc ứng dụng do người dùng cài tại developer/store có màn hình chính và icon mới được hiện. Gói dịch vụ, nền tảng, LG Home và các thành phần ẩn sẽ không xuất hiện.
+
+Danh sách ứng dụng được đặt thành **một hàng biểu tượng nhỏ sát phía dưới màn hình TV**, nền của dock/ô biểu tượng trong suốt; nhấn trái/phải để xem thêm, nút bút ở cuối hàng để chọn cỡ icon.
+
+### Khi installer báo `Home mapping changed externally`
+
+Đây là chốt bảo vệ của Home key (không phải lỗi cài IPK). Có một ánh xạ hiện tại khác với bản backup cũ. **Không xóa file keybinds.json hoặc file backup.** Đầu tiên kiểm tra trên LG Input Hook rằng Home thực sự có mã **773**; trên một số TV mã có thể khác. Chỉ nếu muốn thay ánh xạ Home hiện có, chạy từ shell SSH root trên TV:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh -o /tmp/infiniti-install.sh
+sh /tmp/infiniti-install.sh --rebind-home
+reboot
+```
+
+`--rebind-home` là lựa chọn cố ý ghi đè **phím Home duy nhất**, sau khi lưu bản ánh xạ trước đó và bản backup cũ vào file archive. Những phím khác giữ nguyên. Không truyền cờ này nếu chưa muốn thay thế một keybind của launcher khác. Khi xong, mở LG Input Hook một lần, kiểm tra ánh xạ **Execute** thành `/home/root/lg-tv-vibehack/golauncher.sh`, nhấn Save changes rồi khởi động lại. Mỗi TV/firmware có thể vẫn hiển thị LG Home thoáng qua trước khi bộ hook bắt phím Home.
+
+Kiểm tra trạng thái: `sh /home/root/lg-tv-vibehack/home-control.sh status`.
+Khôi phục: `sh /home/root/lg-tv-vibehack/home-control.sh disable` và `reboot`.
+
+Cài riêng file IPK **không cập nhật** bộ script root, vì thế không sửa được lỗi đồng bộ app hoặc phím Home.

@@ -34,14 +34,46 @@ function originalUnchanged(conf, key, saved) {
 function main() {
   var action = process.argv[2], cfg = process.argv[3], backup = process.argv[4],
     key = process.argv[5], app = process.argv[6], cmd = process.argv[7];
-  if (!cfg || !backup || !key || !app || !cmd) fail('Usage: keymap.js enable|disable CONFIG BACKUP KEY APP_ID LEGACY_COMMAND');
-  if (action !== 'enable' && action !== 'disable') fail('Unknown operation: ' + action);
+  if (!cfg || !backup || !key || !app || !cmd)
+    fail('Usage: keymap.js status|enable|disable|rebind CONFIG BACKUP KEY APP_ID COMMAND [--confirm-rebind]');
+  if (action !== 'status' && action !== 'enable' && action !== 'disable' && action !== 'rebind')
+    fail('Unknown operation: ' + action);
+  if (action === 'rebind' && process.argv[8] !== '--confirm-rebind')
+    fail('Rebind overwrites an external Home mapping; explicit --confirm-rebind is required');
   var saved = fs.existsSync(backup) ? read(backup, false) : null;
-  var conf = read(cfg, action === 'enable' || (action === 'disable' && saved && !saved.present));
+  var conf = read(cfg, action === 'status' || action === 'enable' || action === 'rebind' || (action === 'disable' && saved && !saved.present));
   var has = Object.prototype.hasOwnProperty.call(conf, key);
   var current = has ? conf[key] : null;
   if (saved && typeof saved.present !== 'boolean') fail('Invalid Home key backup (present flag)');
   if (saved && saved.present && !Object.prototype.hasOwnProperty.call(saved, 'binding')) fail('Invalid Home key backup (missing binding)');
+  if (action === 'status') {
+    console.log('Home key ' + key + ': ' +
+      (own(current, app, cmd) ? 'INFINITI ACTIVE' :
+       saved ? 'EXTERNAL CONFLICT (use explicit rebind to recover)' :
+       has ? 'EXTERNAL MAPPING' : 'UNMAPPED'));
+    return;
+  }
+  if (action === 'rebind') {
+    // Recovery is an EXPLICIT root command, never run automatically by install.sh.
+    // Preserve the current external Home key and any older backup before rebinding.
+    if (own(current, app, cmd)) {
+      if (!saved) fail('Infiniti mapping has no original backup; refusing to invent a rollback target');
+      console.log('Infiniti Home key mapping already active with recovery backup');
+      return;
+    }
+    var archive = backup + '.conflict-' + Date.now() + '-' + process.pid + '.json';
+    write(archive, {
+      key: key,
+      current: {present:has, binding:current},
+      previousBackup: saved
+    });
+    // The most recent working mapping is the new rollback target.
+    write(backup, {present:has, binding:current});
+    conf[key] = {action:'exec', command:cmd};
+    write(cfg,conf);
+    console.log('Home key rebound to Infiniti TV Home, prior mapping preserved in ' + archive);
+    return;
+  }
   if (action === 'enable') {
     if (saved) {
       if (own(current, app, cmd)) {

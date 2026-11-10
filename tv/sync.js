@@ -40,11 +40,13 @@ function atomicWrite(file, content) {
   fs.renameSync(temp, file);
 }
 
-// Where webOS keeps installed apps. Read when listLaunchPoints gives nothing (seen on webOS 4.4).
+// Sources for installed packages. System directories contain invisible LG
+// services: only include system apps when they have a visible Luna launchpoint.
 var APP_DIRS = [
-  '/usr/palm/applications',
-  '/media/cryptofs/apps/usr/palm/applications',
+  // Prefer user-installed overrides before any built-in package of the same ID.
   '/media/developer/apps/usr/palm/applications',
+  '/media/cryptofs/apps/usr/palm/applications',
+  '/usr/palm/applications',
   '/mnt/otycabi/usr/palm/applications',
   '/mnt/otncabi/usr/palm/applications'
 ];
@@ -82,14 +84,21 @@ function fromDisk() {
     names.forEach(function (n) {
       var base = path.join(dir, n);
       var info = readJSON(path.join(base, 'appinfo.json'), null);
-      if (!info || !info.id || seen[info.id] || info.visible === false) return;
+      if (!info || !info.id || seen[info.id]) return;
       seen[info.id] = true;
       out.push({
         id: info.id,
         title: info.title || info.id,
         icon: info.icon ? path.join(base, info.icon) : '',
         largeIcon: info.largeIcon ? path.join(base, info.largeIcon) : '',
-        iconColor: info.iconColor || info.bgColor || ''
+        iconColor: info.iconColor || info.bgColor || '',
+        // Private metadata is stripped before writing launcher apps.js.
+        _sourceDir: dir,
+        _hasMain: !!info.main || !!info.executable,
+        _hasTitle: !!info.title,
+        _hidden: info.visible === false || info.hidden === true ||
+          info.noWindow === true || info.noDisplay === true,
+        _service: info.type === 'service' || info.type === 'jsservice'
       });
     });
   });
@@ -97,31 +106,54 @@ function fromDisk() {
 }
 
 /**
- * Some LG firmware returns only a subset of installed packages from listLaunchPoints.
- * Merge Luna and on-disk appinfo.json on EVERY sync, not only when Luna is empty.
- * Luna title/visibility wins; local icon files win over unresolved Luna icon URLs.
- * No app is installed or uninstalled by this read-only discovery.
+ * Only show apps that a TV user can actually launch.
+ * Luna launchpoints are the authoritative list for LG system applications.
+ * Developer/cryptofs packages provide fallback for third-party installed apps
+ * that older firmware omits from listLaunchPoints. Never expose internal system
+ * packages simply because their appinfo.json is present.
  */
+function isUserFacing(p, fromLuna) {
+  if (!p || typeof p.id !== 'string' || !p.id || p.id.length > 240) return false;
+  if (p.id === APP_ID || p.id === 'com.webos.app.home') return false;
+  if (/(^|[.])service([.]|$)/i.test(p.id) || /(^|[.])daemon([.]|$)/i.test(p.id)) return false;
+  if (p.hidden === true || p.visible === false || p._hidden === true || p._service === true) return false;
+  if (fromLuna) return true; // Luna is the actual on-screen app catalog.
+  if (p._sourceDir !== '/media/developer/apps/usr/palm/applications' &&
+      p._sourceDir !== '/media/cryptofs/apps/usr/palm/applications') return false;
+  // An installed user app needs an entry point, human-readable title and icon.
+  // An IPK without those is likely a service/companion, not an app tile.
+  return p._hasMain === true && p._hasTitle === true &&
+    !!(p.icon || p.largeIcon);
+}
 function mergePoints(lunaPoints, diskPoints) {
-  var map = {}, order = [];
-  function valid(p) { return p && typeof p.id === 'string' && p.id.length > 0 && p.id.length < 240; }
-  (diskPoints || []).forEach(function (p) {
-    if (!valid(p) || map[p.id]) return;
+  var map = {}, order = [], visible = {}, suppressed = {};
+  // Honor explicit Luna hide flags before considering the fallback appinfo.
+  (lunaPoints || []).forEach(function (p) {
+    if (p && p.id && (p.hidden === true || p.visible === false))
+      suppressed[p.id] = true;
+  });
+  (lunaPoints || []).forEach(function (p) {
+    if (!isUserFacing(p, true) || Object.prototype.hasOwnProperty.call(visible,p.id)) return;
+    visible[p.id] = true;
     map[p.id] = p;
     order.push(p.id);
   });
-  (lunaPoints || []).forEach(function (p) {
-    if (!valid(p)) return;
-    var disk = map[p.id];
-    if (!disk) { map[p.id] = p; order.push(p.id); return; }
-    // Prefer a real local icon, because Luna usually returns an icon:// or
-    // https:// URI that cannot be copied by fs.readFileSync.
-    var chosen = {};
-    Object.keys(disk).forEach(function (key) { chosen[key] = disk[key]; });
-    Object.keys(p).forEach(function (key) { if (p[key] !== undefined && p[key] !== null) chosen[key] = p[key]; });
-    if (!isFile(chosen.largeIcon) && isFile(disk.largeIcon)) chosen.largeIcon = disk.largeIcon;
-    if (!isFile(chosen.icon) && isFile(disk.icon)) chosen.icon = disk.icon;
-    map[p.id] = chosen;
+  (diskPoints || []).forEach(function (p) {
+    if (!p || !p.id || suppressed[p.id]) return;
+    // Don't re-enable apps Luna explicitly marks hidden.
+    if (Object.prototype.hasOwnProperty.call(visible,p.id)) {
+      if (p._hidden || p._service) return;
+      var current = map[p.id], copy = {}, key;
+      for (key in current) if (Object.prototype.hasOwnProperty.call(current,key)) copy[key] = current[key];
+      // Preserve readable disk icons when Luna supplies icon://, URLs or empty data.
+      if (isFile(p.largeIcon)) copy.largeIcon = p.largeIcon;
+      if (isFile(p.icon)) copy.icon = p.icon;
+      map[p.id] = copy;
+    } else if (isUserFacing(p,false)) {
+      visible[p.id] = true;
+      map[p.id] = p;
+      order.push(p.id);
+    }
   });
   return order.map(function (id) { return map[id]; });
 }
@@ -139,8 +171,8 @@ function findLauncherDir() {
 function listPoints() {
   var diskPoints = fromDisk(), lunaPoints = fromLuna(diskPoints.length > 0);
   var merged = mergePoints(lunaPoints, diskPoints);
-  console.error('App discovery: Luna ' + lunaPoints.length + ', local packages ' +
-    diskPoints.length + ', combined ' + merged.length + '.');
+  console.error('App discovery: Luna ' + lunaPoints.length + ', installed packages ' +
+    diskPoints.length + ', user-facing apps ' + merged.length + '.');
   return { points: merged, source: 'Luna+disk' };
 }
 

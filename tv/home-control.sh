@@ -24,6 +24,7 @@ case "$action" in
     [ -f "$FLAG" ] && echo "Home replacement ENABLED" || echo "Home replacement DISABLED"
     hook_installed && echo "LG Input Hook installed (must be opened once)" || echo "LG Input Hook absent (watcher fallback only)"
     [ -f "$BACKUP" ] && echo "Previous Home mapping backup exists" || echo "No saved Home mapping backup"
+    /usr/bin/node "$DATA/keymap.js" status "$HOOK_CFG" "$BACKUP" "$KEY" "$APP_ID" "$CMD" 2>/dev/null || true
     exit 0 ;;
   enable)
     [ -f "$DATA/homewatch.js" ] && [ -f "$DATA/keymap.js" ] || {
@@ -43,6 +44,28 @@ case "$action" in
     echo "Enabled: boot startup + Home key hook/watcher; LG Home is retained for rollback."
     echo "Restore with: sh $DATA/home-control.sh disable"
     ;;
+  rebind)
+    # Manual recovery only; never silently take ownership of another app's Home binding.
+    # keymap.js archives both the previous backup and the current Home action.
+    [ -f "$DATA/keymap.js" ] && [ -f "$DATA/homewatch.js" ] && [ -f "$DATA/boot.sh" ] || {
+      echo "Infiniti Home control files incomplete. Re-run the installer first." >&2; exit 1;
+    }
+    launcher_installed || { echo "Infiniti TV Home IPK not installed." >&2; exit 1; }
+    hook_installed || { echo "LG Input Hook is absent. Use watcher fallback instead." >&2; exit 1; }
+    mkdir -p "$(dirname "$HOOK_CFG")"
+    /usr/bin/node "$DATA/keymap.js" rebind "$HOOK_CFG" "$BACKUP" "$KEY" "$APP_ID" "$CMD" --confirm-rebind
+    # The installer may have exited before registering the boot service.
+    if [ -d /var/lib/webosbrew/init.d ]; then
+      cp "$DATA/boot.sh" /var/lib/webosbrew/init.d/lg-tv-vibehack
+      chmod +x /var/lib/webosbrew/init.d/lg-tv-vibehack
+    fi
+    touch "$FLAG"
+    if ! ps | grep '[h]omewatch.js' | grep -v grep >/dev/null 2>&1; then
+      nohup setsid /usr/bin/node "$DATA/homewatch.js" >> /tmp/lg-tv-vibehack.log 2>&1 < /dev/null &
+    fi
+    echo "Home key recovery applied. Previous mapping backed up. Open LG Input Hook and reboot."
+    echo "Rollback: sh $DATA/home-control.sh disable"
+    ;;
   disable)
     # Never stop the fallback watcher before the original key mapping is restored.
     if [ -f "$HOOK_CFG" ] || [ -f "$BACKUP" ]; then
@@ -55,5 +78,5 @@ case "$action" in
     pkill -f "$DATA/homewatch.js" 2>/dev/null || true
     echo "Home replacement disabled. Restart LG Input Hook if the previous mapping is cached."
     ;;
-  *) echo "Usage: sh $0 enable|disable|status" >&2; exit 2 ;;
+  *) echo "Usage: sh $0 enable|rebind|disable|status" >&2; exit 2 ;;
 esac

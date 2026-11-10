@@ -46,4 +46,16 @@ assert.ok(/translateX\(/.test(app),'Single app row must scroll horizontally');
 assert.ok(/background:rgba\(12,22,33,\.13\)/.test(css),
   'Weather cards must remain translucent, not opaque');
 assert.ok(/body\.ai-disabled #btnAI/.test(css),'AI must disappear from Home when disabled');
-console.log('Legacy LG TV layout, single app row, transparent weather and AI visibility passed.');
+assert.ok(/var TILE_W = Math.max\(86, Math.min\(146,/.test(app),
+  'App icons must use compact 86–146px sizing');
+assert.ok(/var DOCK_TOP = 1030 - TILE_H - 34;/.test(app),
+  'Single app row must be placed near bottom, above the TV overscan');
+assert.ok(/band.style.display = 'none'/.test(app),
+  'Opaque dock background must be hidden');
+assert.ok(/item.card.style.background = 'transparent'/.test(app),
+  'Per-app inline background must not obscure the wallpaper');
+assert.ok(/#dockBand, body.theme-ocean #dockBand, body.theme-amber #dockBand/.test(css),
+  'Transparent dock must also override theme backgrounds');
+assert.ok(/\.item\.dock \.name \{[\s\S]*?display:block/.test(css),
+  'Compact dock must still show readable app labels');
+console.log('LG TV 1080p/720p: compact transparent dock near bottom, installed app row and AI settings passed.');

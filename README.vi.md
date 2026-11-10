@@ -529,3 +529,27 @@ Mở **Tùy chỉnh** (hoặc nhấn phím đỏ 403 nếu remote hỗ trợ). H
 Thanh thời tiết có **3 thẻ** cho hôm nay, ngày mai, ngày kia, gồm điều kiện thời tiết, nhiệt độ cao/thấp và xác suất mưa. Lựa chọn khu vực và giao diện được lưu bằng localStorage trong ứng dụng, không cần root. Trên TV cũ, nên chọn **Hiệu ứng chuyển động: Giảm** khi thấy giật hình. Khi dùng bàn phím ảo LG ở ô tìm kiếm, nhấn OK để bắt đầu tìm; chọn kết quả bằng remote. Các lựa chọn trên TV có thể ưu tiên hơn vị trí thời tiết đã lưu từ trình cài root. Nếu xóa dữ liệu ứng dụng, thiết lập riêng trên TV sẽ mất.
 
 **Giới hạn nghiệm thu:** kiểm thử mã nguồn và CSS không thay thế thử thực tế trên TV LG. Trước khi phát hành chính thức, kiểm tra 1920×1080, phím Back, tìm khu vực, chuyển trang, vỡ dòng tiếng Việt, chế độ giảm chuyển động và khôi phục Home.
+
+## Cập nhật v1.5.1: Launcher mặc định, ứng dụng và AI
+
+- **Chỉ một hàng ứng dụng:** nhấn trái/phải trên remote để cuộn theo chiều ngang; toàn bộ ứng dụng được tìm thấy vẫn có mặt. Cuối hàng có nút chỉnh kích thước ô và sắp xếp.
+- **Trong suốt:** ba thẻ dự báo thời tiết dùng nền kính gần như trong suốt và chữ có bóng để dễ đọc trên hình nền. webOS 3.x không hỗ trợ blur CSS đầy đủ, nên hiệu ứng có fallback nhẹ.
+- **Bật/tắt AI:** Tùy chỉnh → Trợ lý AI. Khi tắt, nút AI trên Home bị ẩn, micro và yêu cầu AI sẽ không sử dụng. Token không được lưu.
+- **Nhận diện đủ gói ứng dụng:** script root `tv/sync.js` tổng hợp launchpoints và `appinfo.json` từ thư mục cài trên TV; icon thiếu dùng icon launcher mặc định; Home Watcher đồng bộ định kỳ nếu LG không phát sự kiện.
+- **Home:** installer trên TV root tự gắn nút Home (mã 773) của LG Input Hook bằng hành động Execute, khởi động Infiniti khi bật TV, có dự phòng Home Watcher. **LG Home không bị xóa**, nên có thể hoàn tác an toàn. LG Input Hook phải được mở ít nhất một lần để hoạt động.
+
+Cài/update đầy đủ phần trên TV root sau khi bản phát hành mới có sẵn:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh | sh
+reboot
+```
+
+Lệnh này phải chạy trong SSH shell **root trên TV**, không chạy trên Windows. Chỉ cài file `.ipk` bằng webOS CLI **không cập nhật** Home Watcher, LG Input Hook hay bộ đồng bộ gói ứng dụng. Cách khôi phục Home LG:
+
+```sh
+sh /home/root/lg-tv-vibehack/home-control.sh disable
+reboot
+```
+
+**Không được xóa thư mục LG Home hệ thống.** Nếu firmware không hỗ trợ keyhook hoặc phím Home dùng mã khác, LG Home có thể xuất hiện thoáng qua trước khi watcher mở Infiniti TV Home; kiểm tra log trong LG Input Hook để xác nhận mã phím đúng.

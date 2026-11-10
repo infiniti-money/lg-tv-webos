@@ -1,16 +1,24 @@
 #!/usr/bin/env node
 'use strict';
 var assert = require('assert');
-var p = require('../tv/homewatch.js').shouldRedirect;
-assert.strictEqual(p('org.webosbrew.inputhook', true, 0, true), true, 'Input Hook at real boot');
-assert.strictEqual(p('org.webosbrew.inputhook', true, 0, false), false, 'restarting watcher must not hijack Input Hook');
-assert.strictEqual(p('org.webosbrew.hbchannel', true, 10, true), true, 'Homebrew at boot');
-assert.strictEqual(p('com.webos.app.livetv', true, 30, true), true, 'Live TV at boot');
-assert.strictEqual(p('org.webosbrew.inputhook', false, 100, true), false, 'never hijack Input Hook later');
-assert.strictEqual(p('com.webos.app.livetv', false, 100, true), false, 'never hijack Live TV later');
-assert.strictEqual(p('org.webosbrew.inputhook', true, 91000, true), false, 'boot grace expires');
-assert.strictEqual(p('com.webos.app.home', false, 999999, false), true, 'LG Home always redirects');
-assert.strictEqual(p('com.infinitimoney.tvhome', true, 0, true), false, 'do not loop self');
-assert.strictEqual(p('com.netflix.app', true, 0, true), false, 'never hijack third-party app');
-assert.strictEqual(p('com.webos.app.home', false, 999999, true), true, 'LG Home in boot mode');
-console.log('Home watcher policy tests passed.');
+var fs = require('fs');
+var source = fs.readFileSync('tv/homewatch.js','utf8');
+var policy = require('../tv/homewatch.js').shouldRedirect;
+['com.webos.app.home','org.webosbrew.inputhook','org.webosbrew.hbchannel',
+ 'com.webos.app.livetv','com.netflix.app','com.infinitimoney.tvhome'].forEach(function(id) {
+  [true,false].forEach(function(boot) {
+    [true,false].forEach(function(initial) {
+      assert.strictEqual(policy(id,initial,0,boot),false,
+        'Never hijack '+id+' (boot='+boot+', initial='+initial+')');
+    });
+  });
+});
+assert.strictEqual(source.indexOf('applicationManager/launch'),-1,
+  'App-list watcher must never launch another app');
+assert.strictEqual(source.indexOf('getForegroundAppInfo'),-1,
+  'App-list watcher must never subscribe/poll foreground to redirect it');
+assert.strictEqual(source.indexOf('com.webos.app.home'),source.lastIndexOf('com.webos.app.home'),
+  'LG Home is mentioned only in the safety comment, not a conditional redirect');
+assert.ok(source.indexOf('listLaunchPoints')>=0,
+  'Keep app-list change discovery independent of UI');
+console.log('Safe Home watcher: no foreground hijack at boot/wake, including --boot mode.');

@@ -938,7 +938,17 @@
   window.INFINITI_LAUNCHER_LAYOUT_REFRESH = function () {
     cachedHeaderBottom = null;
   };
-  window.INFINITI_CUSTOMIZE_CLOSED = function () { focusPill(pills.length - 1); };
+  function resetDialogOk() {
+    // The dialog captures the OK keyup, so do not leave the launcher stuck in key-repeat mode.
+    okDown = false;
+    if (okTimer) { clearTimeout(okTimer); okTimer = null; }
+  }
+  window.INFINITI_CUSTOMIZE_CLOSED = function () {
+    resetDialogOk(); focusPill(pills.length - 1);
+  };
+  window.INFINITI_AI_CLOSED = function () {
+    resetDialogOk(); focusPill(4);
+  };
   window.INFINITI_WALLPAPER_OPEN = showWall;
   build();
   updateClock();

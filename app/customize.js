@@ -348,8 +348,9 @@
     panel.classList.add('hidden');
     if (typeof root.INFINITI_CUSTOMIZE_CLOSED === 'function') root.INFINITI_CUSTOMIZE_CLOSED();
   }
-  function visibleButtons() {
-    var all = panel.querySelectorAll('button'), result = [];
+  function visibleControls() {
+    // Inputs must participate in remote navigation, not only Magic Remote pointer clicks.
+    var all = panel.querySelectorAll('button, input'), result = [];
     for (var i = 0; i < all.length; i++) {
       if (all[i].offsetWidth > 0 && all[i].offsetHeight > 0) result.push(all[i]);
     }
@@ -371,9 +372,13 @@
     if (active === search) {
       if (code === 461 || code === 27) { stopKey(e); if (e.type === 'keydown') hide(); return; }
       if (code === 13) { stopKey(e); if (e.type === 'keydown') searchRegion(); return; }
-      if (code === 40 && e.type === 'keydown') {
-        var firstResult = $('customizeWeatherResults').querySelector('button');
-        if (firstResult) { stopKey(e); firstResult.focus(); return; }
+      if ((code === 40 || code === 38) && e.type === 'keydown') {
+        stopKey(e);
+        var target = code === 40 ?
+          ($('customizeWeatherResults').querySelector('button') || $('customizeWeatherSearchBtn')) :
+          $('customizeWeatherSearchBtn');
+        if (target) target.focus();
+        return;
       }
       e.stopPropagation();
       if (e.stopImmediatePropagation) e.stopImmediatePropagation();
@@ -382,7 +387,7 @@
     stopKey(e);
     if (e.type === 'keyup') return;
     if (code === 461 || code === 27) { hide(); return; }
-    var buttons = visibleButtons(), i = buttons.indexOf(active);
+    var buttons = visibleControls(), i = buttons.indexOf(active);
     if (code === 13) { if (active && typeof active.click === 'function') active.click(); return; }
     if (code === 37 || code === 38 || code === 39 || code === 40) {
       var step = code === 37 || code === 38 ? -1 : 1;

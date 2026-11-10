@@ -1,3 +1,30 @@
+# Phát hành Infiniti TV Home v1.5.4
+
+**Gộp biểu tượng lớn bo tròn, hình nền trong Tùy chỉnh và cập nhật ứng dụng tự động có xác minh.**
+
+- Biểu tượng dock một hàng lớn hơn khoảng 10–12%, bo góc mềm 24px, giữ nền trong suốt và điều hướng remote.
+- Hình nền chuyển về **Tùy chỉnh → Giao diện → Hình nền**. Mã QR mở trang điện thoại để chọn ảnh, ảnh từ USB, hoặc xóa hình nền. Không còn nút hình ảnh rời trên thanh trên.
+- TV đã root có thể tự nhận bản mới từ GitHub Releases sau khi bật rõ ràng tùy chọn `--auto-update`. Bộ cập nhật kiểm tra mỗi 12 giờ, chờ 20 phút sau khi bật nguồn, kiểm SHA-256 và chỉ cài khi ứng dụng Infiniti không ở foreground, không có chiếm quyền Home LG; hoãn bản major khác.
+- Tùy chọn `--wallpaper-service` chỉ bật dịch vụ hình nền qua điện thoại, không bật cập nhật tự động.
+- **Bảo vệ TV:** vẫn giữ Home LG, không tự mở Infiniti lúc khởi động hoặc standby/wake; `safe-recovery.sh` có thể tắt luôn dịch vụ cập nhật mới. Tự cập nhật chỉ thay IPK, không ghi đè các script root.
+
+**Lưu ý:** CI đã được bổ sung kiểm thử để hạn chế lỗi; chưa xác nhận trên TV LG thực tế từng đen màn hình sau Power. Chỉ bật dịch vụ nền sau ít nhất hai chu kỳ nguồn/standby/wake bình thường. File IPK tải riêng không kích hoạt updater: cần cập nhật root tools bằng trình cài đặt từ `main`.
+
+Sau khi TV ổn định, đăng nhập SSH root:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh -o /tmp/infiniti-install.sh
+sh /tmp/infiniti-install.sh --auto-update
+```
+
+Xem trạng thái: `sh /home/root/lg-tv-vibehack/auto-update.sh --status`.
+
+Bản phát hành: https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.5.4
+
+---
+
+## Lịch sử — bản v1.5.3
+
 # Phát hành Infiniti TV Home v1.5.3 — Chế độ an toàn cho LG webOS 3.x
 
 Phiên bản **v1.5.3** tập trung loại bỏ tranh chấp giao diện Home trên LG webOS 3.x đã root, đặc biệt khi nhấn Power/đánh thức TV. **Chưa được chứng nhận thực nghiệm trên TV từng gặp màn hình đen**: kiểm thử GitHub Actions không tương đương kiểm thử nguồn, standby, remote và HDMI thực tế.

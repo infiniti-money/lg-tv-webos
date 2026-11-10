@@ -6,7 +6,7 @@
 
 *LG TV-vibehack · webOS-vibehack · LG-vibehack: launcher thay thế màn hình Home đầy quảng cáo của LG.*
 
-[![Release](https://img.shields.io/github/v/release/hoangvya19/lg-tv-webos-vibehack?style=flat-square)](https://github.com/infiniti-money/lg-tv-webos/releases)
+[![Release](https://img.shields.io/github/v/release/infiniti-money/lg-tv-webos?style=flat-square)](https://github.com/infiniti-money/lg-tv-webos/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![webOS](https://img.shields.io/badge/webOS-6%2B-a50034?style=flat-square)](#tv-đã-thử-nghiệm)
 [![Root](https://img.shields.io/badge/root-optional-555?style=flat-square)](#root-hay-không-root)
@@ -271,8 +271,11 @@ Bình thường. webOS mở màn hình của nó trước, launcher sẽ chiếm
 <summary><b>Bấm Home không có phản ứng gì</b></summary>
 
 LG Input Hook đã bắt được phím nhưng lệnh lỗi. Kiểm tra:
-`cat /home/root/.config/lginputhook/keybinds.json` phải có
-`/home/root/lg-tv-vibehack/golauncher.sh`. Chạy lại lệnh cài để sửa.
+Chạy `cat /home/root/.config/lginputhook/keybinds.json` và kiểm tra phím Home `773` có
+`{"action":"launch","id":"com.infinitimoney.tvhome"}`. Nếu chưa đúng, hãy xem
+`/home/root/lg-tv-vibehack/home-key-backup.json` trước khi thử lại. Trình quản lý phím Home có thể
+khôi phục lần bật bị gián đoạn, nhưng sẽ không ghi đè thay đổi của ứng dụng khác.
+Kiểm tra thêm bằng `sh /home/root/lg-tv-vibehack/home-control.sh status`.
 </details>
 
 <details>

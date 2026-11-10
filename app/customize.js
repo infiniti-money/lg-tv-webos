@@ -176,7 +176,8 @@
       root.INFINITI_LAUNCHER_LAYOUT_REFRESH();
   }
   function applyAI() {
-    document.body.classList.toggle('ai-disabled', !getAIEnabled());
+    if (getAIEnabled()) document.body.classList.remove('ai-disabled');
+    else document.body.classList.add('ai-disabled');
     if (!getAIEnabled() && typeof root.INFINITI_AI_SET_ENABLED === 'function')
       root.INFINITI_AI_SET_ENABLED(false);
     if (typeof root.INFINITI_AI_VISIBILITY_CHANGED === 'function')

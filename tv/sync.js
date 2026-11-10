@@ -117,14 +117,20 @@ function isUserFacing(p, fromLuna) {
   if (/(^|[.])service([.]|$)/i.test(p.id) || /(^|[.])daemon([.]|$)/i.test(p.id)) return false;
   if (p.hidden === true || p.visible === false || p._hidden === true || p._service === true) return false;
   if (fromLuna) return true; // Luna is the actual on-screen app catalog.
-  if (!p._sourceDir || p._sourceDir === '/usr/palm/applications') return false;
+  if (p._sourceDir !== '/media/developer/apps/usr/palm/applications' &&
+      p._sourceDir !== '/media/cryptofs/apps/usr/palm/applications') return false;
   // An installed user app needs an entry point, human-readable title and icon.
   // An IPK without those is likely a service/companion, not an app tile.
   return p._hasMain === true && p._hasTitle === true &&
     !!(p.icon || p.largeIcon);
 }
 function mergePoints(lunaPoints, diskPoints) {
-  var map = {}, order = [], visible = {};
+  var map = {}, order = [], visible = {}, suppressed = {};
+  // Honor explicit Luna hide flags before considering the fallback appinfo.
+  (lunaPoints || []).forEach(function (p) {
+    if (p && p.id && (p.hidden === true || p.visible === false))
+      suppressed[p.id] = true;
+  });
   (lunaPoints || []).forEach(function (p) {
     if (!isUserFacing(p, true) || Object.prototype.hasOwnProperty.call(visible,p.id)) return;
     visible[p.id] = true;
@@ -132,7 +138,7 @@ function mergePoints(lunaPoints, diskPoints) {
     order.push(p.id);
   });
   (diskPoints || []).forEach(function (p) {
-    if (!p || !p.id) return;
+    if (!p || !p.id || suppressed[p.id]) return;
     // Don't re-enable apps Luna explicitly marks hidden.
     if (Object.prototype.hasOwnProperty.call(visible,p.id)) {
       if (p._hidden || p._service) return;

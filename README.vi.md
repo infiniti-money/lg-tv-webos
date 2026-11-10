@@ -39,7 +39,7 @@
 
 - **Giao diện gọn kiểu tvOS:** hàng dock ghim app, lưới app, và một khung kính lướt mượt giữa các ô.
 - **Nút Home thật** (TV đã root, kích hoạt thủ công): chỉ cấu hình sau khi xác minh TV tắt/bật nguồn bình thường; không can thiệp vào Home LG theo mặc định.
-- **Đổi hình nền bằng điện thoại** (TV đã root): bấm nút hình ảnh, quét mã QR, chọn ảnh rồi cắt
+- **Đổi hình nền trong Tùy chỉnh → Giao diện → Hình nền** (TV đã root, cần bật dịch vụ hình nền): quét mã QR, chọn ảnh rồi cắt
   trong khung đúng tỉ lệ TV, có đánh dấu chỗ đồng hồ và hàng app sẽ nằm. Lấy ảnh từ USB cắm TV cũng được.
 - **Thời tiết** theo thành phố, miễn phí, không cần tài khoản ([Open-Meteo](https://open-meteo.com)).
   Đổi thành phố ngay trên trang điện thoại đó, gõ tiếng Việt có dấu được.
@@ -107,6 +107,32 @@ sh /tmp/infiniti-install.sh --enable-home
 Chỉ chọn thêm \`--rebind-home\` nếu nhận lỗi ánh xạ và biết rõ ánh xạ hiện có cần thay. Các cờ này **không** bật ứng dụng ở thời điểm boot/wake. Cấu hình Input Hook phải được kiểm tra trên remote và lưu trong giao diện của LG Input Hook.
 
 Muốn khôi phục chế độ an toàn: \`sh /home/root/lg-tv-vibehack/safe-recovery.sh\`. Giữ nguyên LG Home như phương án cứu hộ.
+
+## V1.5.4 — Biểu tượng lớn, hình nền trong Tùy chỉnh và tự cập nhật có kiểm soát
+
+- **Giao diện:** dock vẫn một hàng trong suốt, biểu tượng ứng dụng tăng khoảng 10–12% và bo tròn 24px; phím điều hướng TV vẫn cuộn ngang.
+- **Hình nền:** vào **Tùy chỉnh → Giao diện → Hình nền**, nhấn **Lấy mã QR hình nền**, dùng điện thoại cùng Wi-Fi chọn ảnh, ảnh USB hoặc xoá ảnh. Đã bỏ nút hình ảnh riêng trên thanh trên.
+- **Cập nhật tự động:** TV đã root có thể nhận bản mới từ GitHub Releases, tải và kiểm SHA-256 trước khi cài. Đây là **tính năng cần bật một lần**, không tự chạy mặc định trên TV từng gặp lỗi màn hình đen. Chỉ cài khi Infiniti không ở foreground, không bật thay thế Home và đã qua 20 phút kể từ lúc TV khởi động. Kiểm tra khoảng 12 giờ/lần. Bản nâng cấp khác phiên bản major được giữ lại để người dùng kiểm tra.
+- **An toàn LG Home:** dịch vụ không khởi chạy Infiniti, không sửa phím Home, không thay script root tự động. Bản IPK riêng **không thể cập nhật script root cũ** trên TV.
+
+### Kích hoạt dịch vụ hình nền và tự cập nhật sau khi TV ổn định
+
+Chỉ khi TV đã khôi phục Home LG và vượt qua ít nhất **hai lần tắt/bật nguồn bình thường**, đăng nhập SSH root và chạy:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh -o /tmp/infiniti-install.sh
+sh /tmp/infiniti-install.sh --auto-update
+```
+
+Nếu muốn chỉ dùng mã QR hình nền, chưa cho phép tự cập nhật, dùng `--wallpaper-service` thay cho `--auto-update`. Không thêm `--enable-home` khi TV còn lỗi Power/standby.
+
+Xem trạng thái bản cập nhật tự động:
+
+```sh
+sh /home/root/lg-tv-vibehack/auto-update.sh --status
+```
+
+Nếu TV gặp lỗi, chạy `sh /home/root/lg-tv-vibehack/safe-recovery.sh` để vô hiệu hóa dịch vụ cùng các script khởi động tùy chỉnh (không xóa Home LG). Mã trạng thái `RECOVERY_PARTIAL` có nghĩa phải kiểm tra thêm ánh xạ Input Hook, không coi là đã khôi phục hoàn toàn.
 
 ## Root hay không root?
 
@@ -226,8 +252,7 @@ Trên Mac: `TV_HOST=192.168.1.50 ./home-watch-mac.sh`.
 
 ### TV đã root
 
-**Dễ nhất: dùng điện thoại.** Trên launcher, bấm lên nút hình ảnh (giữa nút mạng và Cài đặt) rồi
-bấm OK. Quét mã QR bằng camera điện thoại (điện thoại phải chung Wi-Fi với TV). Trang mở ra cho phép:
+**Dễ nhất: dùng điện thoại.** Trên Infiniti TV Home, mở **Tùy chỉnh → Giao diện → Hình nền**. Quét mã QR bằng camera điện thoại (điện thoại phải chung Wi-Fi với TV). Trang mở ra cho phép:
 
 - **Chọn ảnh** trong điện thoại, rồi kéo và chụm 2 ngón để canh trong khung 16:9. Lưới và các ô
   viền nét đứt cho biết đồng hồ, các nút và hàng app sẽ che chỗ nào.
@@ -332,7 +357,7 @@ Kiểm tra thêm bằng `sh /home/root/lg-tv-vibehack/home-control.sh status`.
 </details>
 
 <details>
-<summary><b>Bấm nút hình ảnh báo "Trang đổi hình nền chưa chạy"</b></summary>
+<summary><b>Trong Tùy chỉnh → Hình nền không hiển thị mã QR</b></summary>
 
 Trang này chạy khoảng 30 giây sau khi bật TV, đợi chút rồi thử lại. Vẫn lỗi thì kiểm tra:
 `ps -ef | grep wallpaper-server` phải có một tiến trình `node`, còn `tail -30 /tmp/lg-tv-vibehack.log`
@@ -342,7 +367,7 @@ cho biết lý do. Chạy lại lệnh cài sẽ khởi động lại nó.
 <details>
 <summary><b>Điện thoại không mở được trang từ mã QR</b></summary>
 
-Điện thoại phải chung mạng với TV (không dùng 4G). Nếu IP của TV đổi, bấm lại nút hình ảnh để có
+Điện thoại phải chung mạng với TV (không dùng 4G). Nếu IP của TV đổi, bấm **Lấy mã QR hình nền** trong Tùy chỉnh để có
 mã QR mới. Mẹo: đặt IP cố định cho TV trong router (DHCP reservation).
 </details>
 
@@ -533,14 +558,14 @@ Nhấn Khôi phục ứng dụng mặc định để xóa các lựa chọn ẩn
 **Tùy biến giao diện:** trong tab Giao diện & phông chữ, chọn Đêm đen,
 Đại dương, Ánh vàng. Phông chữ có Lexend (đã đóng gói và có dấu tiếng Việt),
 Arial, Georgia; bật hoặc tắt cỡ chữ lớn và thanh dự báo 3 ngày.
-Người dùng có thể thay hình nền qua trang điện thoại của nút Hình nền.
+Người dùng có thể thay hình nền qua mã QR trong Tùy chỉnh → Giao diện → Hình nền.
 Lựa chọn được lưu trong localStorage của riêng ứng dụng để giữ lại sau reboot
 (trừ khi bộ nhớ ứng dụng bị xóa).
 
 **Dự báo 3 ngày:** dùng Open-Meteo Forecast API với `forecast_days=3`,
 các trường `daily.weather_code`, `temperature_2m_max`, `temperature_2m_min`,
 `precipitation_probability_max`. Chọn thành phố bằng trình cài `--city` hoặc
-trang điện thoại hình nền. Thanh dự báo tự ẩn khi chưa bật thời tiết, và
+trang điện thoại hình nền trong Tùy chỉnh. Thanh dự báo tự ẩn khi chưa bật thời tiết, và
 hiển thị trạng thái thiếu dữ liệu nếu API không trả về danh sách hợp lệ.
 Nguồn: https://open-meteo.com/en/docs
 
@@ -567,7 +592,7 @@ Chưa phát hành chính thức trước khi kiểm tra các phần này và rol
 File IPK chỉ chứa giao diện; chức năng root (Home Watcher, Input Hook) phải
 được cài riêng bằng `install.sh` sau khi tạo Release và SHA-256 hợp lệ.
 
-Trong mục **Tùy chỉnh > Giao diện & phông chữ**, nút **Đổi thành phố / Hình nền** mở mã QR để thiết lập thành phố dự báo thời tiết hoặc hình nền bằng điện thoại (yêu cầu máy chủ hình nền trên TV root đang chạy).
+Trong **Tùy chỉnh → Giao diện → Hình nền**, TV hiện mã QR để chọn, thay hoặc xóa ảnh từ điện thoại/USB (cần dịch vụ nền trên TV root). Thiết lập địa điểm thời tiết nằm trong mục **Thời tiết** riêng.
 ## Cài đặt giao diện v1.5.0 trên TV
 
 Mở **Tùy chỉnh** (hoặc nhấn phím đỏ 403 nếu remote hỗ trợ). Hộp cài đặt có bốn trang:

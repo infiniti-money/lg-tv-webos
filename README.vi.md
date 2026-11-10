@@ -38,14 +38,14 @@
 **Tương thích dữ liệu cũ:** Các đường dẫn trên TV dạng `/home/root/lg-tv-vibehack/` được giữ nguyên có chủ đích để không làm hỏng cấu hình, hình nền, ánh xạ Home và quá trình cập nhật của bản đã cài. Đây không phải địa chỉ tải phần mềm từ dự án cũ.
 
 - **Giao diện gọn kiểu tvOS:** hàng dock ghim app, lưới app, và một khung kính lướt mượt giữa các ô.
-- **Nút Home thật** (TV đã root): bấm Home trên remote là vào launcher, không qua Home của LG.
+- **Nút Home thật** (TV đã root, kích hoạt thủ công): chỉ cấu hình sau khi xác minh TV tắt/bật nguồn bình thường; không can thiệp vào Home LG theo mặc định.
 - **Đổi hình nền bằng điện thoại** (TV đã root): bấm nút hình ảnh, quét mã QR, chọn ảnh rồi cắt
   trong khung đúng tỉ lệ TV, có đánh dấu chỗ đồng hồ và hàng app sẽ nằm. Lấy ảnh từ USB cắm TV cũng được.
 - **Thời tiết** theo thành phố, miễn phí, không cần tài khoản ([Open-Meteo](https://open-meteo.com)).
   Đổi thành phố ngay trên trang điện thoại đó, gõ tiếng Việt có dấu được.
 - **Tiếng Việt hoặc tiếng Anh**, đồng hồ 12 h hoặc 24 h.
 - **4 đến 10 ô mỗi hàng:** bấm cây bút cạnh hàng dock rồi chọn số.
-- **Tự mở khi bật TV** (TV đã root), kể cả khi TV bật lên vào truyền hình.
+- **Khởi động an toàn:** không tự chiếm màn hình lúc bật nguồn hoặc thức dậy từ chế độ chờ. Đã loại bỏ tự mở launcher ở thời điểm này để tránh lỗi màn hình đen trên webOS 3.x.
 - **Danh sách app tự cập nhật** (TV đã root): cài hay xoá app, khởi động lại TV là launcher tự cập nhật.
 - **Sắp xếp app dễ dàng:** bấm cây bút cạnh dock → **Sắp xếp ứng dụng**, bấm vào app, trỏ tới chỗ mới
   rồi bấm lần nữa. Hoặc giữ OK trên 1 ô (dùng được cả con trỏ lẫn phím mũi tên).
@@ -55,6 +55,58 @@
   <img src="docs/media/home-button.gif" alt="Bấm Home vào thẳng launcher" width="420">
   <img src="docs/media/wallpaper-weather.jpg" alt="Hình nền và thời tiết" width="420">
 </p>
+
+
+## Cứu hộ màn hình đen khi bật nguồn — ưu tiên cao
+
+Áp dụng với các TV LG đã root từng chạy Infiniti TV Home hoặc script thí nghiệm /var/lib/webosbrew/init.d/97-homekey có sleep 25. Các nguyên nhân có thể: nhiều chương trình cùng mở Home khi bật TV; script cũ chạy sau 25 giây; ánh xạ LG Input Hook chưa được khôi phục. Đây là biện pháp loại trừ tác nhân phần mềm, **không khẳng định khắc phục được lỗi phần cứng**.
+
+Bộ cài từ commit sửa lỗi này chạy **chế độ an toàn mặc định**: giải giáp script autostart cũ, bảo toàn LG Home, và chỉ cài app (không mở ngay, không bật Home key, không khởi chạy lại khi TV thức dậy).
+
+### Cứu hộ từ Windows PowerShell 7 — không dán lệnh Linux vào PowerShell
+
+Nếu TV còn mở SSH trên IP \`192.168.2.154\` và đã có khóa \`$env:USERPROFILE\.ssh\infiniti_tv_rsa\`, chạy **một dòng** sau tại dấu nhắc \`PS C:\...>\`:
+
+\`\`\`powershell
+$p = Join-Path $env:TEMP 'recover-lg-tv.ps1'; Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/scripts/recover-lg-tv.ps1' -OutFile $p; pwsh -NoProfile -File $p -TV 192.168.2.154
+\`\`\`
+
+Nên xem nội dung file GitHub trước khi chạy. Công cụ tải script cứu hộ và gửi tới TV bằng \`ssh.exe -T -i ... sh -s\` qua stdin; không yêu cầu PowerShell phân tích cú pháp Linux. **Không tự reboot**. Khi thấy \`RECOVERY_COMPLETE\`, kiểm tra cảnh báo, rồi mới chạy:
+
+\`\`\`powershell
+ssh.exe -i "$env:USERPROFILE\.ssh\infiniti_tv_rsa" root@192.168.2.154 reboot
+\`\`\`
+
+Nếu PowerShell in \`>>\` nghĩa là còn đang nhập lệnh nhiều dòng: nhấn Ctrl+C rồi dán chính xác dòng lệnh PowerShell trên. Tên khóa, IP có thể thay đổi trên TV khác: \`-TV x.x.x.x -KeyPath C:\...\`.
+
+### Cứu hộ trực tiếp trong SSH root
+
+\`\`\`sh
+curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/tv/safe-recovery.sh -o /tmp/infiniti-safe-recovery.sh
+sh /tmp/infiniti-safe-recovery.sh
+\`\`\`
+
+Bộ cứu hộ (idempotent):
+- Lưu log, bản sao keybinds và backup Home tại \`/home/root/infiniti-tv-recovery/<timestamp>/\`.
+- Chuyển \`lg-tv-vibehack\` và \`97-homekey\` ra khỏi \`/var/lib/webosbrew/init.d\` thay vì xóa.
+- Vô hiệu hóa \`home-enabled\`, \`home-event-device\`, \`boot-services-enabled\` trước khi cố phục hồi ánh xạ phím.
+- Ngừng Home watcher và event monitor; nếu keybind xung đột vẫn **không** kích hoạt lại launcher.
+- Chừa nguyên ứng dụng LG, dữ liệu Infiniti, Homebrew và SSH.
+
+Script \`97-homekey\` cũ có vòng lặp nền nên **phải khởi động lại một lần** để dừng tiến trình đã chạy trong bộ nhớ. Nếu TV không phản hồi SSH hoặc đen màn hình ngay cả khi đã tắt hết script, kiểm tra nguồn, tín hiệu, backlight và dịch vụ sửa chữa; không chạy factory reset SSH không xác minh hoặc xóa compositor.
+
+### Chỉ kích hoạt lại Home khi đã kiểm thử TV ổn định
+
+Sau 2 chu kỳ tắt/bật nguồn thành công, có thể *chủ động* chọn Home interception (vẫn giữ LG Home dự phòng):
+
+\`\`\`sh
+curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh -o /tmp/infiniti-install.sh
+sh /tmp/infiniti-install.sh --enable-home
+\`\`\`
+
+Chỉ chọn thêm \`--rebind-home\` nếu nhận lỗi ánh xạ và biết rõ ánh xạ hiện có cần thay. Các cờ này **không** bật ứng dụng ở thời điểm boot/wake. Cấu hình Input Hook phải được kiểm tra trên remote và lưu trong giao diện của LG Input Hook.
+
+Muốn khôi phục chế độ an toàn: \`sh /home/root/lg-tv-vibehack/safe-recovery.sh\`. Giữ nguyên LG Home như phương án cứu hộ.
 
 ## Root hay không root?
 
@@ -67,8 +119,8 @@ Cả hai đều dùng được. **Root cho trải nghiệm tốt hơn nhiều**,
 | Hình nền, thời tiết, ngôn ngữ, đồng hồ, số cột | ✅ | ✅ |
 | Đổi hình nền, thành phố thời tiết **bằng điện thoại** (mã QR) | ✅ | ❌ sửa `config.js` |
 | Cài bằng **1 lệnh**, không cần máy tính | ✅ | ❌ cần máy tính |
-| **Nút Home** mở launcher | ✅ | ❌ (dùng phím tắt số) |
-| Tự mở khi bật TV | ✅ | ❌ |
+| **Nút Home** mở launcher | ⚠️ cần bật thủ công sau khi nghiệm thu | ❌ (dùng phím tắt số) |
+| Tự mở khi bật TV | ❌ tạm tắt để bảo vệ khởi động | ❌ |
 | Danh sách app tự cập nhật | ✅ | ❌ phải chạy lại trình cài |
 | Dùng vĩnh viễn | ✅ | ⚠️ Developer Mode hết hạn, phải gia hạn |
 | Chặn quảng cáo, theo dõi của LG (app *Life's Good Without Spying*) | ✅ | ❌ |
@@ -96,8 +148,7 @@ Xem IP của TV: **Cài đặt → Mạng → (Wi-Fi hoặc Có dây) → Nâng 
 
 ### 2. (Tuỳ chọn) Cài LG Input Hook
 
-Muốn **nút Home** mở thẳng launcher thì cài **LG Input Hook** từ Homebrew Channel và mở nó 1 lần.
-Bỏ qua bước này vẫn cài được, chỉ là nút Home sẽ thoáng hiện Home LG rồi mới chuyển sang launcher.
+Muốn **nút Home** mở Infiniti, trước tiên phải kiểm tra TV ổn định sau ít nhất 2 lần tắt/bật nguồn. Sau đó mới cài **LG Input Hook**, mở một lần rồi chạy bộ cài với cờ `--enable-home`. Mặc định bộ cài **không thay thế phím Home** và không tự khởi động launcher. Nếu có script `97-homekey` cũ, phải sao lưu/vô hiệu hóa trước khi thử.
 
 ### 3. Chạy 1 lệnh
 
@@ -119,7 +170,7 @@ Dán lệnh này rồi Enter:
 curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh | sh
 ```
 
-Hiện chữ **Done** thì gõ `reboot`. Xong. 🎉
+Khi bộ cài báo **SAFE MODE**, hãy giữ Home LG là mặc định, kiểm tra TV hoạt động và tắt/bật nguồn hai lần. **Không bật Home replacement trước khi TV ổn định.**
 
 <details>
 <summary><b>Cài luôn hình nền, thời tiết và tiếng Việt trong 1 lệnh</b></summary>

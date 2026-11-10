@@ -76,7 +76,8 @@ try {
   assert.ok(only(path.join(temp,'boot.log')).indexOf('SAFE MODE')>=0);
   assert.ok(boot.indexOf('applicationManager/launch')<0,
     'boot script must never open a UI application');
-  assert.ok(boot.indexOf('homewatch.js')>=0 && boot.indexOf('"$DIR/homewatch.js" --boot')<0,
+  assert.ok(boot.indexOf('homewatch.js')<0 &&
+    boot.indexOf('"$DIR/homewatch.js" --boot')<0,
     'boot must not start old watcher/foreground hijack');
   assert.ok(boot.indexOf('home-event-monitor.js')<0,
     'boot must not start evdev monitor on power/wake');

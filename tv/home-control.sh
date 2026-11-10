@@ -83,27 +83,12 @@ case "$action" in
     echo "Rollback: sh $DATA/home-control.sh disable"
     ;;
   evdev-enable)
-    # Device should be verified from actual key codes first. This fallback
-    # observes the key; it does not consume/suppress LG's Home ribbon.
-    device="${2:-}"
-    case "$device" in
-      /dev/input/event[0-9]|/dev/input/event[0-9][0-9]) ;;
-      *) echo "Specify verified event device, e.g. /dev/input/event3" >&2; exit 2 ;;
-    esac
-    [ -c "$device" ] || { echo "Not a character input device: $device" >&2; exit 1; }
-    [ -f "$DATA/home-enabled" ] || { echo "Home replacement flag is disabled." >&2; exit 1; }
-    [ -f "$DATA/home-event-monitor.js" ] || {
-      echo "Missing event monitor; run the root installer to update helpers." >&2; exit 1;
-    }
-    if [ -e /var/lib/webosbrew/init.d/97-homekey ]; then
-      echo "Existing custom 97-homekey watcher detected. Back it up and disable it first to avoid duplicate launches." >&2
-      exit 1
-    fi
-    printf '%s\n' "$device" > "$DATA/home-event-device"
-    pkill -f "$DATA/home-event-monitor.js" 2>/dev/null || true
-    nohup setsid /usr/bin/node "$DATA/home-event-monitor.js" "$device" >> /tmp/infiniti-homeevent.log 2>&1 < /dev/null &
-    echo "Optional physical Home monitor active for $device."
-    echo "This overlays Infiniti after Home, but does not prevent LG Home from appearing."
+    # Disabled deliberately after real reports of LG blank-panel on standby.
+    # Monitoring EV_KEY cannot suppress LG's compositor Home ribbon. A former
+    # implementation could race with LG Input Hook and legacy 97-homekey.
+    echo "DISABLED FOR SAFETY: direct evdev Home watcher may race with LG on power/wake." >&2
+    echo "Use LG Home in safe mode; test any replacement on real TV after recovery." >&2
+    exit 2
     ;;
   evdev-disable)
     rm -f "$DATA/home-event-device"
@@ -127,5 +112,5 @@ case "$action" in
     fi
     echo "Home replacement disabled. Restart LG Input Hook if its old binding is cached."
     ;;
-  *) echo "Usage: sh $0 status|diagnose|safe-mode|enable|rebind|evdev-enable /dev/input/eventN|evdev-disable|disable" >&2; exit 2 ;;
+  *) echo "Usage: sh $0 status|diagnose|safe-mode|enable|rebind|evdev-disable|disable" >&2; exit 2 ;;
 esac

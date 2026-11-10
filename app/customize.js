@@ -380,8 +380,8 @@
         if (target) target.focus();
         return;
       }
-      e.stopPropagation();
-      if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+      // Normal characters, Backspace and left/right caret movement must reach
+      // the LG keyboard input. The launcher ignores them while this dialog is open.
       return;
     }
     stopKey(e);

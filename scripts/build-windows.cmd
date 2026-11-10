@@ -23,7 +23,7 @@ node.exe scripts\check-branding.js
 if errorlevel 1 exit /b 1
 if errorlevel 1 exit /b 1
 echo [2/4] Running offline tests...
-for %%F in (scripts\test-homewatch.js scripts\test-keymap.js scripts\test-lunar.js scripts\test-forecast.js scripts\test-customize.js scripts\test-app-structure.js) do (
+for %%F in (scripts\test-homewatch.js scripts\test-keymap.js scripts\test-lunar.js scripts\test-forecast.js scripts\test-customize.js scripts\test-app-structure.js scripts\test-settings-ui.js scripts\test-tv-layout.js) do (
   node.exe "%%F"
   if errorlevel 1 exit /b 1
 )

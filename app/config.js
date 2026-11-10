@@ -18,8 +18,8 @@ window.CONFIG = {
   // The Live TV app, offered at the end of the Inputs menu. Leave empty to omit.
   liveTvApp: 'com.webos.app.livetv',
 
-  // Tiles per row (3-10). The dock always has this many slots. Tiles resize automatically.
-  // On the TV, the pencil next to the dock changes it (that choice wins over this one).
+  // Icon-size setting (3–10): higher number means smaller dock icons.
+  // The dock is always a single horizontal row at the bottom of the TV.
   columns: 6,
 
   // 'en' or 'vi'

@@ -37,6 +37,19 @@ if [ -f /tmp/infiniti-homekey.log ]; then
 else
   echo "No /tmp/infiniti-homekey.log: no confirmed Execute invocation since boot."
 fi
+echo "-- Optional physical key fallback"
+if [ -f "$DATA/home-event-device" ]; then
+  echo "Enabled for: $(cat "$DATA/home-event-device")"
+  ps | grep '[h]ome-event-monitor.js' | grep -v grep || echo "Monitor not running"
+else
+  echo "Not enabled"
+fi
+if [ -e /var/lib/webosbrew/init.d/97-homekey ]; then
+  echo "WARNING: custom /var/lib/webosbrew/init.d/97-homekey still exists; avoid running two watchers"
+fi
+if [ -f /tmp/infiniti-homeevent.log ]; then
+  tail -n 15 /tmp/infiniti-homeevent.log
+fi
 echo "-- Watcher log"
 if [ -f /tmp/lg-tv-vibehack.log ]; then
   tail -n 30 /tmp/lg-tv-vibehack.log

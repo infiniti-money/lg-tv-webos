@@ -410,3 +410,37 @@ Updating only the IPK does not update root-side helper scripts. After publishing
 The root synchronizer now treats Luna's visible launchpoints as authoritative for system apps and includes only launchable, titled, icon-bearing apps installed in developer/cryptofs as fallback. Internal LG service packages no longer appear as launcher tiles just because they have `appinfo.json`. The single bottom dock uses small icons, text labels, no background panel, and a horizontal D-pad scroll. The pencil icon controls size rather than row count.
 
 When upgrading from a failed Home mapping: the installer refuses to overwrite an external Home key binding. After verifying the actual Home key code in LG Input Hook (normally 773), an **explicit** `--rebind-home` argument to the root installer backs up the currently active external binding AND the earlier backup before assigning Home to Infiniti; other keys are untouched. Use `home-control.sh disable` to restore the preceding mapping. Never delete LG's original Home app. IPK-only updates do not update root sidecars.
+
+
+## Black screen on power/wake: recover safely (webOS 3.x)
+
+If your rooted LG TV goes black after Power, or Infiniti opens about 25 seconds after Homebrew, first disable the previously installed auto-launch hooks. An experimental \`97-homekey\` startup loop can overlap with our old \`lg-tv-vibehack\` boot script and Input Hook. No factory reset is required to test this hypothesis. This procedure is reversible and preserves LG's native Home, application settings, and the SSH server.
+
+The installer now defaults to **LG-safe mode**. It does not register an automatic UI launch, hijack the TV on wake, or rewrite the Home key until \`--enable-home\` is selected intentionally. The boot helper does not start UI even if a legacy flag remains. Previously installed autostart scripts must be disarmed before new installation.
+
+**From Windows PowerShell 7** with the configured private key (update the IP/key path for another TV):
+
+\`\`\`powershell
+$p = Join-Path $env:TEMP 'recover-lg-tv.ps1'; Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/scripts/recover-lg-tv.ps1' -OutFile $p; pwsh -NoProfile -File $p -TV 192.168.2.154
+\`\`\`
+
+Review the script in GitHub before running. It sends the recovery shell over SSH standard input instead of pasting Linux \`for\`/\`if\` statements into PowerShell. The recovery helper **does not reboot automatically**.
+
+**From an authenticated root SSH session on the TV:**
+
+\`\`\`sh
+curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/tv/safe-recovery.sh -o /tmp/infiniti-safe-recovery.sh
+sh /tmp/infiniti-safe-recovery.sh
+\`\`\`
+
+Wait for \`RECOVERY_COMPLETE\`; check any warnings. The helper archives \`97-homekey\` and \`lg-tv-vibehack\` from Homebrew's boot-hook directory, preserves Input Hook keybinds and logs, clears all launcher activation flags *before* attempting keymap rollback, and stops our event watcher. Backup directory: \`/home/root/infiniti-tv-recovery/\`.
+
+After successful recovery and inspection, reboot the TV **once** to stop any already-running old \`97-homekey\` process. Test Power / standby / wake at least twice before intentionally enabling Home key interception. If the panel stays black even with custom scripts inactive, check TV hardware and LG service support.
+
+To opt into Home mapping after successful physical acceptance:
+
+\`\`\`sh
+sh /tmp/infiniti-install.sh --enable-home
+\`\`\`
+
+The installer should first be downloaded from this repository into \`/tmp/infiniti-install.sh\`. The explicit Home setting only remaps the remote; it **does not auto-launch** the application during boot or standby/wake. For a conflicting binding, adding \`--rebind-home\` requires deliberate authorization and archives the previous binding. Run \`sh /home/root/lg-tv-vibehack/safe-recovery.sh\` to return to safe mode.

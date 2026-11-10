@@ -22,7 +22,7 @@ if [ "$#" -gt 0 ]; then action="$1"; fi
 case "$action" in
   status)
     [ -f "$FLAG" ] && echo "Home replacement ENABLED" || echo "Home replacement DISABLED"
-    hook_installed && echo "LG Input Hook installed (must be opened once)" || echo "LG Input Hook absent (watcher fallback only)"
+    hook_installed && echo "LG Input Hook installed (must be opened once)" || echo "LG Input Hook absent (Home interception unavailable)"
     [ -f "$BACKUP" ] && echo "Previous Home mapping backup exists" || echo "No saved Home mapping backup"
     /usr/bin/node "$DATA/keymap.js" status "$HOOK_CFG" "$BACKUP" "$KEY" "$APP_ID" "$CMD" 2>/dev/null || true
     echo "NOTE: ACTIVE reflects saved JSON only, not a confirmed remote key event."
@@ -39,44 +39,47 @@ case "$action" in
     }
     sh "$DATA/diagnose-home.sh"
     exit 0 ;;
+  safe-mode)
+    [ -f "$DATA/safe-recovery.sh" ] || { echo "Recovery helper missing" >&2; exit 1; }
+    exec sh "$DATA/safe-recovery.sh"
+    ;;
   enable)
-    [ -f "$DATA/homewatch.js" ] && [ -f "$DATA/keymap.js" ] || {
+    [ -f "$DATA/keymap.js" ] || {
       echo "Infiniti TV Home scripts are incomplete. Reinstall first." >&2; exit 1;
     }
     if ! launcher_installed; then
       echo "Infiniti TV Home .ipk is not installed." >&2; exit 1
     fi
-    if hook_installed; then
-      mkdir -p "$(dirname "$HOOK_CFG")"
-      /usr/bin/node "$DATA/keymap.js" enable "$HOOK_CFG" "$BACKUP" "$KEY" "$APP_ID" "$CMD"
-      echo "Home key set to Execute safe Infiniti launcher. Open Input Hook once, then reboot if needed."
-    else
-      echo "LG Input Hook absent. Only Home Watcher fallback is active."
+    hook_installed || {
+      echo "LG Input Hook missing: cannot safely replace Home on webOS 3.x." >&2
+      exit 1
+    }
+    if [ -e /var/lib/webosbrew/init.d/97-homekey ]; then
+      echo "Old 97-homekey startup script detected; enter safe-mode first." >&2
+      exit 1
     fi
+    mkdir -p "$(dirname "$HOOK_CFG")"
+    /usr/bin/node "$DATA/keymap.js" enable "$HOOK_CFG" "$BACKUP" "$KEY" "$APP_ID" "$CMD"
     touch "$FLAG"
-    echo "Enabled: boot startup + Home key hook/watcher; LG Home is retained for rollback."
-    echo "Restore with: sh $DATA/home-control.sh disable"
+    echo "Enabled manual Home key hook only; no app startup on boot or wake."
+    echo "Restore with: sh $DATA/home-control.sh safe-mode"
     ;;
   rebind)
     # Manual recovery only; never silently take ownership of another app's Home binding.
     # keymap.js archives both the previous backup and the current Home action.
-    [ -f "$DATA/keymap.js" ] && [ -f "$DATA/homewatch.js" ] && [ -f "$DATA/boot.sh" ] || {
+    [ -f "$DATA/keymap.js" ] || {
       echo "Infiniti Home control files incomplete. Re-run the installer first." >&2; exit 1;
     }
     launcher_installed || { echo "Infiniti TV Home IPK not installed." >&2; exit 1; }
-    hook_installed || { echo "LG Input Hook is absent. Use watcher fallback instead." >&2; exit 1; }
+    hook_installed || { echo "LG Input Hook is absent; safe manual Home capture unavailable." >&2; exit 1; }
+    [ ! -e /var/lib/webosbrew/init.d/97-homekey ] || {
+      echo "Old 97-homekey startup script detected; enter safe-mode first." >&2; exit 1;
+    }
     mkdir -p "$(dirname "$HOOK_CFG")"
     /usr/bin/node "$DATA/keymap.js" rebind "$HOOK_CFG" "$BACKUP" "$KEY" "$APP_ID" "$CMD" --confirm-rebind
-    # The installer may have exited before registering the boot service.
-    if [ -d /var/lib/webosbrew/init.d ]; then
-      cp "$DATA/boot.sh" /var/lib/webosbrew/init.d/lg-tv-vibehack
-      chmod +x /var/lib/webosbrew/init.d/lg-tv-vibehack
-    fi
     touch "$FLAG"
-    if ! ps | grep '[h]omewatch.js' | grep -v grep >/dev/null 2>&1; then
-      nohup setsid /usr/bin/node "$DATA/homewatch.js" >> /tmp/lg-tv-vibehack.log 2>&1 < /dev/null &
-    fi
-    echo "Home key recovery applied. Previous mapping backed up. Open LG Input Hook and reboot."
+    echo "Home key mapping repaired without starting any watcher or boot launcher."
+    echo "Open LG Input Hook and Save changes; test manually before power cycling."
     echo "Rollback: sh $DATA/home-control.sh disable"
     ;;
   evdev-enable)
@@ -108,18 +111,21 @@ case "$action" in
     echo "Optional physical Home monitor disabled."
     ;;
   disable)
-    # Never stop the fallback watcher before the original key mapping is restored.
-    if [ -f "$HOOK_CFG" ] || [ -f "$BACKUP" ]; then
-      /usr/bin/node "$DATA/keymap.js" disable "$HOOK_CFG" "$BACKUP" "$KEY" "$APP_ID" "$CMD" || {
-        echo "Home mapping could not be safely restored; watcher still enabled." >&2
-        exit 1
-      }
-    fi
-    rm -f "$FLAG"
+    # Fail-safe ordering: disarm all runtime flags BEFORE restoring a possibly
+    # conflicted keymap. A malformed backup must never keep relaunch loops alive.
+    rm -f "$FLAG" "$DATA/home-event-device" "$DATA/boot-services-enabled"
     pkill -f "$DATA/homewatch.js" 2>/dev/null || true
     pkill -f "$DATA/home-event-monitor.js" 2>/dev/null || true
-    rm -f "$DATA/home-event-device"
-    echo "Home replacement disabled. Restart LG Input Hook if the previous mapping is cached."
+    result=0
+    if [ -f "$HOOK_CFG" ] || [ -f "$BACKUP" ]; then
+      /usr/bin/node "$DATA/keymap.js" disable "$HOOK_CFG" "$BACKUP" "$KEY" "$APP_ID" "$CMD" || result=1
+    fi
+    if [ "$result" -ne 0 ]; then
+      echo "WARNING: Home key binding conflict; launcher flags disabled, keymap/backup untouched." >&2
+      echo "Run safe-recovery.sh and check LG Input Hook mapping manually." >&2
+      exit 1
+    fi
+    echo "Home replacement disabled. Restart LG Input Hook if its old binding is cached."
     ;;
-  *) echo "Usage: sh $0 status|diagnose|enable|rebind|evdev-enable /dev/input/eventN|evdev-disable|disable" >&2; exit 2 ;;
+  *) echo "Usage: sh $0 status|diagnose|safe-mode|enable|rebind|evdev-enable /dev/input/eventN|evdev-disable|disable" >&2; exit 2 ;;
 esac

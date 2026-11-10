@@ -56,7 +56,8 @@ function main() {
   if (action === 'rebind') {
     // Recovery is an EXPLICIT root command, never run automatically by install.sh.
     // Preserve the current external Home key and any older backup before rebinding.
-    if (own(current, app, cmd) && saved) {
+    if (own(current, app, cmd)) {
+      if (!saved) fail('Infiniti mapping has no original backup; refusing to invent a rollback target');
       console.log('Infiniti Home key mapping already active with recovery backup');
       return;
     }

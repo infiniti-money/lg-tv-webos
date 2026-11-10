@@ -16,9 +16,9 @@
   })();
   // Compact, transparent single-row dock. COLUMNS now controls icon size,
   // not the number of rows or how many installed apps can be reached.
-  var TILE_W = Math.max(86, Math.min(146, Math.round(188 - COLUMNS * 11)));
-  var TILE_H = Math.round(TILE_W * 0.82);
-  var CELL_W = TILE_W + 24;
+  var TILE_W = Math.max(96, Math.min(158, Math.round(203 - COLUMNS * 11)));
+  var TILE_H = Math.round(TILE_W * 0.85);
+  var CELL_W = TILE_W + 26;
   var DOCK_TOP = 1030 - TILE_H - 34;
   var FOCUS_SCALE = 1.06;
   var GLASS_PAD = 5;
@@ -72,10 +72,10 @@
   var stage = $('stage'), tilesEl = $('tiles'), glass = $('glass'), hero = $('hero');
   // webOS 3.x runs Chromium 38 and has no CSS custom property support.
   // Set sizing directly on elements rather than relying on var(--tile-...).
-  glass.style.borderRadius = Math.round(TILE_W * 47 / 360) + 'px';
+  glass.style.borderRadius = Math.round(TILE_W * 74 / 360) + 'px';
   var ambients = [$('ambientA'), $('ambientB')], ambientFront = 0, ambientColor = null;
-  var pills = [$('btnInputs'), $('btnWifi'), $('btnWall'), $('btnSettings'), $('btnAI'), $('btnCustomize')];
-  var panel = $('inputsPanel'), wallPanel = $('wallPanel'), pen = $('penBtn'), colsPanel = $('colsPanel');
+  var pills = [$('btnInputs'), $('btnWifi'), $('btnSettings'), $('btnAI'), $('btnCustomize')];
+  var panel = $('inputsPanel'), pen = $('penBtn'), colsPanel = $('colsPanel');
 
   var items = [];               // {app, el, color}
   var zone = 'grid';            // 'grid' | 'top' | 'inputs' | 'wall' | 'pen' | 'cols'
@@ -193,7 +193,7 @@
       card.className = 'card';
       card.style.width = TILE_W + 'px';
       card.style.height = TILE_H + 'px';
-      card.style.borderRadius = Math.round(TILE_W * 32 / 360) + 'px';
+      card.style.borderRadius = Math.round(TILE_W * 68 / 360) + 'px';
       var img = document.createElement('img');
       var item = { app: app, el: el, card: card, color: null };
       img.onload = function () { paintTile(item, img); };
@@ -477,7 +477,7 @@
     pills[pillFocus].classList.remove('focused');
     var next = Math.max(0, Math.min(i, pills.length - 1));
     // The hidden AI pill must never trap a D-pad-only TV remote.
-    if (next === 4 && !aiEnabled()) next = i < pillFocus ? 3 : 5;
+    if (next === 3 && !aiEnabled()) next = i < pillFocus ? 2 : 4;
     pillFocus = next;
     pills[pillFocus].classList.add('focused');
   }
@@ -497,7 +497,7 @@
   function pillAbove(i) {
     var cx = tileLeft(i) - offset + TILE_W / 2, best = 0, bestD = Infinity;
     pills.forEach(function (p, k) {
-      if (k === 4 && !aiEnabled()) return;
+      if (k === 3 && !aiEnabled()) return;
       var r = p.getBoundingClientRect();
       var d = Math.abs(r.left + r.width / 2 - cx);
       if (d < bestD) { bestD = d; best = k; }
@@ -538,56 +538,26 @@
   function activatePill(i) {
     if (i === 0) showInputs();
     else if (i === 1) launch('com.palm.app.settings', 'Settings', { target: 'network' });
-    else if (i === 2) showWall();
-    else if (i === 3) launch('com.palm.app.settings', 'Settings');
-    else if (i === 4 && window.INFINITI_AI_OPEN &&
+    else if (i === 2) launch('com.palm.app.settings', 'Settings');
+    else if (i === 3 && window.INFINITI_AI_OPEN &&
       (!window.INFINITI_PREFS || window.INFINITI_PREFS.getAIEnabled())) window.INFINITI_AI_OPEN();
-    else if (i === 5 && window.INFINITI_CUSTOMIZE_OPEN) window.INFINITI_CUSTOMIZE_OPEN();
+    else if (i === 4 && window.INFINITI_CUSTOMIZE_OPEN) window.INFINITI_CUSTOMIZE_OPEN();
   }
 
-  // ---- wallpaper QR panel --------------------------------------------------------------------
-
-  // tv/wallpaper-server.js (rooted TVs) serves a phone page for picking the wallpaper and writes
-  // its address into wall.js. Web apps on webOS 6 cannot call HTTP on the TV itself, so the file is
-  // (re)loaded here, and the server relaunches the launcher with {reload: true} after a change.
+  // Wallpaper is configured inside Customize > Giao diện, not as a top-row pill.
+  // The optional root service writes wall.js with the authenticated phone URL.
   function loadWallUrl(cb) {
     var old = $('wallJs');
-    if (old) old.parentNode.removeChild(old);
+    if (old && old.parentNode) old.parentNode.removeChild(old);
     window.WALL_URL = '';
     var sc = document.createElement('script');
     sc.id = 'wallJs';
-    sc.src = 'wall.js';
+    sc.src = 'wall.js?ts=' + Date.now();
     sc.onload = function () { cb(window.WALL_URL || ''); };
     sc.onerror = function () { cb(''); };
     document.body.appendChild(sc);
   }
-
-  function showWall() {
-    loadWallUrl(function (url) {
-      if (!url) { toast(L.wallOff); return; }
-      var qr = qrcode(0, 'M');
-      qr.addData(url);
-      qr.make();
-      $('wallQr').innerHTML = '<img src="' + qr.createDataURL(8, 0) + '">';
-      $('wallTitle').textContent = L.wallTitle;
-      $('wallScan').textContent = L.wallScan;
-      $('wallUrl').textContent = url.split('?')[0];
-
-      // Hang below the top row, right-aligned with the last pill.
-      var r = pills[pills.length - 1].getBoundingClientRect();
-      wallPanel.style.right = Math.round(1920 - r.right) + 'px';
-      wallPanel.style.top = (r.bottom + 20) + 'px';
-      wallPanel.classList.remove('hidden');
-      pills[pillFocus].classList.remove('focused');
-      zone = 'wall';
-    });
-  }
-
-  function hideWall() {
-    wallPanel.classList.add('hidden');
-    zone = 'none';
-    focusPill(2);
-  }
+  window.INFINITI_WALLPAPER_GET_URL = loadWallUrl;
 
   // ---- tiles-per-row picker (the pencil next to the dock) ------------------------------------
 
@@ -828,10 +798,6 @@
       else if (k === KEY.OK) showCols();
       else if (k === KEY.BACK) { /* home screen: Back goes nowhere */ }
       else return;
-    } else if (zone === 'wall') {
-      if (k === KEY.BACK || k === KEY.ESC || k === KEY.OK || k === KEY.LEFT || k === KEY.RIGHT ||
-          k === KEY.UP || k === KEY.DOWN) hideWall();
-      else return;
     } else if (zone === 'top') {
       if (k === KEY.LEFT) focusPill(pillFocus - 1);
       else if (k === KEY.RIGHT) focusPill(pillFocus + 1);
@@ -877,7 +843,6 @@
     if (arranging) { arranging = false; document.body.classList.remove('arranging'); }
     updateClock();
     if (zone === 'inputs') panel.classList.add('hidden');
-    if (zone === 'wall') wallPanel.classList.add('hidden');
     if (zone === 'cols') colsPanel.classList.add('hidden');
     pen.classList.remove('focused');
     pills.forEach(function (p) { p.classList.remove('focused'); });
@@ -938,7 +903,7 @@
   };
   window.INFINITI_AI_VISIBILITY_CHANGED = function () {
     cachedHeaderBottom = null;
-    if (!aiEnabled() && pillFocus === 4) focusPill(5);
+    if (!aiEnabled() && pillFocus === 3) focusPill(4);
   };
   window.INFINITI_LAUNCHER_LAYOUT_REFRESH = function () {
     cachedHeaderBottom = null;
@@ -952,9 +917,9 @@
     resetDialogOk(); focusPill(pills.length - 1);
   };
   window.INFINITI_AI_CLOSED = function () {
-    resetDialogOk(); focusPill(4);
+    resetDialogOk(); focusPill(3);
   };
-  window.INFINITI_WALLPAPER_OPEN = showWall;
+  // Wallpaper settings now open within the Customize panel.
   build();
   updateClock();
   setInterval(updateClock, 10000);
@@ -966,7 +931,7 @@
   }, 30000);
   document.documentElement.lang = CONFIG.language === 'vi' ? 'vi' : 'en';
   pills[0].querySelector('span').textContent = L.inputs;
-  pills[3].querySelector('span').textContent = L.settings;
+  pills[2].querySelector('span').textContent = L.settings;
   watchNetwork();
   animateIn();
   zone = 'none';

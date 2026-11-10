@@ -25,6 +25,7 @@ assert.ok(eventSource.indexOf('var EV_KEY = 1, HOME = 773, KEY_DOWN = 1')>=0,
 assert.ok(eventSource.indexOf("fs.openSync(device, 'r')")>=0 &&
   eventSource.indexOf('ioctl(')<0 && eventSource.indexOf("fs.openSync(device, 'w')")<0,
   'Monitor must only read events, not grab or write to Linux input devices');
-assert.ok(boot.indexOf('home-event-device')>=0,'Monitor startup must be explicit opt-in');
+assert.ok(boot.indexOf('home-event-device')<0 && boot.indexOf('applicationManager/launch')<0,
+  'Safe boot must never read physical keys or force-launch a UI app');
 assert.ok(control.indexOf('evdev-disable)')>=0,'Monitor must have reversible stop control');
 console.log('Legacy webOS Home mapping and physical HOME 0305 diagnostics passed.');

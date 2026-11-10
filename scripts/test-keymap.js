@@ -12,7 +12,8 @@ function load(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
 try {
   fs.writeFileSync(cfg, JSON.stringify({'773': {action:'replace', keycode:1}, '42':{action:'ignore'}}));
   assert.strictEqual(call('enable').status, 0);
-  assert.strictEqual(load(cfg)['773'].id, app);
+  assert.strictEqual(load(cfg)['773'].action, 'exec');
+  assert.strictEqual(load(cfg)['773'].command, cmd);
   assert.strictEqual(load(cfg)['42'].action, 'ignore');
   assert.strictEqual(call('enable').status, 0, 'enable idempotence');
   assert.strictEqual(call('disable').status, 0);
@@ -29,12 +30,25 @@ try {
   fs.writeFileSync(cfg, JSON.stringify({'773':{action:'launch',id:'another.app'}}));
   assert.notStrictEqual(call('disable').status, 0, 'no overwrite on external edit');
   assert.strictEqual(fs.existsSync(bak), true, 'backup must survive conflict');
+  // Existing 1.5.0 installations mapped launch App ID; migrate to Execute
+  // while keeping the saved original binding intact.
+  var oldHome = {action:'replace', keycode:7};
+  fs.writeFileSync(cfg, JSON.stringify({'773':{action:'launch',id:app}, '42':{action:'ignore'}}));
+  fs.writeFileSync(bak, JSON.stringify({present:true,binding:oldHome}));
+  assert.strictEqual(call('enable').status, 0, 'upgrade backed-up Launch App mapping to Execute');
+  assert.strictEqual(load(cfg)['773'].action, 'exec');
+  assert.strictEqual(load(cfg)['773'].command, cmd);
+  assert.strictEqual(call('disable').status, 0, 'restore original key after upgrade');
+  assert.strictEqual(load(cfg)['773'].keycode, 7);
+  assert.strictEqual(load(cfg)['42'].action, 'ignore');
+
   // A crash after writing the backup but before changing keybinds must be recoverable.
   var original = {action:'replace', keycode:7};
   fs.writeFileSync(cfg, JSON.stringify({'773':original, '42':{action:'ignore'}}));
   fs.writeFileSync(bak, JSON.stringify({present:true, binding:original}));
   assert.strictEqual(call('enable').status, 0, 'recover interrupted enable with prior Home key');
-  assert.strictEqual(load(cfg)['773'].id, app);
+  assert.strictEqual(load(cfg)['773'].action, 'exec');
+  assert.strictEqual(load(cfg)['773'].command, cmd);
   assert.strictEqual(call('disable').status, 0, 'restores original after recovered enable');
   assert.strictEqual(load(cfg)['773'].keycode, 7);
   assert.strictEqual(fs.existsSync(bak), false);
@@ -49,7 +63,8 @@ try {
   fs.writeFileSync(cfg, JSON.stringify({'42':{action:'ignore'}}));
   fs.writeFileSync(bak, JSON.stringify({present:false, binding:null}));
   assert.strictEqual(call('enable').status, 0, 'recover when original Home key did not exist');
-  assert.strictEqual(load(cfg)['773'].id, app);
+  assert.strictEqual(load(cfg)['773'].action, 'exec');
+  assert.strictEqual(load(cfg)['773'].command, cmd);
   assert.strictEqual(call('disable').status, 0);
   assert.strictEqual(Object.prototype.hasOwnProperty.call(load(cfg), '773'), false);
   assert.strictEqual(fs.existsSync(bak), false);

@@ -40,7 +40,7 @@ assert.ok(!fs.existsSync('.github/FUNDING.yml'), 'Previous owner's sponsor link 
 assert.ok(!fs.existsSync('docs/media/donate-usdt-bsc.gif'),
   'Old donation QR code still present');
 assert.ok(license.indexOf('Copyright (c) 2026 Infiniti Money') !== -1,
-  'Missing derivative's copyright notice');
+  'Missing Infiniti derivative copyright notice');
 ['Gathin', 'OmkarK97', 'hoangvya19'].forEach(function (name) {
   assert.ok(license.indexOf(name) !== -1, 'Do not erase original MIT attribution: ' + name);
 });

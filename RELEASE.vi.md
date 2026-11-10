@@ -1,4 +1,4 @@
-# Phát hành Infiniti TV Home v1.5.1
+# Phát hành Infiniti TV Home v1.5.2
 
 Ứng dụng LG webOS 3.4.0 đóng gói thành `infiniti-tv-home.ipk`. Không phát hành bản chính thức nếu CI đóng gói hoặc kiểm tra SHA-256 thất bại. Chỉ tải gói từ GitHub Releases của `infiniti-money/lg-tv-webos`; không dùng link hoặc địa chỉ ủng hộ từ repository nguồn.
 
@@ -8,13 +8,13 @@
 2. Chọn **Run workflow** → **Branch: main**.
 3. Đánh dấu **Create version tag and publish the verified IPK to GitHub Releases**.
 4. Nhấn **Run workflow**. Workflow sẽ kiểm thử cú pháp, ES5 và hồi quy; tạo gói IPK, kiểm tra cấu trúc và sinh SHA-256; tải artifact lên GitHub; cuối cùng tạo tag theo phiên bản trong `app/appinfo.json` và công bố Release.
-5. Chỉ sau khi job thành công, kiểm tra https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.5.1, xác nhận hai tệp `infiniti-tv-home.ipk` và `infiniti-tv-home.ipk.sha256`.
+5. Chỉ sau khi job thành công, kiểm tra https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.5.2, xác nhận hai tệp `infiniti-tv-home.ipk` và `infiniti-tv-home.ipk.sha256`.
 
 **Nếu chỉ muốn kiểm tra hoặc tải artifact thử nghiệm:** bỏ dấu chọn phát hành trước khi chạy; workflow không tạo tag/Release.
 
 **Nếu không có nút Run workflow:** vào **Settings → Actions → General**, kiểm tra GitHub Actions được bật, rồi quay lại workflow. Commit do GitHub App tạo có thể không kích hoạt sự kiện `push`; lúc đó cần chạy thủ công. Không giả định mã nguồn gộp thành công đồng nghĩa build đã chạy.
 
-## Nâng cấp giao diện v1.5.1
+## Nâng cấp giao diện v1.5.2
 
 - Trang **Cài đặt giao diện** riêng có các mục Giao diện, Thời tiết, Âm–dương lịch và Ứng dụng.
 - Thời tiết Open-Meteo còn **3 ngày**: hôm nay, ngày mai, ngày kia; chọn nhanh khu vực hoặc tìm thành phố/khu vực qua API geocoding.
@@ -28,7 +28,7 @@ Cài trên TV LG đã bật Developer Mode hoặc đã root theo hướng dẫn.
 
 Đối chiếu tệp IPK bằng SHA-256 trước khi cài. **Không tự kích hoạt thay thế phím Home trên TV sản xuất khi chưa thử khôi phục Home gốc.**
 
-## Bản sửa lỗi v1.5.1 (webOS 3.x)
+## Bản sửa lỗi v1.5.2 (webOS 3.x)
 
 - Đồng bộ gói ứng dụng từ Luna + thư mục cài đặt cùng lúc, kể cả khi Luna chỉ trả một phần danh sách. Phát hiện ứng dụng cài tại các vị trí developer/cryptofs và đồng bộ định kỳ mỗi 10 phút.
 - LG Input Hook 1.4: cấu hình nút Home (773) bằng **Execute** lệnh `/home/root/lg-tv-vibehack/golauncher.sh`, tương thích hơn tùy chọn Launch App; giữ backup keymap và phục hồi nguyên trạng sau khi tắt.
@@ -38,3 +38,28 @@ Cài trên TV LG đã bật Developer Mode hoặc đã root theo hướng dẫn.
 - Trang **Trợ lý AI** trong Tùy chỉnh cho phép bật/tắt và lưu cấu hình; tắt sẽ ẩn nút AI, ngăn gửi yêu cầu và tắt micro/huỷ yêu cầu đang xử lý; không lưu token truy cập.
 
 **Lưu ý:** Nâng cấp IPK đơn lẻ chỉ cập nhật giao diện. Để kích hoạt Home khi bật TV và sửa đồng bộ app, phải chạy lại `install.sh` qua SSH root để cập nhật các sidecar `tv/*.sh` và `tv/*.js` trên TV, sau đó khởi động lại. Bản nghiệm thu CI không thay thế thử remote và Input Hook trên TV LG thật.
+
+## Bản sửa lỗi v1.5.2 — Chỉ ứng dụng sử dụng được, dock gọn, sửa xung đột Home
+
+- Bộ đồng bộ trước đây lấy cả khoảng 185 gói trên hệ thống khi Luna chỉ trả 20 ứng dụng. Nay chỉ dùng launchpoint thực sự được hiển thị và các ứng dụng đã cài tại `/media/developer` hoặc `/media/cryptofs` có giao diện, tiêu đề và icon. Không đưa service/daemon/ứng dụng nội bộ vào Home.
+- Dock chỉ **một hàng biểu tượng nhỏ**, nền hoàn toàn trong suốt, sát đáy màn hình (chừa vùng an toàn overscan), nhãn ứng dụng bên dưới; điều hướng ngang bằng remote.
+- Sửa xung đột `Home mapping changed externally`: không tự ghi đè. Người dùng phải chủ động dùng `--rebind-home`. Công cụ sẽ lưu cả ánh xạ hiện tại và bản backup trước đây thành tệp khôi phục riêng; tắt Home replacement sẽ trả lại đúng ánh xạ gần nhất trước khi sửa.
+- Giữ nguyên ứng dụng Home của LG trong hệ thống và khả năng rollback; không xóa hay sửa file hệ thống LG Home. Cần mở LG Input Hook một lần để hook hoạt động trên TV.
+- Khi chỉ cài IPK, phần Home key và sync root sẽ **không được cập nhật**. Cần chạy lại installer root từ nhánh main sau khi Release mới xuất bản.
+
+Ví dụ cài đặt trên **TV đã root**, sau khi xác nhận Home key ID 773 trong log của LG Input Hook:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh -o /tmp/infiniti-install.sh
+sh /tmp/infiniti-install.sh --rebind-home
+reboot
+```
+
+Phục hồi cấu hình Home cũ:
+
+```sh
+sh /home/root/lg-tv-vibehack/home-control.sh disable
+reboot
+```
+
+**Lưu ý:** Lệnh `--rebind-home` cố ý thay mapping Home hiện tại (sau khi lưu backup). Không sử dụng nếu chưa kiểm tra phím Home/ứng dụng đang sở hữu keybind. Kiểm thử CI không thay thế nghiệm thu TV thực tế.

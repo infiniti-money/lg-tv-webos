@@ -42,8 +42,8 @@ Object.defineProperty(Node.prototype,'offsetWidth',{get:function () {
 }});
 Object.defineProperty(Node.prototype,'offsetHeight',{get:function () { return this.offsetWidth ? 45 : 0; }});
 Object.defineProperty(Node.prototype,'innerHTML',{
-  get:function () { return ''; },
-  set:function () { this.children=[]; }
+  get:function () { return this._innerHTML || ''; },
+  set:function (v) { this._innerHTML=String(v); this.children=[]; }
 });
 function node(id,tag) { if (!ids[id]) ids[id]=new Node(tag||'div',id); return ids[id]; }
 var document = {
@@ -110,7 +110,8 @@ assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true);
 assert.equal(document.activeElement.id,'customizeStyleTab','appearance page gets initial focus');
 assert.equal(node('customizeStyleView').hasClass('hidden'),false);
 assert.equal(node('customizeWeatherView').hasClass('hidden'),true);
-assert.ok(node('customizeWallQr').innerHTML.indexOf('')>=0);
+assert.ok(node('customizeWallQr').innerHTML.indexOf('data:image/png')>=0,
+  'Valid QR must render inside Customize, not on Home');
 assert.equal(node('customizeWallState').textContent,
   'Mở camera điện thoại để chọn ảnh, ảnh USB hoặc xóa hình nền.');
 node('customizeWallpaper').click();

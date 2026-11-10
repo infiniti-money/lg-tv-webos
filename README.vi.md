@@ -4,16 +4,16 @@
 
 **Màn hình chính kiểu Apple TV cho TV LG webOS, có nút Home thật, thời tiết và hình nền riêng.**
 
-*LG TV-vibehack · webOS-vibehack · LG-vibehack: launcher thay thế màn hình Home đầy quảng cáo của LG.*
+*Dự án Infiniti Money dành cho TV LG webOS. Mã nguồn, cập nhật và bản phát hành chính thức đều tại repository này.*
 
-[![Release](https://img.shields.io/github/v/release/hoangvya19/lg-tv-webos-vibehack?style=flat-square)](https://github.com/infiniti-money/lg-tv-webos/releases)
+[![Release](https://img.shields.io/github/v/release/infiniti-money/lg-tv-webos?style=flat-square)](https://github.com/infiniti-money/lg-tv-webos/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
-[![webOS](https://img.shields.io/badge/webOS-6%2B-a50034?style=flat-square)](#tv-đã-thử-nghiệm)
+[![webOS](https://img.shields.io/badge/webOS-3.x%2B%20(tuong%20thich%20ma%20nguon)-a50034?style=flat-square)](#tv-đã-thử-nghiệm)
 [![Root](https://img.shields.io/badge/root-optional-555?style=flat-square)](#root-hay-không-root)
 
 [English](README.md) · **Tiếng Việt**
 
-<img src="docs/media/hero.jpg" alt="LG TV Vibehack chạy trên TV LG" width="860">
+<img src="docs/media/hero.jpg" alt="Giao diện Infiniti TV Home trên LG webOS (ảnh minh họa từ dự án)" width="860">
 
 </div>
 
@@ -34,6 +34,8 @@
 - [Ủng hộ](#ủng-hộ)
 
 ## Tính năng
+
+**Tương thích dữ liệu cũ:** Các đường dẫn trên TV dạng `/home/root/lg-tv-vibehack/` được giữ nguyên có chủ đích để không làm hỏng cấu hình, hình nền, ánh xạ Home và quá trình cập nhật của bản đã cài. Đây không phải địa chỉ tải phần mềm từ dự án cũ.
 
 - **Giao diện gọn kiểu tvOS:** hàng dock ghim app, lưới app, và một khung kính lướt mượt giữa các ô.
 - **Nút Home thật** (TV đã root): bấm Home trên remote là vào launcher, không qua Home của LG.
@@ -271,8 +273,11 @@ Bình thường. webOS mở màn hình của nó trước, launcher sẽ chiếm
 <summary><b>Bấm Home không có phản ứng gì</b></summary>
 
 LG Input Hook đã bắt được phím nhưng lệnh lỗi. Kiểm tra:
-`cat /home/root/.config/lginputhook/keybinds.json` phải có
-`/home/root/lg-tv-vibehack/golauncher.sh`. Chạy lại lệnh cài để sửa.
+Chạy `cat /home/root/.config/lginputhook/keybinds.json` và kiểm tra phím Home `773` có
+`{"action":"launch","id":"com.infinitimoney.tvhome"}`. Nếu chưa đúng, hãy xem
+`/home/root/lg-tv-vibehack/home-key-backup.json` trước khi thử lại. Trình quản lý phím Home có thể
+khôi phục lần bật bị gián đoạn, nhưng sẽ không ghi đè thay đổi của ứng dụng khác.
+Kiểm tra thêm bằng `sh /home/root/lg-tv-vibehack/home-control.sh status`.
 </details>
 
 <details>
@@ -323,6 +328,8 @@ reboot
 
 ## TV đã thử nghiệm
 
+**Lưu ý:** Danh sách model dưới đây kế thừa tài liệu nguồn; chưa xác nhận độc lập toàn bộ với Infiniti TV Home v1.4.1.
+
 | Model | webOS | Chế độ | Trạng thái |
 |---|---|---|---|
 | 55NANO77TPA | 6 (firmware 03.51.15) | Root | ✅ |
@@ -333,6 +340,8 @@ Bạn đã thử trên TV khác? Tạo issue hoặc pull request để bổ sung
 
 ## Cảm ơn
 
+Infiniti Money duy trì phiên bản tùy chỉnh này; thông báo tác quyền và giấy phép của các tác giả gốc được giữ trong [LICENSE](LICENSE).
+
 Project này được xây trên công sức của nhiều người. Xin cảm ơn:
 
 - **[Gathin23/tv-vibehack](https://github.com/Gathin23/tv-vibehack)**: launcher kiểu Apple TV gốc cho Android TV.
@@ -341,21 +350,12 @@ Project này được xây trên công sức của nhiều người. Xin cảm �
 - **[Simon34545/lginputhook](https://github.com/Simon34545/lginputhook)**: đổi chức năng nút remote.
 - **[Open-Meteo](https://open-meteo.com)**: API thời tiết và tìm toạ độ miễn phí.
 - Font **[Lexend](https://fonts.google.com/specimen/Lexend)** (SIL Open Font License), có đủ chữ tiếng Việt.
-- Thực hiện cùng **[Claude](https://claude.ai)** của Anthropic.
 
 ## Ủng hộ
 
 Nếu project giúp TV của bạn đẹp hơn, một ⭐ cho repo sẽ giúp người khác tìm thấy nó.
 
-Muốn mời mình ly cà phê? Ủng hộ bằng **USDT mạng BNB Smart Chain (BEP20)**:
-
-<img src="docs/media/donate-usdt-bsc.gif" alt="Mã QR địa chỉ ủng hộ USDT BEP20" width="180">
-
-```
-0x11a0cd4c3e0135d2af5dc0ad0d44bc535fe4645b
-```
-
-⚠️ Chỉ gửi **USDT trên mạng BNB Smart Chain (BEP20)**. Gửi nhầm mạng khác sẽ mất tiền.
+Dự án do **Infiniti Money** duy trì tại [infiniti-money/lg-tv-webos](https://github.com/infiniti-money/lg-tv-webos). Hiện chưa công bố địa chỉ ví nhận tài trợ của dự án.
 
 ## Miễn trừ trách nhiệm
 
@@ -470,7 +470,7 @@ Chu trình: tiếng nói -> LG/Web Speech chuyển thành chữ -> bấm Gửi A
 Trợ lý chưa có quyền điều khiển TV hoặc mở ứng dụng bằng câu lệnh AI.
 Cần thử thật trên TV, đặc biệt nút micro, bàn phím, TLS/CORS và Magic Remote.
 
-## Nâng cấp 1.4.0: tùy chỉnh, thời tiết 7 ngày, âm lịch
+## Nâng cấp 1.4.x: tùy chỉnh, thời tiết 7 ngày, âm lịch
 
 **Quản lý ứng dụng trên Home:** chọn nút Tùy chỉnh ở góc trên phải, hoặc nhấn
 phím ĐỎ của remote (nếu TV gửi keycode 403). Chọn tab Thêm / ẩn ứng dụng.

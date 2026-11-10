@@ -1,6 +1,6 @@
-# Phát hành Infiniti TV Home v1.4.0
+# Phát hành Infiniti TV Home v1.4.1
 
-Ứng dụng LG webOS 3.4.0 đóng gói thành `infiniti-tv-home.ipk`. Không phát hành bản chính thức nếu CI đóng gói hoặc kiểm tra SHA-256 thất bại.
+Ứng dụng LG webOS 3.4.0 đóng gói thành `infiniti-tv-home.ipk`. Không phát hành bản chính thức nếu CI đóng gói hoặc kiểm tra SHA-256 thất bại. Chỉ tải gói từ GitHub Releases của `infiniti-money/lg-tv-webos`; không dùng link hoặc địa chỉ ủng hộ từ repository nguồn.
 
 ## Chạy thủ công trên GitHub
 
@@ -8,7 +8,7 @@
 2. Chọn **Run workflow** → **Branch: main**.
 3. Đánh dấu **Create version tag and publish the verified IPK to GitHub Releases**.
 4. Nhấn **Run workflow**. Workflow sẽ kiểm thử cú pháp, ES5 và hồi quy; tạo gói IPK, kiểm tra cấu trúc và sinh SHA-256; tải artifact lên GitHub; cuối cùng tạo tag theo phiên bản trong `app/appinfo.json` và công bố Release.
-5. Chỉ sau khi job thành công, kiểm tra https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.4.0, xác nhận hai tệp `infiniti-tv-home.ipk` và `infiniti-tv-home.ipk.sha256`.
+5. Chỉ sau khi job thành công, kiểm tra https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.4.1, xác nhận hai tệp `infiniti-tv-home.ipk` và `infiniti-tv-home.ipk.sha256`.
 
 **Nếu chỉ muốn kiểm tra hoặc tải artifact thử nghiệm:** bỏ dấu chọn phát hành trước khi chạy; workflow không tạo tag/Release.
 

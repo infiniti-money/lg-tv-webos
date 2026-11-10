@@ -29,6 +29,53 @@ try {
   fs.writeFileSync(cfg, JSON.stringify({'773':{action:'launch',id:'another.app'}}));
   assert.notStrictEqual(call('disable').status, 0, 'no overwrite on external edit');
   assert.strictEqual(fs.existsSync(bak), true, 'backup must survive conflict');
+  // A crash after writing the backup but before changing keybinds must be recoverable.
+  var original = {action:'replace', keycode:7};
+  fs.writeFileSync(cfg, JSON.stringify({'773':original, '42':{action:'ignore'}}));
+  fs.writeFileSync(bak, JSON.stringify({present:true, binding:original}));
+  assert.strictEqual(call('enable').status, 0, 'recover interrupted enable with prior Home key');
+  assert.strictEqual(load(cfg)['773'].id, app);
+  assert.strictEqual(call('disable').status, 0, 'restores original after recovered enable');
+  assert.strictEqual(load(cfg)['773'].keycode, 7);
+  assert.strictEqual(fs.existsSync(bak), false);
+
+  // If disabling while a backup is pending, do not change the original binding.
+  fs.writeFileSync(bak, JSON.stringify({present:true, binding:original}));
+  assert.strictEqual(call('disable').status, 0, 'discard incomplete backup');
+  assert.strictEqual(load(cfg)['773'].keycode, 7);
+  assert.strictEqual(fs.existsSync(bak), false);
+
+  // The original Home key may have been absent; an interrupted transaction is safe to resume.
+  fs.writeFileSync(cfg, JSON.stringify({'42':{action:'ignore'}}));
+  fs.writeFileSync(bak, JSON.stringify({present:false, binding:null}));
+  assert.strictEqual(call('enable').status, 0, 'recover when original Home key did not exist');
+  assert.strictEqual(load(cfg)['773'].id, app);
+  assert.strictEqual(call('disable').status, 0);
+  assert.strictEqual(Object.prototype.hasOwnProperty.call(load(cfg), '773'), false);
+  assert.strictEqual(fs.existsSync(bak), false);
+
+  // Disable must be able to clear a pending backup even when there was no config file.
+  fs.unlinkSync(cfg);
+  fs.writeFileSync(bak, JSON.stringify({present:false, binding:null}));
+  assert.strictEqual(call('disable').status, 0, 'recover missing config with empty previous mapping');
+  assert.strictEqual(fs.existsSync(bak), false);
+  assert.strictEqual(fs.existsSync(cfg), false);
+
+  // A third-party edit is never overwritten, even with a valid pending backup.
+  fs.writeFileSync(cfg, JSON.stringify({'773':{action:'launch', id:'other.tv.app'}}));
+  fs.writeFileSync(bak, JSON.stringify({present:true, binding:original}));
+  assert.notStrictEqual(call('enable').status, 0, 'reject external Home edit during recovery');
+  assert.strictEqual(load(cfg)['773'].id, 'other.tv.app');
+  assert.strictEqual(fs.existsSync(bak), true);
+  assert.notStrictEqual(call('disable').status, 0, 'reject external Home edit during rollback');
+  assert.strictEqual(load(cfg)['773'].id, 'other.tv.app');
+  assert.strictEqual(fs.existsSync(bak), true);
+
+  // Malformed backup must not be used to overwrite the binding.
+  fs.writeFileSync(bak, JSON.stringify({present:true}));
+  assert.notStrictEqual(call('enable').status, 0, 'reject malformed backup');
+  assert.strictEqual(load(cfg)['773'].id, 'other.tv.app');
+
   console.log('Key mapping rollback tests passed.');
 } finally {
   fs.readdirSync(temp).forEach(function (name) { fs.unlinkSync(path.join(temp, name)); });

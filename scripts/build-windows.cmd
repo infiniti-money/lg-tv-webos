@@ -19,6 +19,8 @@ if errorlevel 1 (
 )
 echo [1/4] Checking Chromium 38 / Node 0.12 compatibility...
 node.exe scripts\check-webos3.js
+node.exe scripts\check-branding.js
+if errorlevel 1 exit /b 1
 if errorlevel 1 exit /b 1
 echo [2/4] Running offline tests...
 for %%F in (scripts\test-homewatch.js scripts\test-keymap.js scripts\test-lunar.js scripts\test-forecast.js scripts\test-customize.js scripts\test-app-structure.js) do (

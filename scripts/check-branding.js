@@ -36,7 +36,7 @@ assert.ok(diag.indexOf('raw.githubusercontent.com/infiniti-money/lg-tv-webos/mai
 });
 assert.ok(notes.indexOf('v' + meta.version) !== -1,
   'Release notes must match appinfo version');
-assert.ok(!fs.existsSync('.github/FUNDING.yml'), 'Previous owner's sponsor link still present');
+assert.ok(!fs.existsSync('.github/FUNDING.yml'), 'Upstream sponsor link still present');
 assert.ok(!fs.existsSync('docs/media/donate-usdt-bsc.gif'),
   'Old donation QR code still present');
 assert.ok(license.indexOf('Copyright (c) 2026 Infiniti Money') !== -1,

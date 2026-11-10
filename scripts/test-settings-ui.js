@@ -117,6 +117,13 @@ var down={type:'keydown',keyCode:40,preventDefault:function(){},
 node('customizeWeatherPresets').querySelectorAll('button')[7].focus();
 docEvents.keydown(arrow);
 assert.equal(document.activeElement.id,'customizeWeatherSearch','Right should focus search input');
+var typed={type:'keydown',keyCode:78,stopped:false,prevented:false,
+  preventDefault:function(){this.prevented=true;},
+  stopPropagation:function(){this.stopped=true;},
+  stopImmediatePropagation:function(){this.stopped=true;}};
+docEvents.keydown(typed);
+assert.equal(typed.prevented,false,'Typing must not be prevented');
+assert.equal(typed.stopped,false,'LG keyboard input events must reach their input target');
 docEvents.keydown(down);
 assert.equal(document.activeElement.id,'customizeWeatherSearchBtn','Down should exit search input');
 node('customizeWeatherSearch').value='Nha Trang';

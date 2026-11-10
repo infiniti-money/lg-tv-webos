@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-rem Infiniti TV Home 1.4.x for webOS 3.4.0. Produces stable IPK + SHA-256.
+rem Infiniti TV Home 1.5.x for webOS 3.4.0. Produces stable IPK + SHA-256.
 rem Use Windows CMD (avoids npm.ps1 execution-policy errors).
 cd /d "%~dp0\.."
 if not exist "app\appinfo.json" (

@@ -10,7 +10,7 @@ ENABLED="$DATA/boot-services-enabled"
 LOG=/tmp/infiniti-auto-update.log
 VERSION_URL=https://api.github.com/repos/infiniti-money/lg-tv-webos/releases/latest
 PREFIX=https://github.com/infiniti-money/lg-tv-webos/releases/download
-MODE="\${1:---check}"
+MODE="${1:---check}"
 log() { printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$LOG" 2>/dev/null || true; }
 status() {
   for appdir in "/media/developer/apps/usr/palm/applications/$APP" "/media/cryptofs/apps/usr/palm/applications/$APP"; do
@@ -20,7 +20,7 @@ status() {
       var obj={enabled:enabled,version:process.argv[3],message:process.argv[4],
         checkedAt:(new Date()).toISOString()};
       fs.writeFileSync(f,"window.INFINITI_UPDATE_STATUS = "+JSON.stringify(obj)+";\n");
-    ' "$appdir/update-status.js" "$([ -f "$FLAG" ] && echo yes || echo no)" "\${2:-}" "$1" 2>/dev/null || true
+    ' "$appdir/update-status.js" "$([ -f "$FLAG" ] && echo yes || echo no)" "${2:-}" "$1" 2>/dev/null || true
   done
 }
 local_version() {

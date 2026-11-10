@@ -24,23 +24,35 @@ function write(path, obj) {
   try { fs.renameSync(temp, path); }
   catch (e) { try { fs.unlinkSync(temp); } catch (ignored) {} throw e; }
 }
+// A backup may survive a crash before the new Home mapping is written.
+// Recover only if the binding is still exactly the original saved state.
+function originalUnchanged(conf, key, saved) {
+  var present = Object.prototype.hasOwnProperty.call(conf, key);
+  return present === saved.present &&
+    (!present || JSON.stringify(conf[key]) === JSON.stringify(saved.binding));
+}
 function main() {
   var action = process.argv[2], cfg = process.argv[3], backup = process.argv[4],
     key = process.argv[5], app = process.argv[6], cmd = process.argv[7];
   if (!cfg || !backup || !key || !app || !cmd) fail('Usage: keymap.js enable|disable CONFIG BACKUP KEY APP_ID LEGACY_COMMAND');
   if (action !== 'enable' && action !== 'disable') fail('Unknown operation: ' + action);
-  var conf = read(cfg, action === 'enable'), saved = fs.existsSync(backup) ? read(backup, false) : null;
+  var saved = fs.existsSync(backup) ? read(backup, false) : null;
+  var conf = read(cfg, action === 'enable' || (action === 'disable' && saved && !saved.present));
   var has = Object.prototype.hasOwnProperty.call(conf, key);
   var current = has ? conf[key] : null;
   if (saved && typeof saved.present !== 'boolean') fail('Invalid Home key backup (present flag)');
+  if (saved && saved.present && !Object.prototype.hasOwnProperty.call(saved, 'binding')) fail('Invalid Home key backup (missing binding)');
   if (action === 'enable') {
     if (saved) {
-      if (!own(current, app, cmd)) fail('Home mapping changed externally; refusing to overwrite it');
-      console.log('Home mapping already active and safely backed up');
-      return;
-    }
-    if (own(current, app, cmd)) fail('Our mapping already exists but no original backup; manual recovery required');
-    if (saved === null) {
+      if (own(current, app, cmd)) {
+        console.log('Home mapping already active and safely backed up');
+        return;
+      }
+      if (!originalUnchanged(conf, key, saved))
+        fail('Home mapping changed externally; refusing to overwrite it');
+      console.log('Recovering interrupted Home mapping activation');
+    } else {
+      if (own(current, app, cmd)) fail('Our mapping already exists but no original backup; manual recovery required');
       write(backup, {present: has, binding: has ? current : null});
     }
     conf[key] = {action: 'launch', id: app};
@@ -50,6 +62,11 @@ function main() {
     if (!saved) {
       if (own(current, app, cmd)) fail('Our Home mapping exists without backup; refusing unsafe restore');
       console.log('No managed Home mapping to restore');
+      return;
+    }
+    if (originalUnchanged(conf, key, saved)) {
+      fs.unlinkSync(backup);
+      console.log('Home mapping was not changed; interrupted backup cleared');
       return;
     }
     if (!own(current, app, cmd)) fail('Home mapping changed externally; leaving it and backup intact');

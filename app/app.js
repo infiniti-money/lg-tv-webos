@@ -476,11 +476,17 @@
     ambientFront = 1 - ambientFront;
   }
 
+  function aiEnabled() {
+    return !window.INFINITI_PREFS || window.INFINITI_PREFS.getAIEnabled();
+  }
   function focusPill(i) {
     setZone('top');
     document.body.classList.remove('scrolled');
     pills[pillFocus].classList.remove('focused');
-    pillFocus = Math.max(0, Math.min(i, pills.length - 1));
+    var next = Math.max(0, Math.min(i, pills.length - 1));
+    // The hidden AI pill must never trap a D-pad-only TV remote.
+    if (next === 4 && !aiEnabled()) next = i < pillFocus ? 3 : 5;
+    pillFocus = next;
     pills[pillFocus].classList.add('focused');
   }
 
@@ -499,6 +505,7 @@
   function pillAbove(i) {
     var cx = tileLeft(i) + TILE_W / 2, best = 0, bestD = Infinity;
     pills.forEach(function (p, k) {
+      if (k === 4 && !aiEnabled()) return;
       var r = p.getBoundingClientRect();
       var d = Math.abs(r.left + r.width / 2 - cx);
       if (d < bestD) { bestD = d; best = k; }
@@ -541,7 +548,8 @@
     else if (i === 1) launch('com.palm.app.settings', 'Settings', { target: 'network' });
     else if (i === 2) showWall();
     else if (i === 3) launch('com.palm.app.settings', 'Settings');
-    else if (i === 4 && window.INFINITI_AI_OPEN) window.INFINITI_AI_OPEN();
+    else if (i === 4 && window.INFINITI_AI_OPEN &&
+      (!window.INFINITI_PREFS || window.INFINITI_PREFS.getAIEnabled())) window.INFINITI_AI_OPEN();
     else if (i === 5 && window.INFINITI_CUSTOMIZE_OPEN) window.INFINITI_CUSTOMIZE_OPEN();
   }
 
@@ -934,6 +942,10 @@
     animateIn();
     if (items.length) focusTile(focused);
     else focusPill(pills.length - 1);
+  };
+  window.INFINITI_AI_VISIBILITY_CHANGED = function () {
+    cachedHeaderBottom = null;
+    if (!aiEnabled() && pillFocus === 4) focusPill(5);
   };
   window.INFINITI_LAUNCHER_LAYOUT_REFRESH = function () {
     cachedHeaderBottom = null;

@@ -39,6 +39,7 @@ jobs:
           node scripts/check-webos3.js
           node scripts/check-branding.js
           node scripts/test-homewatch.js
+          node scripts/test-homekey-runtime.js
           node scripts/test-app-discovery.js
           node scripts/test-keymap.js
           node scripts/test-ai-worker.mjs

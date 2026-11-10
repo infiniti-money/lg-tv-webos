@@ -180,9 +180,10 @@
     } catch (e) { /* storage unavailable: the order lasts until the app restarts */ }
   }
 
-  function rowOf(i) { return Math.floor(i / COLUMNS); }
-  function tileLeft(i) { return 112 + (i % COLUMNS) * CELL_W + (CELL_W - TILE_W) / 2; }
-  function tileTop(i) { var r = rowOf(i); return DOCK_TOP + r * ROW_PITCH + (r > 0 ? DOCK_GAP : 0); }
+  // One horizontal app row. COLUMNS sets visible tile size; never creates another row.
+  function rowOf(i) { return 0; }
+  function tileLeft(i) { return 112 + i * CELL_W + (CELL_W - TILE_W) / 2; }
+  function tileTop(i) { return DOCK_TOP; }
 
   function build() {
     tilesEl.innerHTML = '';
@@ -244,6 +245,7 @@
 
   /** Places every tile by its position in items; tiles glide when the order changes. */
   function layout() {
+    offset = Math.max(0, offset);
     items.forEach(function (it, i) {
       it.el.style.left = tileLeft(i) + 'px';
       it.el.style.top = tileTop(i) + 'px';
@@ -251,7 +253,7 @@
     });
 
     var band = $('dockBand');
-    var n = Math.min(COLUMNS, items.length);
+    var n = items.length;
     band.style.display = n ? 'block' : 'none';
     band.style.left = (tileLeft(0) - 28) + 'px';
     band.style.top = (DOCK_TOP - 28) + 'px';
@@ -265,7 +267,7 @@
   }
 
   /** Index of the last tile in the dock row. */
-  function lastDock() { return Math.min(COLUMNS, items.length) - 1; }
+  function lastDock() { return items.length - 1; }
 
   function animateIn() {
     items.forEach(function (it, i) {
@@ -389,23 +391,14 @@
     focused = i;
     items[i].el.classList.add('focused');
 
-    var top = tileTop(i), row = rowOf(i);
-    if (row === 0) {
-      offset = 0;
-    } else {
-      // Scroll just enough so the whole glass and the name below the tile are visible.
-      if (top - offset + TILE_H + 70 > VIEW_BOTTOM) offset = top + TILE_H + 70 - VIEW_BOTTOM;
-      if (top - offset - 24 < VIEW_TOP) offset = top - 24 - VIEW_TOP;
-    }
-    stage.style.transform = 'translateY(' + (-offset) + 'px)';
-    // Keep the header until the content (the dock band is topmost) would run into it.
-    // Avoid synchronous geometry reads for each remote key repeat; remeasure only after settings change.
-    if (cachedHeaderBottom === null) {
-      var header = document.querySelector('header');
-      cachedHeaderBottom = header.offsetTop + header.offsetHeight;
-    }
-    var headerBottom = cachedHeaderBottom;
-    document.body.classList.toggle('scrolled', DOCK_TOP - 28 - offset < headerBottom + 24);
+    var top = tileTop(i), left = tileLeft(i);
+    // Slide the one app row horizontally, keeping the selected tile within the TV safe area.
+    // No expensive layout reads on each remote press.
+    if (left - offset < 130) offset = Math.max(0, left - 130);
+    if (left + TILE_W - offset > 1780) offset = left + TILE_W - 1780;
+    offset = Math.max(0, offset);
+    stage.style.transform = 'translateX(' + (-offset) + 'px)';
+    document.body.classList.remove('scrolled');
 
     var w = TILE_W * FOCUS_SCALE + 2 * GLASS_PAD, h = TILE_H * FOCUS_SCALE + 2 * GLASS_PAD;
     var x = tileLeft(i) + TILE_W / 2 - w / 2, y = top + TILE_H / 2 - h / 2;
@@ -421,8 +414,7 @@
       glassShown = true;
     }
 
-    if (row === 0) showHero(items[i]);
-    else hideHero();
+    showHero(items[i]);
     setAmbient(items[i].color);   // the glow follows the focused tile in every row
   }
 
@@ -503,7 +495,7 @@
 
   /** The pill straight above a dock tile, by horizontal distance. */
   function pillAbove(i) {
-    var cx = tileLeft(i) + TILE_W / 2, best = 0, bestD = Infinity;
+    var cx = tileLeft(i) - offset + TILE_W / 2, best = 0, bestD = Infinity;
     pills.forEach(function (p, k) {
       if (k === 4 && !aiEnabled()) return;
       var r = p.getBoundingClientRect();
@@ -808,8 +800,6 @@
     if (editing) {
       if (k === KEY.LEFT) moveTo(focused - 1);
       else if (k === KEY.RIGHT) moveTo(focused + 1);
-      else if (k === KEY.UP) moveTo(focused - COLUMNS);
-      else if (k === KEY.DOWN) moveTo(Math.min(focused + COLUMNS, items.length - 1));
       else if (k === KEY.OK) finishEdit(true);
       else if (k === KEY.BACK || k === KEY.ESC) finishEdit(false);
       else return;
@@ -830,7 +820,7 @@
     } else if (zone === 'pen') {
       if (k === KEY.LEFT) focusTile(lastDock());
       else if (k === KEY.UP) focusPill(pills.length - 1);
-      else if (k === KEY.DOWN) focusTile(Math.min(lastDock() + COLUMNS, items.length - 1));
+      else if (k === KEY.DOWN) focusTile(lastDock());
       else if (k === KEY.OK) showCols();
       else if (k === KEY.BACK) { /* home screen: Back goes nowhere */ }
       else return;
@@ -841,24 +831,23 @@
     } else if (zone === 'top') {
       if (k === KEY.LEFT) focusPill(pillFocus - 1);
       else if (k === KEY.RIGHT) focusPill(pillFocus + 1);
-      else if (k === KEY.DOWN) focusTile(rowOf(focused) === 0 ? focused : 0);
+      else if (k === KEY.DOWN) focusTile(Math.max(0, focused));
       else if (k === KEY.OK) activatePill(pillFocus);
       else if (k === KEY.BACK) { /* home screen: Back goes nowhere */ }
       else return;
     } else {
-      var col = focused % COLUMNS, last = items.length - 1;
+      var last = items.length - 1;
       if (arranging && k === KEY.OK) { startEdit(); e.preventDefault(); return; }
       if (arranging && (k === KEY.BACK || k === KEY.ESC)) { stopArrange(); e.preventDefault(); return; }
-      if (k === KEY.LEFT) { if (col > 0) focusTile(focused - 1); }
+      if (k === KEY.LEFT) { if (focused > 0) focusTile(focused - 1); }
       else if (k === KEY.RIGHT) {
-        if (col < COLUMNS - 1 && focused < last) focusTile(focused + 1);
-        else if (focused === lastDock() && !arranging) focusPen();
+        if (focused < last) focusTile(focused + 1);
+        else if (!arranging) focusPen();
       }
       else if (k === KEY.UP) {
-        if (rowOf(focused) === 0) { if (!arranging) focusPill(pillAbove(focused)); }
-        else focusTile(focused - COLUMNS);
+        if (!arranging) focusPill(pillAbove(focused));
       } else if (k === KEY.DOWN) {
-        if (rowOf(focused) < rowOf(last)) focusTile(Math.min(focused + COLUMNS, last));
+        // There is no second row of apps.
       } else if (k === KEY.OK) {
         okTimer = setTimeout(function () { okTimer = null; startEdit(); }, LONG_PRESS_MS);
       } else if (k === KEY.BACK) { /* home screen: Back goes nowhere */ }

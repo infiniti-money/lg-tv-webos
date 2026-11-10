@@ -58,7 +58,8 @@ var panel=node('customizePanel'); panel.className='hidden';
 });
 var groups = {
   customizeStyleView:['customizeThemes','customizeFonts','customizeLargeText',
-    'customizeShowWeek','customizeMotion','customizeWallpaper','customizeResetStyle'],
+    'customizeShowWeek','customizeMotion','customizeWallpaper','customizeWallQr',
+    'customizeWallState','customizeWallHost','customizeUpdateState','customizeResetStyle'],
   customizeWeatherView:['customizeWeatherChoice','customizeWeatherPresets',
     'customizeWeatherSearch','customizeWeatherSearchBtn','customizeWeatherResults',
     'customizeWeatherEnable','customizeWeatherUnit'],
@@ -83,8 +84,15 @@ var window={
   CONFIG:{hiddenApps:[],language:'vi',weather:{enabled:false,latitude:0,longitude:0}},
   TV_APPS:{apps:[]},
   INFINITI_WEATHER_RELOAD:function(){weatherCalls++;},
-  INFINITI_LAUNCHER_LAYOUT_REFRESH:function(){}
+  INFINITI_LAUNCHER_LAYOUT_REFRESH:function(){},
+  INFINITI_WALLPAPER_GET_URL:function(cb) {
+    cb('http://192.168.2.154:8090/?k=abcdef123456');
+  }
 };
+function qrcode() {
+  return {addData:function(url){assert.ok(url.indexOf('192.168.2.154')>=0);},
+    make:function(){},createDataURL:function(){return 'data:image/png;base64,test';}};
+}
 function XMLHttpRequest() { lastXhr=this; this.status=200; }
 XMLHttpRequest.prototype.open=function(method,url){this.url=url;};
 XMLHttpRequest.prototype.send=function(){
@@ -95,13 +103,22 @@ XMLHttpRequest.prototype.send=function(){
 };
 XMLHttpRequest.prototype.abort=function(){};
 vm.runInNewContext(source,{window:window, document:document, localStorage:localStorage,
-  XMLHttpRequest:XMLHttpRequest, module:{exports:{}},console:console});
+  XMLHttpRequest:XMLHttpRequest, qrcode:qrcode, module:{exports:{}},console:console});
 assert.equal(typeof window.INFINITI_CUSTOMIZE_OPEN,'function');
 window.INFINITI_CUSTOMIZE_OPEN();
 assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true);
 assert.equal(document.activeElement.id,'customizeStyleTab','appearance page gets initial focus');
 assert.equal(node('customizeStyleView').hasClass('hidden'),false);
 assert.equal(node('customizeWeatherView').hasClass('hidden'),true);
+assert.ok(node('customizeWallQr').innerHTML.indexOf('')>=0);
+assert.equal(node('customizeWallState').textContent,
+  'Mở camera điện thoại để chọn ảnh, ảnh USB hoặc xóa hình nền.');
+node('customizeWallpaper').click();
+assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true,
+  'Wallpaper QR refresh must keep settings open, not return to Home');
+assert.ok(document.body.children.some(function(el) {
+  return el.id==='updateStatusJs' && el.src.indexOf('update-status.js?ts=')===0;
+}), 'Settings should load current automatic-update status from TV');
 node('customizeWeatherTab').click();
 assert.equal(node('customizeWeatherView').hasClass('hidden'),false);
 assert.equal(node('customizeStyleView').hasClass('hidden'),true);

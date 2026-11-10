@@ -534,6 +534,7 @@ body.solar-hidden #date, body.lunar-hidden #lunarDate { display:none; }
 #customizePanel.hidden,
 #customizeStyleView.hidden,
 #customizeWeatherView.hidden,
+#customizeAIView.hidden,
 #customizeCalendarView.hidden,
 #customizeAppsView.hidden { display:none; }
 .customizeDialog { margin:0 auto; width:100%; max-width:1640px; height:100%; overflow:hidden;
@@ -610,3 +611,8 @@ body.motion-reduced .item:not(.moving) .card { animation:none!important; }
   transform:scale(.711); } }
 @media screen and (max-width:1280px) { body { -webkit-transform:scale(.6666);
   transform:scale(.6666); } }
+
+/* On-TV AI preference only affects the launcher, never system apps. */
+body.ai-disabled #btnAI {display:none!important;}
+#customizeAIState {margin-top:16px!important; color:#c5e6fa!important;}
+.customizeTabs button {padding-left:17px; padding-right:17px; font-size:20px;}

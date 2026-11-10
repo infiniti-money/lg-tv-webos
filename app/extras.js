@@ -16,7 +16,7 @@
   var el = document.getElementById('weather');
   var area = document.getElementById('forecastArea');
   var week = document.getElementById('weekWeather');
-  var active = null, sequence = 0;
+  var active = null, sequence = 0, lastRegion = '';
   var vi = C.language !== 'en';
   var NAMES = vi ? {
     0:'Trời quang',1:'Ít mây',2:'Có mây',3:'Nhiều mây',45:'Sương mù',48:'Sương mù',
@@ -74,6 +74,14 @@
     sequence++;
     var serial=sequence;
     if (active) { active.abort(); active=null; }
+    var region = w.enabled && valid ?
+      [w.latitude,w.longitude,w.unit].join(',') : '';
+    if (region !== lastRegion) {
+      // Never show the previous city's cards beneath a newly selected city.
+      week.innerHTML = '';
+      area.classList.add('hidden');
+      lastRegion = region;
+    }
     if (!w.enabled || !valid) {
       el.textContent='';
       el.className='';

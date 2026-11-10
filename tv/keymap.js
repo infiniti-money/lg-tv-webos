@@ -55,9 +55,11 @@ function main() {
       if (own(current, app, cmd)) fail('Our mapping already exists but no original backup; manual recovery required');
       write(backup, {present: has, binding: has ? current : null});
     }
-    conf[key] = {action: 'launch', id: app};
+    // Input Hook 1.4 supports Execute on rooted LG TVs; Launch App is not
+    // available on every version. Keep the old 'launch' mapping recognizable.
+    conf[key] = {action: 'exec', command: cmd};
     write(cfg, conf);
-    console.log('Home mapping installed (previous binding backed up)');
+    console.log('Home key executes the safe Infiniti TV Home launcher (previous binding backed up)');
   } else {
     if (!saved) {
       if (own(current, app, cmd)) fail('Our Home mapping exists without backup; refusing unsafe restore');

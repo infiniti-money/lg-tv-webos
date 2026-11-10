@@ -20,6 +20,9 @@
 #   --enable-home           EXPLICITLY map Home button; no boot/wake autolaunch
 #   --no-home-button        Deprecated alias for the safe default
 #   --rebind-home           Explicitly rebind a conflicting mapping (requires --enable-home)
+#   --auto-update           Enable delayed, SHA-256-verified app updates + wallpaper server
+#   --wallpaper-service     Enable wallpaper QR phone server only (no app update)
+#   --no-auto-update        Disable auto updates; safe mode also stops background services by default
 #   --uninstall             Remove Infiniti TV Home after safe recovery
 #   --uninstall             Remove everything this script installed
 set -e
@@ -61,7 +64,7 @@ luna_wait() {
 
 # ---------------------------------------------------------------- options
 LANG_OPT="vi"; CLOCK="on"; COLS=""; CITY=""; FAHR=""; NOWEATHER=""; WALL=""; NOWALL=""; DIM=""; GLOW=""
-HOME_BTN=""; UNINSTALL=""; REBIND_HOME=""
+HOME_BTN=""; UNINSTALL=""; REBIND_HOME=""; AUTO_UPDATE=""; WALL_SERVICE=""; STOP_AUTO=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --lang) LANG_OPT="$2"; shift ;;
@@ -77,6 +80,9 @@ while [ $# -gt 0 ]; do
     --no-home-button) HOME_BTN="" ;;
     --enable-home) HOME_BTN=1 ;;
     --rebind-home) REBIND_HOME=1 ;;
+    --auto-update) AUTO_UPDATE=1; WALL_SERVICE=1 ;;
+    --wallpaper-service) WALL_SERVICE=1 ;;
+    --no-auto-update) STOP_AUTO=1 ;;
     --uninstall) UNINSTALL=1 ;;
     *) die "Unknown option: $1" ;;
   esac
@@ -121,7 +127,7 @@ fi
 # ---------------------------------------------------------------- files
 say "Downloading scripts"
 mkdir -p "$DATA/icons"
-for f in sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh home-control.sh safe-recovery.sh diagnose-home.sh compat-check.sh; do
+for f in sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh home-control.sh safe-recovery.sh auto-update.sh install-ipk-update.js diagnose-home.sh compat-check.sh; do
   curl -fsSL "$RAW/tv/$f" -o "$DATA/$f" || die "Could not download $f. Is the TV online?"
 done
 chmod +x "$DATA"/*.sh "$DATA"/*.js
@@ -197,6 +203,43 @@ ok "Launcher installed"
 say "Reading your apps"
 node "$DATA/sync.js" || die "App sync failed."
 
+# ---------------------------------------------------------------- opt-in maintenance (never launches the TV home)
+# All old boot hooks were previously archived by safe-recovery.sh. Only the
+# explicit flags below restore background (non-UI) services, never the old
+# Home watcher or evdev key monitor. This is reversible with safe-recovery.sh.
+if [ -n "$STOP_AUTO" ]; then
+  rm -f "$DATA/auto-update-enabled"
+fi
+if [ -n "$AUTO_UPDATE" ]; then
+  touch "$DATA/auto-update-enabled"
+  WALL_SERVICE=1
+fi
+if [ -n "$WALL_SERVICE" ]; then
+  touch "$DATA/boot-services-enabled"
+  mkdir -p "$(dirname "$INITD")"
+  cp "$DATA/boot.sh" "$INITD"
+  chmod +x "$INITD"
+  # Start only the local wallpaper phone service, without any foreground UI.
+  if ! ps | grep '[w]allpaper-server.js' | grep -v grep >/dev/null 2>&1; then
+    nohup setsid /usr/bin/node "$DATA/wallpaper-server.js" >> /tmp/lg-tv-vibehack.log 2>&1 < /dev/null &
+  fi
+  ok "Wallpaper service enabled. QR can be opened from Customize > Wallpaper."
+  if [ -n "$AUTO_UPDATE" ]; then
+    # No immediate GitHub update during installation or startup. The opt-in
+    # watcher waits 20 minutes and then checks twice per day.
+    if ! ps | grep '[a]uto-update.sh --watch' | grep -v grep >/dev/null 2>&1; then
+      nohup setsid sh "$DATA/auto-update.sh" --watch >> /tmp/infiniti-auto-update.log 2>&1 < /dev/null &
+    fi
+    ok "SHA-256 verified automatic app updates enabled (delayed background mode)."
+  fi
+else
+  ok "Safe mode: no background service registered. Use --wallpaper-service or --auto-update when ready."
+fi
+
+# Persist the status for Customize > Giao diện even before the first scheduled
+# network check. This only writes update-status.js, never installs or opens UI.
+sh "$DATA/auto-update.sh" --init-status || warn "Could not initialize auto-update status."
+
 # ---------------------------------------------------------------- optional manual Home button interception
 # Safe default: NO auto-boot hook, NO watcher, NO evdev reader, NO UI launch.
 # We keep only the app and read-only synched metadata until the user tests
@@ -223,3 +266,4 @@ echo
 ok "Installation complete. Test LG power off/on twice BEFORE enabling Home interception."
 ok "To start Infiniti manually, select it from the TV app list."
 ok "Emergency rollback: sh $DATA/safe-recovery.sh"
+[ -z "$AUTO_UPDATE" ] || ok "Auto update status: sh $DATA/auto-update.sh --status"

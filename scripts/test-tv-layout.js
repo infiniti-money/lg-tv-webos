@@ -46,8 +46,18 @@ assert.ok(/translateX\(/.test(app),'Single app row must scroll horizontally');
 assert.ok(/background:rgba\(12,22,33,\.13\)/.test(css),
   'Weather cards must remain translucent, not opaque');
 assert.ok(/body\.ai-disabled #btnAI/.test(css),'AI must disappear from Home when disabled');
-assert.ok(/var TILE_W = Math.max\(86, Math.min\(146,/.test(app),
-  'App icons must use compact 86–146px sizing');
+assert.ok(/var TILE_W = Math.max\(96, Math.min\(158,/.test(app),
+  'App icons should be slightly larger (96–158px) without extra rows');
+assert.ok(/border-radius:24px!important/.test(css) &&
+  /\.item \.card img \{[^}]*border-radius:24px/.test(css),
+  'Icons must have more rounded corners in transparent dock');
+assert.ok(html.indexOf('id="customizeWallQr"')>=0 &&
+  html.indexOf('id="btnWall"')<0 && html.indexOf('id="customizeWallpaper"')>=0,
+  'Wallpaper QR setup must be inside Customize rather than on the top bar');
+assert.ok(html.indexOf('id="customizeUpdateState"')>=0,
+  'Settings should explain automatic update availability');
+assert.ok(app.indexOf("var pills = [")>=0 && app.indexOf("'btnWall'")<0,
+  'Remote focus must not navigate to a removed wallpaper top button');
 assert.ok(/var DOCK_TOP = 1030 - TILE_H - 34;/.test(app),
   'Single app row must be placed near bottom, above the TV overscan');
 assert.ok(/band.style.display = 'none'/.test(app),
@@ -58,4 +68,4 @@ assert.ok(/#dockBand, body.theme-ocean #dockBand, body.theme-amber #dockBand/.te
   'Transparent dock must also override theme backgrounds');
 assert.ok(/\.item\.dock \.name \{[\s\S]*?display:block/.test(css),
   'Compact dock must still show readable app labels');
-console.log('LG TV 1080p/720p: compact transparent dock near bottom, installed app row and AI settings passed.');
+console.log('LG TV 1080p/720p: larger rounded single-row dock, Customize wallpaper QR and updater status passed.');

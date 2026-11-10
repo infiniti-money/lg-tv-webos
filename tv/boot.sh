@@ -17,6 +17,13 @@ if [ ! -f "$DIR/boot-services-enabled" ]; then
 fi
 
 echo "$(date) Infiniti boot services requested (no launcher autostart)" >> "$LOG"
+# The updater only starts when explicitly enabled by the root installer.
+# It sleeps 20 minutes before its first check, and never launches any UI.
+if [ -f "$DIR/auto-update-enabled" ] && [ -f "$DIR/auto-update.sh" ]; then
+  if ! ps | grep '[a]uto-update.sh --watch' | grep -v grep >/dev/null 2>&1; then
+    nohup setsid sh "$DIR/auto-update.sh" --watch >> /tmp/infiniti-auto-update.log 2>&1 < /dev/null &
+  fi
+fi
 # This is background maintenance ONLY; no Home key hooks or UI launches.
 # The service is delayed to avoid competing with the LG compositor on wake.
 nohup setsid sh -c '

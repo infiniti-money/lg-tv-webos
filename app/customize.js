@@ -233,6 +233,60 @@
       appsList.appendChild(row);
     });
   }
+  function renderWallpaperQR() {
+    var code = $('customizeWallQr'), state = $('customizeWallState');
+    var host = $('customizeWallHost');
+    if (!code || !state || !host) return;
+    code.innerHTML = '';
+    host.textContent = '';
+    state.textContent = 'Đang lấy địa chỉ dịch vụ hình nền…';
+    if (typeof root.INFINITI_WALLPAPER_GET_URL !== 'function') {
+      state.textContent = 'Dịch vụ hình nền chưa sẵn sàng. Mở lại Tùy chỉnh.';
+      return;
+    }
+    root.INFINITI_WALLPAPER_GET_URL(function (url) {
+      // The QR links to a TV-local, secret-authenticated phone service.
+      // Only display a valid local IP:8090 URL written by the root helper.
+      if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:8090\/\?k=[a-f0-9]{12}$/.test(url || '')) {
+        state.textContent = 'Chưa bật dịch vụ hình nền. Trên TV đã root, cài gói root và bật --auto-update để kích hoạt dịch vụ nền; LG Home vẫn được giữ nguyên.';
+        return;
+      }
+      try {
+        var qr = qrcode(0, 'M');
+        qr.addData(url);
+        qr.make();
+        code.innerHTML = '<img alt="Quét để đổi hình nền" src="' + qr.createDataURL(6, 0) + '">';
+        state.textContent = 'Mở camera điện thoại để chọn ảnh, ảnh USB hoặc xóa hình nền.';
+        host.textContent = url.split('?')[0];
+      } catch (err) {
+        state.textContent = 'Không tạo được mã QR. Hãy kiểm tra bộ cài và thử lại.';
+      }
+    });
+  }
+  function renderUpdateStatus() {
+    var output = $('customizeUpdateState');
+    if (!output) return;
+    var old = $('updateStatusJs');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    root.INFINITI_UPDATE_STATUS = null;
+    var sc = document.createElement('script');
+    sc.id = 'updateStatusJs';
+    sc.src = 'update-status.js?ts=' + Date.now();
+    sc.onload = function () {
+      var status = root.INFINITI_UPDATE_STATUS;
+      if (!status || !status.enabled) {
+        output.textContent = 'Tự cập nhật chưa bật. Dùng --auto-update khi chạy bộ cài root để kích hoạt.';
+      } else {
+        output.textContent = 'Tự cập nhật: đã bật. ' +
+          (status.version ? 'Phiên bản đã cập nhật: ' + status.version + '. ' : '') +
+          'Sẽ chỉ cài khi Infiniti Home không đang hiển thị và đã qua thời gian bảo vệ sau khi bật TV.';
+      }
+    };
+    sc.onerror = function () {
+      output.textContent = 'Tự cập nhật chưa bật hoặc chưa có trạng thái. Cần gói root và tùy chọn --auto-update.';
+    };
+    document.body.appendChild(sc);
+  }
   function renderStyle() {
     var a = getAppearance();
     themeBox.innerHTML = '';
@@ -258,6 +312,8 @@
       }, a.font === entry[0]);
     });
     refreshToggles();
+    renderWallpaperQR();
+    renderUpdateStatus();
   }
   function markChoice(parent, selected) {
     var list = parent.querySelectorAll('button');
@@ -450,8 +506,8 @@
   appearanceToggle('customizeSolar','showSolar');
   appearanceToggle('customizeLunar','showLunar');
   $('customizeWallpaper').addEventListener('click', function () {
-    hide();
-    if (typeof root.INFINITI_WALLPAPER_OPEN === 'function') root.INFINITI_WALLPAPER_OPEN();
+    renderWallpaperQR();
+    message('Mã QR nằm trong phần Hình nền của Tùy chỉnh.');
   });
   $('customizeResetStyle').addEventListener('click', function () {
     saveAppearance(defaults); applyAppearance(); renderStyle();

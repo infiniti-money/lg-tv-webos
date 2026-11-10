@@ -6,7 +6,6 @@ var appInfo = JSON.parse(fs.readFileSync('app/appinfo.json','utf8'));
 assert.strictEqual(appInfo.id, 'com.infinitimoney.tvhome');
 assert.strictEqual(appInfo.title, 'Infiniti TV Home');
 assert.strictEqual(appInfo.vendor, 'Infiniti Money');
-assert.strictEqual(require('child_process').execFileSync ? typeof require('child_process').execFileSync : 'function','function');
 var noRootWatcher = fs.readFileSync('home-watch.py','utf8');
 assert.ok(/LAUNCHER = "com\.infinitimoney\.tvhome"/.test(noRootWatcher), 'no-root Home watcher must open the correct application');
 assert.ok(!/com\.gathin\.tvhome/.test(noRootWatcher), 'old app ID in no-root Home watcher');

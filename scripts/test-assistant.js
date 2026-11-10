@@ -2,7 +2,7 @@
 'use strict';
 var assert = require('assert'), fs = require('fs'), vm = require('vm');
 var code = fs.readFileSync('app/assistant.js', 'utf8');
-var nodes = {}, domEvents = {}, calls = 0, requests = [];
+var nodes = {}, domEvents = {}, calls = 0, requests = [], closed = 0;
 function node(id) {
   if (!nodes[id]) {
     nodes[id] = {value:'', disabled:false, textContent:'', events:{},
@@ -22,7 +22,8 @@ function XHR() {
   this.abort = function(){this.readyState=4;if(this.onreadystatechange)this.onreadystatechange();};
 }
 var ctx = {
-  window:{CONFIG:{language:'vi',aiEndpoint:'https://example.workers.dev/api/chat'},setTimeout:function(){}},
+  window:{CONFIG:{language:'vi',aiEndpoint:'https://example.workers.dev/api/chat'},setTimeout:function(){},
+    INFINITI_AI_CLOSED:function(){closed++;}},
   document:{getElementById:node,addEventListener:function(type,fn){domEvents[type]=fn;}},
   XMLHttpRequest:XHR,
   console:console
@@ -47,6 +48,7 @@ assert.equal(calls,1,'one request');
 assert.equal(node('aiSend').disabled,true,'disabled during request');
 node('aiClose').events.click();
 assert.equal(node('aiSend').disabled,false,'re-enabled after abort/close');
+assert.equal(closed,1,'close notifies launcher to reset held OK state');
 ctx.window.INFINITI_AI_OPEN();
 node('aiSend').events.click();
 assert.equal(calls,2,'can submit again after reopening');

@@ -73,8 +73,19 @@ function sync(cb) {
   execFile('/usr/bin/node', [path.join(DATA, 'sync.js')], { timeout: 60000 }, function (err, out, errOut) {
     if (err) log('sync failed: ' + (errOut || err.message));
     writeWallJs();
-    execFile('luna-send', ['-n', '1', 'luna://com.webos.applicationManager/launch',
-      JSON.stringify({ id: 'com.infinitimoney.tvhome', params: { reload: true } })]);
+    // A wallpaper change from a phone must not wake or take over LG Home.
+    // Reload only when Infiniti is *already* the verified foreground app.
+    execFile('luna-send', ['-n', '1',
+      'luna://com.webos.applicationManager/getForegroundAppInfo', '{}'],
+      { timeout: 5000 }, function (fgErr, out) {
+        var foreground = '';
+        try { foreground = JSON.parse(String(out || '').trim()).appId || ''; } catch (e) {}
+        if (!fgErr && foreground === 'com.infinitimoney.tvhome') {
+          execFile('luna-send', ['-n', '1', 'luna://com.webos.applicationManager/launch',
+            JSON.stringify({ id: foreground, params: { reload: true } })],
+            { timeout: 5000 }, function () {});
+        }
+      });
     cb(err);
   });
 }
@@ -251,4 +262,14 @@ http.createServer(function (req, res) {
 }).on('error', function (e) {
   log('cannot start: ' + e.message);
   process.exit(1);
-}).listen(PORT, function () { writeWallJs(); log('listening on port ' + PORT); });
+}).listen(PORT, function () {
+  writeWallJs();
+  // An app-only auto-update may replace wall.js. Restore the QR URL without
+  // reopening the launcher or interacting with LG's Home on wake.
+  setInterval(function () {
+    try {
+      if (!fs.existsSync(path.join(APP_DIR, 'wall.js'))) writeWallJs();
+    } catch (e) { log('wall.js refresh failed: ' + e.message); }
+  }, 60000);
+  log('listening on port ' + PORT);
+});

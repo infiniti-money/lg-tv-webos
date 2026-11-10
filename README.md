@@ -4,16 +4,16 @@
 
 **An Apple TV–style home screen for LG webOS TVs, with a real Home button, weather and your own wallpaper.**
 
-*LG TV-vibehack · webOS-vibehack · LG-vibehack: a webOS launcher that replaces LG's ad-filled home.*
+*An Infiniti Money project for LG webOS TVs. Install packages and updates from this repository.*
 
 [![Release](https://img.shields.io/github/v/release/infiniti-money/lg-tv-webos?style=flat-square)](https://github.com/infiniti-money/lg-tv-webos/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
-[![webOS](https://img.shields.io/badge/webOS-6%2B-a50034?style=flat-square)](#tested-tvs)
+[![webOS](https://img.shields.io/badge/webOS-3.x%2B%20(source%20compatibility)-a50034?style=flat-square)](#tested-tvs)
 [![Root](https://img.shields.io/badge/root-optional-555?style=flat-square)](#root-or-no-root)
 
 **English** · [Tiếng Việt](README.vi.md)
 
-<img src="docs/media/hero.jpg" alt="LG TV Vibehack running on an LG TV" width="860">
+<img src="docs/media/hero.jpg" alt="Infiniti TV Home launcher on LG webOS (illustrative project image)" width="860">
 
 </div>
 
@@ -330,6 +330,8 @@ reboot
 
 ## Tested TVs
 
+These model reports are inherited from the upstream documentation; Infiniti TV Home v1.4.1 has not yet been independently hardware-validated on every listed firmware.
+
 | Model | webOS | Mode | Status |
 |---|---|---|---|
 | 55NANO77TPA | 6 (firmware 03.51.15) | Root | ✅ |
@@ -339,6 +341,8 @@ reboot
 Tested yours? Open an issue or a pull request to add it here.
 
 ## How it works
+
+For compatibility with existing installs, on-TV data and startup/log paths still use the historical `lg-tv-vibehack` directory name. Do not rename those paths manually.
 
 <details>
 <summary>For developers</summary>
@@ -356,7 +360,7 @@ Tested yours? Open an issue or a pull request to add it here.
   (wallpaper, crop, dim, weather city). Web apps on webOS 6 can't make HTTP calls to the TV itself,
   so it writes its address to `wall.js` in the app folder (for the QR code) and relaunches the
   launcher with `{reload: true}` after a change.
-- `tv/golauncher.sh`: the command LG Input Hook runs for the Home key (key code 773).
+- `tv/keymap.js` and `tv/home-control.sh`: safely map Home to the Infiniti app ID (key code 773, model-dependent) and restore the prior mapping. `golauncher.sh` remains as a legacy helper.
 - `tv/boot.sh`: started by the Homebrew Channel from `/var/lib/webosbrew/init.d/` at every boot.
 - `install.sh`: the rooted one-command installer. `install-noroot.sh` + `sync-apps.py`: the Developer Mode path.
 - Releases are built by GitHub Actions (`.github/workflows/release.yml`) when a `v*` tag is pushed.
@@ -372,21 +376,12 @@ This project stands on the work of others. Thank you:
 - **[Simon34545/lginputhook](https://github.com/Simon34545/lginputhook)**: remote button remapping.
 - **[Open-Meteo](https://open-meteo.com)**: free weather and geocoding API.
 - **[Lexend](https://fonts.google.com/specimen/Lexend)** font (SIL Open Font License), which covers Vietnamese.
-- Built with help from **[Claude](https://claude.ai)** by Anthropic.
 
 ## Support
 
 If this made your TV nicer, a ⭐ on the repo helps others find it.
 
-Want to buy me a coffee? Donations in **USDT on BNB Smart Chain (BEP20)** are welcome:
-
-<img src="docs/media/donate-usdt-bsc.gif" alt="USDT BEP20 donation address QR code" width="180">
-
-```
-0x11a0cd4c3e0135d2af5dc0ad0d44bc535fe4645b
-```
-
-⚠️ Send **USDT on the BNB Smart Chain (BEP20) network only**. Coins sent on another network are lost.
+Support and maintenance are managed at [infiniti-money/lg-tv-webos](https://github.com/infiniti-money/lg-tv-webos). No cryptocurrency donation address is published for this project.
 
 ## Disclaimer
 
@@ -395,5 +390,7 @@ modify system partitions; everything it installs can be removed with `--uninstal
 app names are trademarks of their respective owners. This project is not affiliated with LG Electronics.
 
 ## License
+
+Infiniti Money maintains this derivative. Original authors and licenses remain credited in [LICENSE](LICENSE).
 
 [MIT](LICENSE). Includes code from tv-vibehack and webos-vibehack, also MIT.

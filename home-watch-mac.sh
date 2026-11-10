@@ -2,14 +2,21 @@
 # Run home-watch.py in the background on this Mac: starts at login, restarts if it stops.
 #   TV_HOST=192.168.1.50 ./home-watch-mac.sh            # install / update
 #   ./home-watch-mac.sh uninstall
-# Log: ~/Library/Logs/tv-vibehack-home-watch.log
+# Log: ~/Library/Logs/infiniti-tv-home-watch.log
 set -euo pipefail
 cd "$(dirname "$0")"
-LABEL=com.tvvibehack.homewatch
+LABEL=com.infinitimoney.tvhome.homewatch
+LEGACY_LABEL=com.tvvibehack.homewatch
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
-LOG="$HOME/Library/Logs/tv-vibehack-home-watch.log"
+LOG="$HOME/Library/Logs/infiniti-tv-home-watch.log"
+LEGACY_PLIST="$HOME/Library/LaunchAgents/$LEGACY_LABEL.plist"
 
 launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+# Migrate the previous upstream agent without leaving two watchers active.
+if [ -f "$LEGACY_PLIST" ]; then
+  launchctl bootout "gui/$(id -u)/$LEGACY_LABEL" 2>/dev/null || true
+  rm -f "$LEGACY_PLIST"
+fi
 if [ "${1:-}" = uninstall ]; then
   rm -f "$PLIST"
   echo "Removed. Home opens LG's home again."

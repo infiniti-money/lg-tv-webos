@@ -28,7 +28,8 @@ done
 
 # First disarm *all* known activators, even if Input Hook has an unknown
 # binding or the older home-control.sh refuses its keymap rollback.
-for item in "$D/home-enabled" "$D/home-event-device" "$D/boot-services-enabled" "$D/auto-update-enabled"; do
+for item in "$D/home-enabled" "$D/home-event-device" "$D/boot-services-enabled" \
+  "$D/auto-update-enabled" "$D/boot-home-armed" "$D/boot-home-trial" "$D/boot-home-enabled"; do
   if [ -f "$item" ]; then
     mv "$item" "$R/" || {
       echo "ERROR: Could not disarm $item" >&2
@@ -70,6 +71,7 @@ if command -v pkill >/dev/null 2>&1; then
   pkill -f "$D/homewatch.js" 2>/dev/null || true
   pkill -f "$D/home-event-monitor.js" 2>/dev/null || true
   pkill -f "$D/auto-update.sh --watch" 2>/dev/null || true
+  pkill -f "$D/boot-home-once.sh" 2>/dev/null || true
 fi
 
 sync

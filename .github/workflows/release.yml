@@ -56,6 +56,8 @@ jobs:
           node scripts/test-app-structure.js
           node scripts/test-settings-ui.js
           node scripts/test-devmode-companion.js
+          node scripts/test-upstream-compat.js
+          python3 scripts/test-sync-noroot.py
           node scripts/test-weather-ui.js
           node scripts/test-tv-layout.js
           for file in app/app.js app/extras.js app/config.js app/assistant.js app/customize.js app/lunar.js app/forecast.js app/qrcode.js tv/*.js; do node --check "$file"; done

@@ -55,6 +55,26 @@
   <img src="docs/media/wallpaper-weather.jpg" alt="Wallpaper and weather" width="420">
 </p>
 
+## v1.5.5: remote Home 0x0305 / 773 and a confirmed cold-boot default
+
+The physical TV remote Home key is **hex `0305` / decimal `773`**. With a rooted TV, LG Input Hook can map it to `/home/root/lg-tv-vibehack/golauncher.sh`, launching `com.infinitimoney.tvhome`. All existing bindings are backed up first, and the stock LG Home remains installed.
+
+**Caution: a real LG TV previously became black after Power/standby.** Startup activation is therefore a deliberate two-step opt-in, not an unconditional wake-relaunch loop. After confirming stock Home and at least two normal power/standby/wake cycles, run on an authenticated root SSH session:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh -o /tmp/infiniti-install.sh
+sh /tmp/infiniti-install.sh --enable-home --start-home-on-boot
+```
+
+Open LG Input Hook once, check Home 773 → Execute and **Save changes**. Test the Home button manually. On the next **cold boot**, Infiniti is launched **once** after a 55-second delay and app manager readiness check. The trial is consumed before launch; if the TV goes black, the following cold boot returns to stock LG without another automatic launch. Only once you can see Infiniti working on the real TV should you run:
+
+```sh
+sh /home/root/lg-tv-vibehack/home-control.sh boot-confirm
+sh /home/root/lg-tv-vibehack/home-control.sh status
+```
+
+This makes the once-per-cold-boot launch persistent. `boot-disable` stops boot launch while retaining the Home remap; `safe-recovery.sh` disarms the startup and restores the prior mapping if possible. **Power/standby resume is not the same as cold boot**: we do not force a custom launcher at every wake because of the earlier black-screen symptom. Hardware validation is required before enabling such behavior.
+
 ## v1.5.4: rounded app icons, Wallpaper in Customize, opt-in automatic updates
 
 The transparent, horizontally scrolling single-row dock now has icons about 10–12% larger with softer rounded corners. On rooted TVs, choose **Customize → Appearance → Wallpaper** for the authenticated phone/USB QR editor. The redundant top toolbar picture button was removed.

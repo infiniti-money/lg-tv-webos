@@ -6,6 +6,9 @@ var assert=require('assert'),fs=require('fs'),path=require('path'),
 var original=fs.readFileSync('tv/root-safety-check.sh','utf8');
 var installer=fs.readFileSync('install.sh','utf8');
 var recovery=fs.readFileSync('tv/safe-recovery.sh','utf8');
+var boot=fs.readFileSync('tv/boot.sh','utf8');
+var cold=fs.readFileSync('tv/boot-home-once.sh','utf8');
+var updater=fs.readFileSync('tv/auto-update.sh','utf8');
 var tmp=fs.mkdtempSync(path.join(os.tmpdir(),'infiniti-root-safety-'));
 try {
   var hb=path.join(tmp,'webosbrew'),mark=path.join(tmp,'webosbrew_failsafe');
@@ -47,6 +50,12 @@ try {
   assert.ok(installer.indexOf('rm -rf "$DATA"')===-1 &&
     installer.indexOf('rm -f "$INITD"')===-1,
     'Uninstall must preserve root sidecars and unknown startup hooks');
+  [boot,cold,updater].forEach(function(src){
+    assert.ok(src.indexOf('/var/luna/preferences/webosbrew_failsafe')>=0,
+      'Boot, one-shot launcher, and updater must all skip Homebrew Failsafe');
+  });
+  assert.ok(cold.split('/var/luna/preferences/webosbrew_failsafe').length >= 3,
+    'Cold-boot trial must recheck Failsafe after its 55-second delay');
   assert.ok(recovery.indexOf('webosbrew_failsafe')===-1,
     'Infiniti emergency Home rollback must not delete Failsafe marker');
   console.log('Root/Failsafe offline regression: rooted, failsafe, non-root, missing Homebrew, app-only, explicit recovery, backups preserved.');

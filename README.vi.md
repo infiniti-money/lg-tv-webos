@@ -516,19 +516,19 @@ chủ sở hữu tương ứng. Project không liên quan đến LG Electronics.
 
 **Điều kiện:** đã đóng gói và phát hành `infiniti-tv-home.ipk` từ chính repository này; `LG Input Hook` đã cài nếu muốn bấm Home chuyển trực tiếp. Không xóa hoặc ghi đè ứng dụng Home hệ thống của LG.
 
-Trước khi cài, kiểm tra gói phát hành, sao lưu cấu hình quan trọng và kết nối SSH vào TV bằng tài khoản root. Trình cài mới tải các tệp từ `infiniti-money/lg-tv-webos`, bật Home Watcher và, nếu có LG Input Hook, sao lưu riêng ánh xạ phím Home (mã 773) vào `/home/root/lg-tv-vibehack/home-key-backup.json` trước khi thay đổi.
+Trước khi cài, kiểm tra gói phát hành, sao lưu cấu hình quan trọng và kết nối SSH vào TV bằng tài khoản root. Trình cài mới tải các tệp từ `infiniti-money/lg-tv-webos` và **mặc định giữ Home LG**, không bật Home Watcher. Chỉ khi chỉ định `--enable-home` mới sao lưu riêng ánh xạ phím Home (mã 773) vào `/home/root/lg-tv-vibehack/home-key-backup.json` trước khi thay đổi.
 
 ```sh
 # Bật lại thay thế Home sau khi cài đặt:
 sh /home/root/lg-tv-vibehack/home-control.sh enable
 # Kiểm tra:
 sh /home/root/lg-tv-vibehack/home-control.sh status
-# Trả lại phím Home cũ, dừng Home Watcher, không xóa ứng dụng:
+# Trả lại phím Home cũ và tắt các cờ chiếm Home, không xóa ứng dụng:
 sh /home/root/lg-tv-vibehack/home-control.sh disable
 reboot
 ```
 
-Nếu muốn giữ Home LG ngay từ lúc cài, dùng tùy chọn `--no-home-button`. Khi gỡ, trình cài khôi phục ánh xạ đã sao lưu; nếu không thể khôi phục, nó dừng thay vì xóa dữ liệu sao lưu. Không chỉnh hoặc xóa `home-key-backup.json` bằng tay trước khi khôi phục. Nếu một công cụ khác đã sửa phím Home sau đó, việc khôi phục sẽ không ghi đè thay đổi của công cụ ấy và yêu cầu bạn kiểm tra thủ công. Sau khi thử Home Watcher và LG Input Hook trên model TV cụ thể, mới nên sử dụng thường xuyên.
+Home LG được giữ mặc định kể cả khi không truyền `--no-home-button`.  Khi gỡ, trình cài khôi phục ánh xạ đã sao lưu; nếu không thể khôi phục, nó dừng thay vì xóa dữ liệu sao lưu. Không chỉnh hoặc xóa `home-key-backup.json` bằng tay trước khi khôi phục. Nếu một công cụ khác đã sửa phím Home sau đó, việc khôi phục sẽ không ghi đè thay đổi của công cụ ấy và yêu cầu bạn kiểm tra thủ công. Không bật lại Home Watcher để ép foreground vì TV từng gặp lỗi đen màn hình.
 
 ### Gán phím Home qua LG Input Hook
 
@@ -658,18 +658,18 @@ Chưa phát hành chính thức trước khi kiểm tra các phần này và rol
     node scripts/test-ai-worker.mjs
     npx -y -p @webos-tools/cli ares-package --no-minify app -o build
 
-File IPK chỉ chứa giao diện; chức năng root (Home Watcher, Input Hook) phải
-được cài riêng bằng `install.sh` sau khi tạo Release và SHA-256 hợp lệ.
+File IPK chỉ chứa giao diện; các công cụ root (đồng bộ ứng dụng, LG Input Hook, khởi động lạnh có kiểm soát, bộ cứu hộ) phải được cài riêng bằng `install.sh` sau khi có Release và SHA-256 hợp lệ. Home Watcher không tự chiếm giao diện.
 
 Trong **Tùy chỉnh → Giao diện → Hình nền**, TV hiện mã QR để chọn, thay hoặc xóa ảnh từ điện thoại/USB (cần dịch vụ nền trên TV root). Thiết lập địa điểm thời tiết nằm trong mục **Thời tiết** riêng.
 ## Cài đặt giao diện v1.5.0 trên TV
 
-Mở **Tùy chỉnh** (hoặc nhấn phím đỏ 403 nếu remote hỗ trợ). Hộp cài đặt có bốn trang:
+Mở **Tùy chỉnh** (hoặc nhấn phím đỏ 403 nếu remote hỗ trợ). Từ v1.5.6 có thêm mục **Dev Mode**, chỉ tích hợp ứng dụng đồng hành khi đã cài riêng:
 
 - **Giao diện:** đổi chủ đề, phông chữ, cỡ chữ, hình nền bằng điện thoại, bật chế độ giảm hiệu ứng chuyển động cho TV cấu hình thấp.
 - **Thời tiết:** chọn nhanh Hà Nội, Hải Phòng, Hưng Yên, Đà Nẵng, Huế, TP. Hồ Chí Minh, Cần Thơ, Đà Lạt; hoặc dùng ô tìm kiếm tên khu vực để tra Open-Meteo. Chọn kết quả để lưu trên TV và cập nhật ngay. Có nút bật/tắt và °C/°F.
 - **Âm · dương lịch:** chọn hiển thị dương lịch đầy đủ (thứ, ngày, tháng, năm) và âm lịch Việt Nam (ngày, tháng, năm, Can Chi, tháng nhuận). Dương lịch lấy ngày TV; âm lịch quy đổi theo UTC+7.
 - **Ứng dụng:** thêm/ẩn biểu tượng khỏi Home, không gỡ ứng dụng thật.
+- **Dev Mode:** kiểm tra Dev Mode Forever đã xuất hiện trong danh sách app, sau đó mở bằng hai lần xác nhận; ứng dụng độc lập có thể làm TV reboot nên không tự bật.
 
 Thanh thời tiết có **3 thẻ** cho hôm nay, ngày mai, ngày kia, gồm điều kiện thời tiết, nhiệt độ cao/thấp và xác suất mưa. Lựa chọn khu vực và giao diện được lưu bằng localStorage trong ứng dụng, không cần root. Trên TV cũ, nên chọn **Hiệu ứng chuyển động: Giảm** khi thấy giật hình. Khi dùng bàn phím ảo LG ở ô tìm kiếm, nhấn OK để bắt đầu tìm; chọn kết quả bằng remote. Các lựa chọn trên TV có thể ưu tiên hơn vị trí thời tiết đã lưu từ trình cài root. Nếu xóa dữ liệu ứng dụng, thiết lập riêng trên TV sẽ mất.
 
@@ -681,7 +681,7 @@ Thanh thời tiết có **3 thẻ** cho hôm nay, ngày mai, ngày kia, gồm đ
 - **Trong suốt:** ba thẻ dự báo thời tiết dùng nền kính gần như trong suốt và chữ có bóng để dễ đọc trên hình nền. webOS 3.x không hỗ trợ blur CSS đầy đủ, nên hiệu ứng có fallback nhẹ.
 - **Bật/tắt AI:** Tùy chỉnh → Trợ lý AI. Khi tắt, nút AI trên Home bị ẩn, micro và yêu cầu AI sẽ không sử dụng. Token không được lưu.
 - **Nhận diện đủ gói ứng dụng:** script root `tv/sync.js` tổng hợp launchpoints và `appinfo.json` từ thư mục cài trên TV; icon thiếu dùng icon launcher mặc định; Home Watcher đồng bộ định kỳ nếu LG không phát sự kiện.
-- **Home:** installer trên TV root tự gắn nút Home (mã 773) của LG Input Hook bằng hành động Execute, khởi động Infiniti khi bật TV, có dự phòng Home Watcher. **LG Home không bị xóa**, nên có thể hoàn tác an toàn. LG Input Hook phải được mở ít nhất một lần để hoạt động.
+- **Home (hành vi lịch sử v1.5.1):** installer từng tự gán nút 773 và tự mở ứng dụng, có dự phòng Home Watcher. **Từ v1.5.3 các cơ chế này bị tắt mặc định; v1.5.5 chỉ cho phép thử cold boot theo hai giai đoạn có xác nhận.** **LG Home không bị xóa**, nên có thể hoàn tác an toàn. LG Input Hook phải được mở ít nhất một lần để hoạt động.
 
 Cài/update đầy đủ phần trên TV root sau khi bản phát hành mới có sẵn:
 
@@ -690,7 +690,7 @@ curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/ins
 reboot
 ```
 
-Lệnh này phải chạy trong SSH shell **root trên TV**, không chạy trên Windows. Chỉ cài file `.ipk` bằng webOS CLI **không cập nhật** Home Watcher, LG Input Hook hay bộ đồng bộ gói ứng dụng. Cách khôi phục Home LG:
+Lệnh này phải chạy trong SSH shell **root trên TV**, không dán shell Linux vào Windows PowerShell. Chỉ cài file `.ipk` bằng webOS CLI **không cập nhật** script root như bộ cứu hộ, Input Hook hoặc đồng bộ ứng dụng. Cách khôi phục Home LG:
 
 ```sh
 sh /home/root/lg-tv-vibehack/home-control.sh disable
@@ -728,7 +728,7 @@ Nếu lệnh `home-control.sh status` báo `INFINITI ACTIVE` nhưng bấm Home v
 
 1. Thử launcher hoạt động trực tiếp: `luna-send -n 1 luna://com.webos.applicationManager/launch '{"id":"com.infinitimoney.tvhome"}'`.
 2. Trong LG Input Hook → log, bấm Home **một lần** và xác nhận mã nhận được (có thể là 773, 774 hoặc 125 tùy remote). Trên TV hiện tại phải có log sự kiện, không chỉ keymap trong tệp.
-3. Chạy `sh /home/root/lg-tv-vibehack/home-control.sh diagnose`. Bộ chẩn đoán đọc log `/tmp/lginput-hook*.log`, tiến trình hook, keymap 773/774/125, nhật ký Home Watcher và tệp `/tmp/infiniti-homekey.log`. Không ghi hay sửa dữ liệu.
+3. Chạy `sh /home/root/lg-tv-vibehack/home-control.sh diagnose`. Bộ chẩn đoán đọc log `/tmp/lginput-hook*.log`, tiến trình hook, keymap 773/774/125, nhật ký và tệp `/tmp/infiniti-homekey.log`. Home Watcher cũ chỉ phục vụ đối chiếu log, không phải yêu cầu đang chạy. Không ghi hay sửa dữ liệu.
 4. Nếu có log phím đúng mà **không có** `HOME Execute invoked`, hook chưa áp dụng binding hoặc không inject vào firmware. Mở ứng dụng Input Hook, kiểm tra hành động Execute, nhấn **Save changes**, khởi động lại và thử. Nếu log mã phím khác 773 thì cần sửa đúng phím sau khi xác minh.
 5. Nếu **có** `HOME Execute invoked` nhưng launcher không hiện, đọc dòng `Launch failed` trong log. Nếu launcher mở bằng lệnh Luna trực tiếp nhưng không mở từ hook, kiểm tra quyền thực thi và môi trường của Input Hook.
 

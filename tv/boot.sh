@@ -1,15 +1,37 @@
 #!/bin/sh
 # Safe startup for rooted LG webOS 3.x.
 #
-# IMPORTANT: Never auto-launch Infiniti, redirect native Home/Live TV or read
-# physical remote devices at boot. Doing so caused repeated wake/black-screen
-# reports. Leave LG's own launcher and wake pipeline in full control.
+# IMPORTANT: Never redirect native Home/Live TV or read physical remote
+# devices at boot. An optional *manually armed* trial may attempt one Infiniti
+# launch per cold boot, but never repeats on standby/wake or loops after failure.
 #
 # Optional background services can be opted into *separately*, after the TV
 # survives at least two normal power/standby cycles. They never launch UI.
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin:$PATH
 DIR=/home/root/lg-tv-vibehack
 LOG=/tmp/lg-tv-vibehack.log
+
+# Home 0x0305 (773) is captured by LG Input Hook, independently from boot.
+# In safe mode, all of these flags are absent. Never arm from a timer.
+if [ -f "$DIR/boot-home-armed" ] || [ -f "$DIR/boot-home-enabled" ]; then
+  if [ -f "$DIR/home-enabled" ] &&
+     [ -f "$DIR/boot-home-once.sh" ] &&
+     [ ! -e /var/lib/webosbrew/init.d/97-homekey ]; then
+    if [ -f "$DIR/boot-home-armed" ]; then
+      # Consume trial flag BEFORE starting the helper. If the TV goes black
+      # or power is cycled, the next boot is stock LG unless user confirms.
+      if mv "$DIR/boot-home-armed" "$DIR/boot-home-trial"; then
+        echo "$(date) Infiniti cold-boot trial armed (one-shot)" >> "$LOG"
+        nohup setsid sh "$DIR/boot-home-once.sh" trial >> /tmp/infiniti-boot-home.log 2>&1 < /dev/null &
+      fi
+    else
+      echo "$(date) Infiniti confirmed cold-boot launch requested" >> "$LOG"
+      nohup setsid sh "$DIR/boot-home-once.sh" confirmed >> /tmp/infiniti-boot-home.log 2>&1 < /dev/null &
+    fi
+  else
+    echo "$(date) Infiniti boot launch skipped: flags/scripts inconsistent or legacy hook present" >> "$LOG"
+  fi
+fi
 
 if [ ! -f "$DIR/boot-services-enabled" ]; then
   echo "$(date) Infiniti boot SAFE MODE: no autostart, no Home watcher" >> "$LOG"

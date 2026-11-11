@@ -281,37 +281,82 @@ its own repository, which can lag a little behind the app's GitHub releases.
 ## Troubleshooting
 
 <details>
-<summary><b>The app grid is empty or black</b></summary>
+<summary><b>App grid is empty, but LG menus and video still work</b></summary>
 
-Rooted: run `node /home/root/lg-tv-vibehack/sync.js` over SSH, then reopen the launcher.
-No root: run `./install-noroot.sh` again.
+Rooted TV: run `node /home/root/lg-tv-vibehack/sync.js` from a **root SSH session on the TV**, then reopen Infiniti Home. The dock only lists actual visible user-installable launchpoints; it intentionally excludes hidden LG system services. Non-root TV: rerun `./install-noroot.sh` from your connected computer.
+
+**Do not attempt to fix an entirely black TV screen with `sync.js`.** An empty launcher grid and a TV without video, LG menus, or volume OSD are distinct problems.
 </details>
 
 <details>
-<summary><b>Home still opens LG's home</b></summary>
+<summary><b>Power/standby/wake causes a completely black screen</b></summary>
 
-1. Is **LG Input Hook** installed and opened once? Run the installer again after installing it.
-2. Reboot the TV once after installing.
-3. Check the watcher: `ps -ef | grep homewatch` should show a `node` process.
-4. Log: `tail -30 /tmp/lg-tv-vibehack.log`
+If SSH is still accessible, enter the emergency safe mode **before** reset or system edits:
+
+```sh
+sh /home/root/lg-tv-vibehack/safe-recovery.sh
+```
+
+This archives known customized Homebrew startup hooks `lg-tv-vibehack` and `97-homekey`, clears Home auto-start flags, optional background services and trial cold-boot states, and attempts to restore the previous LG Input Hook Home binding. Read the outcome carefully: `RECOVERY_COMPLETE` (all known steps reported OK), `RECOVERY_PARTIAL` (the Input Hook mapping needs review), or `RECOVERY_INCOMPLETE` (some hooks could not be disarmed). Only reboot after reviewing the output. An already-running experimental `97-homekey` loop may remain in memory until reboot.
+
+If TV video remains black even without custom hooks, investigate backlight, power, signal and LG hardware service. Do not delete LG Home or execute undocumented factory-reset commands.
 </details>
 
 <details>
-<summary><b>At power-on I see Live TV or LG's home for a few seconds first</b></summary>
+<summary><b>The Home key still opens native LG Home</b></summary>
 
-Normal. webOS starts its own screen first; the launcher takes over as soon as webOS is ready
-(usually a few seconds, longer if an LG pop-up such as a software update notice is showing).
+Confirmed remote key: **HEX `0305` = decimal `773`**. Install and open LG Input Hook, configure the Home key to **Execute**, and save:
+
+```json
+"773": {"action":"exec","command":"/home/root/lg-tv-vibehack/golauncher.sh"}
+```
+
+Read-only diagnostics:
+
+```sh
+sh /home/root/lg-tv-vibehack/home-control.sh status
+sh /home/root/lg-tv-vibehack/home-control.sh diagnose
+tail -n 30 /tmp/infiniti-homekey.log
+```
+
+`INFINITI ACTIVE` confirms **only the JSON configuration**, not that native LG's compositor Home overlay is suppressed. Even a `Launch accepted` response only confirms that webOS accepted the app launch. **Do not reactivate the legacy `homewatch.js --boot`, direct `evdev-enable`, or `97-homekey` workarounds**. They caused duplicate launches and standby/black-screen risks.
 </details>
 
 <details>
-<summary><b>Home does nothing at all</b></summary>
+<summary><b>Live TV or LG Home is initially visible on power-on</b></summary>
 
-LG Input Hook caught the key but the command failed. Check:
-Run `cat /home/root/.config/lginputhook/keybinds.json` and check the Home key `773` maps to
-`{"action":"launch","id":"com.infinitimoney.tvhome"}`. If it does not, inspect
-`/home/root/lg-tv-vibehack/home-key-backup.json` before retrying. The installer now safely
-recovers a backup left behind by an interrupted activation, but refuses to overwrite edits
-from another tool. Run `sh /home/root/lg-tv-vibehack/home-control.sh status` to diagnose.
+Stock LG Home is deliberately the safe default. With explicit `--enable-home --start-home-on-boot`, Infiniti requests one launch **55 seconds after a cold boot**, and only persists for later cold boots after `home-control.sh boot-confirm` has been run while Infiniti is visible.
+
+Short Power/standby resume is **not the same as a cold boot**. We deliberately do not force Infiniti on every wake on the previously affected hardware. Inspect `home-control.sh status` and `tail -n 30 /tmp/infiniti-boot-home.log`. Do not treat older 12–25-second relaunch loops as expected behavior.
+</details>
+
+<details>
+<summary><b>The Home key does nothing</b></summary>
+
+Check `cat /home/root/.config/lginputhook/keybinds.json`. Modern builds use the **`exec`** action pointing to `golauncher.sh`, not the old `{"action":"launch","id":"com.infinitimoney.tvhome"}` example.
+
+```sh
+sh /home/root/lg-tv-vibehack/home-control.sh status
+tail -n 30 /tmp/infiniti-homekey.log
+```
+
+Missing `HOME Execute invoked` means Input Hook did not execute the command. `Launch failed` with an execution trace means the webOS app manager or package needs examination. Preserve `home-key-backup.json` and third-party bindings; any explicit `--rebind-home` must accompany `--enable-home` and be backed up first.
+</details>
+
+<details>
+<summary><b>Developer Mode expires or Dev Mode Forever is unavailable</b></summary>
+
+**Dev Mode Forever is a separate, optional, no-root companion** from [infiniti-money/lg-devmode-forever](https://github.com/infiniti-money/lg-devmode-forever), app ID `com.lennylxx.devmodeforever`. Keep LG's **official Developer Mode app** installed. Build and install the companion separately following that repository's README; refresh Infiniti's app list and visit **Customize → Dev Mode**.
+
+The companion's watchdog manages its own shutdown counter and official session. It **may reboot the TV**, including on app open when a threshold check triggers a counter reset. Infiniti therefore requires a two-press confirmation to open it; it never silently installs, arms, renews or toggles Developer Mode. **Compatibility with the LG webOS 3.4.0 TV that previously displayed a black screen has not been physically verified.**
+
+For authorized diagnostics on the TV:
+
+```sh
+cat /media/internal/devmodeforever/service.log
+```
+
+Never edit the official `start-devmode.sh`, `start-devmode.sig`, `pub.pem`, or session token.
 </details>
 
 <details>

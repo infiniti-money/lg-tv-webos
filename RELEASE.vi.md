@@ -1,3 +1,19 @@
+# Infiniti TV Home v1.5.6 — Dev Mode Forever và chẩn đoán an toàn
+
+Bản v1.5.6 bổ sung mục **Tùy chỉnh → Dev Mode** để phát hiện và mở ứng dụng **LG Dev Mode Forever** đã cài riêng. Người dùng phải xác nhận **hai lần nhấn** để mở, vì watchdog của ứng dụng đi kèm có thể **khởi động lại TV** khi kiểm tra phiên Developer Mode hoặc bộ đếm tắt nguồn. Infiniti không tự cài hoặc tự kích hoạt dịch vụ Developer Mode.
+
+Nguồn ứng dụng đi kèm: https://github.com/infiniti-money/lg-devmode-forever — cần build và cài độc lập theo hướng dẫn dự án, giữ ứng dụng Developer Mode chính thức của LG.
+
+Đã sửa mục Xử lý sự cố: tách lưới app trống khỏi lỗi màn hình đen, hướng dẫn `safe-recovery.sh`; mã phím Home chính xác **0305 (HEX) / 773**, ánh xạ **Execute `golauncher.sh`**; bỏ yêu cầu chạy Home Watcher; phân biệt cold boot và standby. Không tự xóa LG Home hoặc sửa hệ thống.
+
+**Chưa nghiệm thu Dev Mode Forever trên TV LG webOS 3.4.0 đã từng đen màn hình sau Power.** Không chạy thao tác có thể khởi động lại TV khi thiết bị chưa ổn định. Bộ phát hành này chỉ có Infiniti IPK và bộ cứu hộ root, không đóng gói IPK của Dev Mode Forever.
+
+Phiên bản: https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.5.6
+
+---
+
+## Lịch sử — v1.5.5
+
 # Phát hành Infiniti TV Home v1.5.5 — Home 0305 / 773
 
 - **Phím Home remote:** `0305` HEX = `773` thập phân. LG Input Hook mở `com.infinitimoney.tvhome` thông qua lệnh `golauncher.sh`, sao lưu ánh xạ trước đó.

@@ -157,8 +157,6 @@
   var appsList = $('customizeAppList'), themeBox = $('customizeThemes');
   var fontBox = $('customizeFonts'), status = $('customizeStatus');
   var opened = false, activeTab = 'style', searchRequest = null;
-  var devmodeConfirmUntil = 0;
-  var devmodeConfirmKeyReleased = true, devmodeTriggeredByKey = false;
   var DEVMODE_APP = 'com.lennylxx.devmodeforever';
 
   function applyAppearance() {
@@ -409,9 +407,9 @@
     var d = new Date();
     $('customizeCalendarNote').textContent = 'Dương lịch dùng ngày giờ TV; âm lịch tính theo múi giờ Việt Nam (UTC+7).';
   }
-  // Companion integration is intentionally read-only until a deliberate
-  // two-click OPEN. The independent app can reboot the TV on a counter reset,
-  // so never arm its service when showing settings or during boot.
+  // On a previously-rooted TV, even simply opening a separately installed
+  // Developer Mode watchdog can reboot the panel. This page is information
+  // only. There is no launcher call, service call, or root-state guess.
   function devModeInstalled() {
     var list = (root.TV_APPS && root.TV_APPS.apps) || [];
     for (var i = 0; i < list.length; i++) {
@@ -420,17 +418,15 @@
     return false;
   }
   function renderDevMode() {
-    var available = devModeInstalled();
-    var state = $('customizeDevModeState'), control = $('customizeDevModeOpen');
-    devmodeConfirmUntil = 0;
-    devmodeConfirmKeyReleased = true;
-    state.textContent = available ?
-      'Đã tìm thấy Dev Mode Forever trong danh sách ứng dụng đã đồng bộ.' :
-      'Chưa tìm thấy Dev Mode Forever trong danh sách ứng dụng đã đồng bộ. Cài ứng dụng riêng, sau đó đồng bộ lại danh sách ứng dụng.';
-    control.disabled = !available;
-    control.textContent = 'Mở Dev Mode Forever (cần xác nhận 2 lần)';
+    $('customizeRootModeState').textContent =
+      'Chưa xác minh quyền root trong phiên hiện tại. TV đã root không nên bật ' +
+      'Developer Mode chính thức; hãy kiểm tra Homebrew Channel → Settings → Root status.';
+    $('customizeDevModeState').textContent = devModeInstalled() ?
+      'Đã tìm thấy Dev Mode Forever (chỉ thông tin; Infiniti không khởi chạy).' :
+      'Không thấy Dev Mode Forever trong danh sách đã đồng bộ. Không cần cài trên TV đã root.';
     $('customizeDevModeWarning').textContent =
-      'Chưa mở ứng dụng. Nếu mở, watchdog của ứng dụng riêng có thể khởi động lại TV.';
+      'Không gửi lệnh mở ứng dụng, gia hạn phiên, thay đổi root hoặc REBOOT. ' +
+      'Nếu TV vào Failsafe, chỉ thực hiện kiểm tra đọc qua SSH/Homebrew.';
   }
   function activateTab(name) {
     activeTab = name;
@@ -456,8 +452,6 @@
     tabs.style.focus();
   }
   function hide() {
-    devmodeConfirmUntil = 0;
-    devmodeConfirmKeyReleased = true;
     if (searchRequest) { searchRequest.abort(); searchRequest = null; }
     opened = false;
     panel.classList.add('hidden');
@@ -500,17 +494,12 @@
       return;
     }
     stopKey(e);
-    if (e.type === 'keyup') {
-      if (code === 13) devmodeConfirmKeyReleased = true;
-      return;
-    }
+    if (e.type === 'keyup') return;
     if (code === 461 || code === 27) { hide(); return; }
     var buttons = visibleControls(), i = buttons.indexOf(active);
     if (code === 13) {
       if (e.repeat) return; // Holding OK must never auto-confirm a reboot-capable app.
-      devmodeTriggeredByKey = active === $('customizeDevModeOpen');
       if (active && typeof active.click === 'function') active.click();
-      devmodeTriggeredByKey = false;
       return;
     }
     if (code === 37 || code === 38 || code === 39 || code === 40) {
@@ -526,36 +515,6 @@
   document.addEventListener('keyup', keyHandler, true);
   Object.keys(tabs).forEach(function (name) {
     tabs[name].addEventListener('click', function () { activateTab(name); tabs[name].focus(); });
-  });
-  $('customizeDevModeOpen').addEventListener('click', function () {
-    if (!devModeInstalled()) {
-      renderDevMode();
-      message('Cần cài Dev Mode Forever riêng trước khi mở từ Infiniti.');
-      return;
-    }
-    var now = Date.now();
-    if (now > devmodeConfirmUntil || !devmodeConfirmUntil) {
-      devmodeConfirmUntil = now + 8000;
-      devmodeConfirmKeyReleased = !devmodeTriggeredByKey;
-      $('customizeDevModeWarning').textContent =
-        'XÁC NHẬN: App này có thể reset Developer Mode và REBOOT TV. ' +
-        'Chỉ mở sau khi đã kiểm tra TV ổn định. Nhấn lại trong 8 giây nếu đồng ý.';
-      message('Chưa gửi lệnh. Nhấn nút lần hai để mở ứng dụng độc lập.');
-      return;
-    }
-    if (devmodeTriggeredByKey && !devmodeConfirmKeyReleased) {
-      message('Hãy thả nút OK rồi nhấn lại để xác nhận.');
-      return;
-    }
-    devmodeConfirmUntil = 0;
-    devmodeConfirmKeyReleased = true;
-    $('customizeDevModeWarning').textContent = 'Đang mở ứng dụng độc lập…';
-    if (typeof root.INFINITI_DEVMODE_OPEN !== 'function') {
-      message('Không có bộ gọi app. Kiểm tra lại bộ cài và cập nhật Infiniti TV Home.');
-      return;
-    }
-    hide();
-    root.INFINITI_DEVMODE_OPEN();
   });
   $('customizeClose').addEventListener('click', hide);
   $('customizeResetApps').addEventListener('click', function () {

@@ -66,17 +66,17 @@ var groups = {
   customizeCalendarView:['customizeSolar','customizeLunar','customizeCalendarNote'],
   customizeAppsView:['customizeAppList','customizeResetApps'],
   customizeAIView:['customizeAIToggle','customizeAIState'],
-  customizeDevModeView:['customizeDevModeState','customizeDevModeOpen','customizeDevModeWarning']
+  customizeDevModeView:['customizeRootModeState','customizeDevModeState','customizeDevModeWarning']
 };
 Object.keys(groups).forEach(function (name) {
   var view=node(name); view.className='hidden'; panel.appendChild(view);
   groups[name].forEach(function (id) {
     view.appendChild(node(id,id==='customizeWeatherSearch'?'input':
-      /Btn$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeAIToggle|customizeDevModeOpen/.test(id)?'button':'div'));
+      /Btn$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeAIToggle/.test(id)?'button':'div'));
   });
 });
 panel.appendChild(node('customizeStatus'));
-var storage={}, devmodeOpens=0;
+var storage={};
 var localStorage={
   getItem:function(k){return storage[k]||null;},
   setItem:function(k,v){storage[k]=v;}
@@ -88,8 +88,7 @@ var window={
   INFINITI_LAUNCHER_LAYOUT_REFRESH:function(){},
   INFINITI_WALLPAPER_GET_URL:function(cb) {
     cb('http://192.168.2.154:8090/?k=abcdef123456');
-  },
-  INFINITI_DEVMODE_OPEN:function () { devmodeOpens++; }
+  }
 };
 function qrcode() {
   return {addData:function(url){assert.ok(url.indexOf('192.168.2.154')>=0);},
@@ -122,42 +121,21 @@ assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true,
 assert.ok(document.body.children.some(function(el) {
   return el.id==='updateStatusJs' && el.src.indexOf('update-status.js?ts=')===0;
 }), 'Settings should load current automatic-update status from TV');
-// Dev Mode is a separate app with a reboot-capable watchdog. A TV settings
-// page must not trigger service calls or app launch while simply browsing it.
+// Rooted TV may lose access to root/Failsafe. The settings UI must only
+// provide read-only guidance, even if Dev Mode Forever is installed.
 node('customizeDevModeTab').click();
 assert.equal(node('customizeDevModeView').hasClass('hidden'),false);
-assert.equal(node('customizeDevModeOpen').disabled,true,
-  'Missing companion must not offer an active launch');
-assert.equal(devmodeOpens,0,'Navigating into Dev Mode must never arm the external service');
+assert.ok(node('customizeRootModeState').textContent.indexOf('Chưa xác minh quyền root')>=0);
+assert.ok(node('customizeDevModeWarning').textContent.indexOf('Không gửi lệnh mở ứng dụng')>=0);
+assert.ok(node('customizeDevModeView').querySelectorAll('button').length===0,
+  'No action inside Dev Mode may start an app or reboot the TV');
+assert.equal(typeof window.INFINITI_DEVMODE_OPEN,'undefined');
 window.TV_APPS.apps.push({id:'com.lennylxx.devmodeforever',title:'Dev Mode Forever'});
 node('customizeAppsTab').click();
 node('customizeDevModeTab').click();
-assert.equal(node('customizeDevModeOpen').disabled,false,
-  'Installed companion becomes available after app list refresh');
-node('customizeDevModeOpen').click();
-assert.equal(devmodeOpens,0,'First click must only show the reboot warning');
-assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true,'First click must keep dialog open');
-assert.ok(node('customizeDevModeWarning').textContent.indexOf('REBOOT TV')>=0);
-node('customizeDevModeOpen').click();
-assert.equal(devmodeOpens,1,'Second click must launch companion exactly once');
-assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),false,
-  'Settings should close before intentionally opening external companion');
-window.INFINITI_CUSTOMIZE_OPEN();
-node('customizeDevModeTab').click();
-node('customizeDevModeOpen').focus();
-var pressOk={type:'keydown',keyCode:13,preventDefault:function(){},
-  stopPropagation:function(){},stopImmediatePropagation:function(){}};
-var releaseOk={type:'keyup',keyCode:13,preventDefault:function(){},
-  stopPropagation:function(){},stopImmediatePropagation:function(){}};
-docEvents.keydown(pressOk);
-assert.equal(devmodeOpens,1,'First remote OK must not open reboot-capable companion');
-docEvents.keydown(pressOk);
-assert.equal(devmodeOpens,1,'Repeated OK keydowns without keyup must not confirm');
-docEvents.keyup(releaseOk);
-docEvents.keydown(pressOk);
-assert.equal(devmodeOpens,2,'A separate second OK press may explicitly open companion');
-assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),false);
-window.INFINITI_CUSTOMIZE_OPEN();
+assert.ok(node('customizeDevModeState').textContent.indexOf('chỉ thông tin')>=0,
+  'Companion discovery must remain informational even when installed');
+assert.equal(node('customizeDevModeView').querySelectorAll('button').length,0);
 node('customizeWeatherTab').click();
 assert.equal(node('customizeWeatherView').hasClass('hidden'),false);
 assert.equal(node('customizeStyleView').hasClass('hidden'),true);
@@ -210,4 +188,4 @@ var back={type:'keydown',keyCode:461,preventDefault:function(){},
   stopPropagation:function(){},stopImmediatePropagation:function(){}};
 docEvents.keydown(back);
 assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),false,'Back closes settings');
-console.log('Settings TV remote, DevMode Forever guarded launch, weather region, search, appearance and calendar smoke tests passed.');
+console.log('Settings TV remote, read-only DevMode root/Failsafe guidance, weather, search, appearance and calendar smoke tests passed.');

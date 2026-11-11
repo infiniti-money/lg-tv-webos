@@ -113,13 +113,6 @@
     });
   }
 
-  // The companion itself decides whether it needs to renew Developer Mode
-  // or reboot. The launcher must NEVER call its service or arm it on boot.
-  // This callback only runs after the two-click confirmation in Customize.
-  window.INFINITI_DEVMODE_OPEN = function () {
-    launch('com.lennylxx.devmodeforever', 'Dev Mode Forever');
-  };
-
   var toastTimer;
   function toast(text) {
     var t = $('toast');

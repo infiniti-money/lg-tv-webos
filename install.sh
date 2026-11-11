@@ -26,7 +26,9 @@
 #   --wallpaper-service     Enable wallpaper QR phone server only (no app update)
 #   --no-auto-update        Disable auto updates; safe mode also stops background services by default
 #   --uninstall             Remove Infiniti TV Home after safe recovery
-#   --uninstall             Remove everything this script installed
+#   --app-only              Only install IPK; no root sidecar/boot/keymap changes
+#   --diagnose-root         Read-only Homebrew/Failsafe status, even without root
+#   --recover-home          Explicitly archive/disarm custom Home hooks and exit
 set -e
 
 REPO="infiniti-money/lg-tv-webos"
@@ -67,6 +69,7 @@ luna_wait() {
 # ---------------------------------------------------------------- options
 LANG_OPT="vi"; CLOCK="on"; COLS=""; CITY=""; FAHR=""; NOWEATHER=""; WALL=""; NOWALL=""; DIM=""; GLOW=""
 HOME_BTN=""; UNINSTALL=""; REBIND_HOME=""; AUTO_UPDATE=""; WALL_SERVICE=""; STOP_AUTO=""; START_BOOT=""
+APP_ONLY=""; DIAGNOSE_ROOT=""; RECOVER_HOME=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --lang) LANG_OPT="$2"; shift ;;
@@ -87,13 +90,24 @@ while [ $# -gt 0 ]; do
     --wallpaper-service) WALL_SERVICE=1 ;;
     --no-auto-update) STOP_AUTO=1 ;;
     --uninstall) UNINSTALL=1 ;;
+    --app-only) APP_ONLY=1 ;;
+    --diagnose-root) DIAGNOSE_ROOT=1 ;;
+    --recover-home) RECOVER_HOME=1 ;;
     *) die "Unknown option: $1" ;;
   esac
   shift
 done
 
 # ---------------------------------------------------------------- checks
-[ "$(id -u)" = "0" ] || die "Run this as root over SSH (ssh root@<TV IP>). The webOS Terminal app is not root."
+if [ -n "$DIAGNOSE_ROOT" ]; then
+  [ -z "$UNINSTALL$RECOVER_HOME$HOME_BTN$START_BOOT$AUTO_UPDATE$WALL_SERVICE" ] ||
+    die "--diagnose-root cannot be combined with installing or recovery"
+  curl -fsSL "$RAW/tv/root-safety-check.sh" -o /tmp/infiniti-root-safety-check.sh ||
+    die "Cannot download root diagnostic"
+  sh /tmp/infiniti-root-safety-check.sh
+  exit $?
+fi
+[ "$(id -u)" = "0" ] || die "Root not available in this shell. Do not enable Developer Mode or attempt automatic re-root."
 [ -d /var/lib/webosbrew ] || die "Homebrew Channel with root not found. Root the TV first (see README)."
 for c in node luna-send curl; do command -v "$c" >/dev/null 2>&1 || die "'$c' not found on this TV."; done
 if [ -n "$REBIND_HOME" ] && [ -z "$HOME_BTN" ]; then
@@ -103,14 +117,40 @@ if [ -n "$START_BOOT" ] && [ -z "$HOME_BTN" ]; then
   die "--start-home-on-boot requires --enable-home: Home key 773 must be backed up first."
 fi
 
-# Make this the FIRST mutation, before package download/install. Previous
-# 97-homekey loops and legacy boot hooks caused 25s relaunch/black-screen reports.
-# The recovery works even without a previously installed Infiniti sidecar.
-say "Disarming legacy Home takeover before any installation"
-curl -fsSL "$RAW/tv/safe-recovery.sh" -o /tmp/infiniti-safe-recovery.sh ||
-  die "Cannot download recovery script; refusing to proceed with risky boot hooks."
-sh /tmp/infiniti-safe-recovery.sh ||
-  die "Safe recovery failed. Do not reboot until the reported files are secured."
+# Root/Homebrew recovery must never run as a side effect of installing an IPK.
+# In particular, moving a 97-homekey hook on every ordinary update could look
+# like root loss. Recovery is a separate, explicitly requested operation.
+if [ -n "$RECOVER_HOME" ]; then
+  say "Explicit Home recovery requested; backups will be preserved"
+  curl -fsSL "$RAW/tv/safe-recovery.sh" -o /tmp/infiniti-safe-recovery.sh ||
+    die "Cannot download recovery helper"
+  sh /tmp/infiniti-safe-recovery.sh
+  exit $?
+fi
+if [ -e /var/luna/preferences/webosbrew_failsafe ]; then
+  die "Homebrew FAILSAFE marker detected. Refusing installation; diagnose the original boot crash first."
+fi
+if [ -n "$APP_ONLY" ]; then
+  [ -z "$HOME_BTN$START_BOOT$AUTO_UPDATE$WALL_SERVICE$REBIND_HOME$UNINSTALL$STOP_AUTO" ] ||
+    die "--app-only cannot be combined with Home, boot, services, or uninstall options"
+  say "APP ONLY: verifying and installing IPK without changing root configuration"
+  command -v sha256sum >/dev/null 2>&1 || die "sha256sum is required"
+  curl -fsSL "$IPK_URL" -o /tmp/lg-tv-vibehack.ipk || die "IPK download failed"
+  curl -fsSL "$IPK_URL.sha256" -o /tmp/lg-tv-vibehack.ipk.sha256 || die "Checksum download failed"
+  (cd /tmp && sed 's/infiniti-tv-home.ipk/lg-tv-vibehack.ipk/g' lg-tv-vibehack.ipk.sha256 | sha256sum -c -) ||
+    die "IPK checksum mismatch"
+  luna_wait luna://com.webos.appInstallService/dev/install \
+    '{"id":"com.ares.defaultName","ipkUrl":"/tmp/lg-tv-vibehack.ipk","subscribe":true}' ||
+    die "App-only installation failed; root scripts remain unchanged"
+  rm -f /tmp/lg-tv-vibehack.ipk /tmp/lg-tv-vibehack.ipk.sha256
+  ok "APP_ONLY_COMPLETE: Homebrew hooks, keymap and root settings unchanged"
+  exit 0
+fi
+if [ -e /var/lib/webosbrew/init.d/97-homekey ]; then
+  warn "Existing 97-homekey boot hook detected; no changes made to it."
+  [ -z "$HOME_BTN$START_BOOT" ] ||
+    die "Refusing Home remap/startup while a legacy Home hook exists. Recover explicitly."
+fi
 
 # ---------------------------------------------------------------- uninstall
 if [ -n "$UNINSTALL" ]; then
@@ -122,18 +162,21 @@ if [ -n "$UNINSTALL" ]; then
     die "Refusing uninstall without a reversible Home configuration."
   fi
   pkill -f "$DATA/wallpaper-server.js" 2>/dev/null || true
-  rm -f "$INITD"
+  # Preserve other root services, startup hooks and recovery evidence.
+  if [ -f "$INITD" ] && grep -q 'Infiniti boot' "$INITD"; then
+    mkdir -p "$DATA/uninstall-backups" || exit 1
+    mv "$INITD" "$DATA/uninstall-backups/$(date +%Y%m%d-%H%M%S)-lg-tv-vibehack" || exit 1
+  fi
   luna_wait luna://com.webos.appInstallService/remove "{\"id\":\"$APP_ID\",\"subscribe\":true}" || warn "Could not remove the launcher app"
-  rm -f /tmp/lg-tv-vibehack.log
-  rm -rf "$DATA"
-  ok "Removed. Reboot the TV to get LG's Home button back: reboot"
+  ok "IPK uninstalled. Root scripts, logs, Homebrew, and recovery backups preserved."
+  warn "Inspect remaining Home hooks before choosing to reboot."
   exit 0
 fi
 
 # ---------------------------------------------------------------- files
 say "Downloading scripts"
 mkdir -p "$DATA/icons"
-for f in sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh boot-home-once.sh home-control.sh safe-recovery.sh auto-update.sh install-ipk-update.js diagnose-home.sh integration-diagnostics.sh compat-check.sh; do
+for f in sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh boot-home-once.sh home-control.sh safe-recovery.sh root-safety-check.sh auto-update.sh install-ipk-update.js diagnose-home.sh integration-diagnostics.sh compat-check.sh; do
   curl -fsSL "$RAW/tv/$f" -o "$DATA/$f" || die "Could not download $f. Is the TV online?"
 done
 chmod +x "$DATA"/*.sh "$DATA"/*.js

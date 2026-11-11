@@ -10,7 +10,14 @@ LOG=/tmp/infiniti-boot-home.log
 MODE="${1:-trial}"
 log() { printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$LOG" 2>/dev/null || true; }
 case "$MODE" in trial|confirmed) ;; *) log "Rejected unknown boot mode: $MODE"; exit 2 ;; esac
+# Do not create foreground UI during recovery even if manually called.
+[ ! -e /var/luna/preferences/webosbrew_failsafe ] || {
+  log "Skipped: Homebrew FAILSAFE state"; exit 0;
+}
 sleep 55
+[ ! -e /var/luna/preferences/webosbrew_failsafe ] || {
+  log "Skipped after delay: Homebrew FAILSAFE state"; exit 0;
+}
 # Fail closed if recovery disabled the binding while the launch was waiting.
 [ -f "$D/home-enabled" ] || { log "Skipped: Home key is disabled"; exit 0; }
 [ ! -e /var/lib/webosbrew/init.d/97-homekey ] || {

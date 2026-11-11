@@ -35,6 +35,9 @@ local_version() {
   done
 }
 if [ "$MODE" = "--watch" ]; then
+  [ ! -e /var/luna/preferences/webosbrew_failsafe ] || {
+    log 'Updater disabled by Homebrew FAILSAFE'; exit 0;
+  }
   # Never start an update during boot, when LG's native UI may be initializing.
   sleep 1200
   while [ -f "$FLAG" ] && [ -f "$ENABLED" ]; do
@@ -53,6 +56,9 @@ if [ "$MODE" = "--status" ]; then
   exit 0
 fi
 [ "$MODE" = "--check" ] || { echo "Use --check, --watch or --status" >&2; exit 2; }
+[ ! -e /var/luna/preferences/webosbrew_failsafe ] || {
+  log 'Skipped update: Homebrew FAILSAFE state'; exit 0;
+}
 [ -f "$FLAG" ] && [ -f "$ENABLED" ] || { log 'Skipped: disabled'; exit 0; }
 [ ! -f "$DATA/home-enabled" ] || { log 'Deferred: custom Home binding active'; status 'postponed: Home binding active'; exit 0; }
 LOCK=/tmp/infiniti-update-lock

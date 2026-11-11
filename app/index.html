@@ -148,15 +148,13 @@
           <button id="customizeResetApps" type="button">Khôi phục ứng dụng mặc định</button>
         </div>
         <div id="customizeDevModeView" class="hidden">
-          <h3>LG Dev Mode Forever</h3>
-          <p>Ứng dụng độc lập để theo dõi và gia hạn phiên Developer Mode. Cần giữ ứng dụng Developer Mode chính thức của LG. Không cần root.</p>
-          <p id="customizeDevModeState" role="status">Đang kiểm tra danh sách ứng dụng đã cài…</p>
-          <p class="customizeHint">Nguồn: github.com/infiniti-money/lg-devmode-forever · Mã ứng dụng: com.lennylxx.devmodeforever. Cài riêng qua Homebrew Channel hoặc webOS CLI.</p>
-          <p class="customizeHint">CẢNH BÁO: Dev Mode Forever có thể REBOOT (khởi động lại) TV khi xử lý bộ đếm tắt nguồn. Chưa xác nhận tương thích trên LG webOS 3.4.0 từng bị màn hình đen. Infiniti không tự cài, không tự gọi thao tác gia hạn/reset và không khởi chạy dịch vụ này khi bật TV.</p>
-          <div class="customizeChoice">
-            <button type="button" id="customizeDevModeOpen">Mở Dev Mode Forever (cần xác nhận 2 lần)</button>
-          </div>
-          <p id="customizeDevModeWarning" role="status">Chưa có lệnh thay đổi Developer Mode nào được gửi.</p>
+          <h3>Developer Mode / Trạng thái root</h3>
+          <p id="customizeRootModeState" role="status">Không thể xác nhận quyền root từ giao diện ứng dụng. Kiểm tra Homebrew Channel hoặc SSH trước khi thay đổi chế độ hệ thống.</p>
+          <p class="customizeHint">TV đã root: KHÔNG cài, bật hoặc gia hạn Developer Mode chính thức của LG qua Infiniti. Homebrew Channel có cơ chế SSH và ứng dụng riêng; việc bật Developer Mode có thể làm TV reboot, gây xung đột cấu hình root.</p>
+          <p class="customizeHint">TV chưa root: Developer Mode là một lựa chọn riêng để cài app. Chỉ sử dụng hướng dẫn chính thức của LG sau khi xác nhận TV chưa root, không còn ở Homebrew Failsafe.</p>
+          <p id="customizeDevModeState" role="status">Đang kiểm tra danh sách ứng dụng đã đồng bộ…</p>
+          <p class="customizeHint">Dev Mode Forever là ứng dụng độc lập tại github.com/infiniti-money/lg-devmode-forever · ID: com.lennylxx.devmodeforever. Có thể tự REBOOT khi mở hoặc gia hạn phiên.</p>
+          <p id="customizeDevModeWarning" role="status">AN TOÀN: Infiniti không mở Dev Mode Forever, không kích hoạt watchdog, không tự gia hạn, không đặt lại bộ đếm và không gửi lệnh reboot. Muốn xem ứng dụng đã cài, hãy mở thủ công từ danh sách ứng dụng TV sau khi kiểm tra trạng thái root.</p>
         </div>
       </div>
       <div id="customizeStatus" role="status" aria-live="polite"></div>

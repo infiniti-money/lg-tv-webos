@@ -289,6 +289,30 @@ The upstream projects [LG Input Hook](https://github.com/Simon34545/lginputhook)
 
 See [source compatibility, credits and safety details](docs/upstream-webos3-compat.md). Real hardware Power/standby/wake acceptance is still required.
 
+## Root preservation and Homebrew Failsafe recovery
+
+Rooted LG TVs do **not** need LG's official Developer Mode to run Infiniti or Homebrew. The official Developer Mode application is intended for an unrooted development workflow, and enabling it can reboot the TV. RootMyTV's documentation specifically required removing that app before rooting; do not enable it to recover a TV that appears to have lost root.
+
+**Customize → Dev Mode is informational only.** It never opens the reboot-capable Dev Mode Forever companion, calls its watchdog, renews a session, restarts the TV, or changes root status. If the app is listed, the status is read-only and does **not** establish the TV's current root status.
+
+After the user reports losing root or SSH following Infiniti installation, check from an already-accessible SSH session:
+
+```sh
+sh /home/root/lg-tv-vibehack/root-safety-check.sh
+```
+
+The helper reports `ROOT_OK`, `ROOT_NOT_ACTIVE`, `ROOT_UNVERIFIED`, or `ROOT_FAILSAFE` without changing any system files. `ROOT_FAILSAFE` means the Homebrew flag `/var/luna/preferences/webosbrew_failsafe` is present; it may indicate temporarily suspended customizations after a startup crash. **Do not automatically remove that marker, restart services, or reboot.** Diagnose the original boot failure first. An unavailable SSH server is not proof root was permanently removed.
+
+The updated root installer no longer calls `safe-recovery.sh` on **every install**. It supports these distinct operations:
+
+- `sh /tmp/infiniti-install.sh --diagnose-root` — read-only root/Failsafe status, before any installer root check.
+- `sh /tmp/infiniti-install.sh --app-only` — verify and install just the IPK; never rewrite Homebrew startup hooks, input mappings or root sidecars.
+- `sh /tmp/infiniti-install.sh --recover-home` — explicitly archive/disable conflicting Infiniti custom Home startup scripts and exit. Read the recovery result before rebooting.
+
+An app-only installation requires a functioning root session and is blocked in Homebrew Failsafe. It is **not a root recovery exploit**. The uninstall path now preserves logs, root tools, and previous boot mapping backups instead of recursively deleting them.
+
+If the TV still has a black screen, do not attempt a factory reset, firmware update, or unverified Developer Mode activation as a workaround. Real LG webOS 3.4 hardware validation remains required.
+
 ## Troubleshooting
 
 <details>
@@ -358,7 +382,7 @@ Missing `HOME Execute invoked` means Input Hook did not execute the command. `La
 <details>
 <summary><b>Developer Mode expires or Dev Mode Forever is unavailable</b></summary>
 
-**Dev Mode Forever is a separate, optional, no-root companion** from [infiniti-money/lg-devmode-forever](https://github.com/infiniti-money/lg-devmode-forever), app ID `com.lennylxx.devmodeforever`. Keep LG's **official Developer Mode app** installed. Build and install the companion separately following that repository's README; refresh Infiniti's app list and visit **Customize → Dev Mode**.
+**Dev Mode Forever is a separate, optional, no-root companion** from [infiniti-money/lg-devmode-forever](https://github.com/infiniti-money/lg-devmode-forever), app ID `com.lennylxx.devmodeforever`. For an already-rooted TV, **do not install, enable, or renew LG's official Developer Mode app**; it is for unrooted development workflows and may change system state or reboot. Build and install the companion separately following that repository's README; refresh Infiniti's app list and visit **Customize → Dev Mode**.
 
 The companion's watchdog manages its own shutdown counter and official session. It **may reboot the TV**, including on app open when a threshold check triggers a counter reset. Infiniti therefore requires a two-press confirmation to open it; it never silently installs, arms, renews or toggles Developer Mode. **Compatibility with the LG webOS 3.4.0 TV that previously displayed a black screen has not been physically verified.**
 

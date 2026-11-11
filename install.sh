@@ -133,7 +133,7 @@ fi
 # ---------------------------------------------------------------- files
 say "Downloading scripts"
 mkdir -p "$DATA/icons"
-for f in sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh boot-home-once.sh home-control.sh safe-recovery.sh auto-update.sh install-ipk-update.js diagnose-home.sh compat-check.sh; do
+for f in sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh boot-home-once.sh home-control.sh safe-recovery.sh auto-update.sh install-ipk-update.js diagnose-home.sh integration-diagnostics.sh compat-check.sh; do
   curl -fsSL "$RAW/tv/$f" -o "$DATA/$f" || die "Could not download $f. Is the TV online?"
 done
 chmod +x "$DATA"/*.sh "$DATA"/*.js

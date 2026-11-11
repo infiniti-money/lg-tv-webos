@@ -48,6 +48,11 @@ case "$action" in
       echo "Diagnostic helper not installed; update the root-side scripts first." >&2; exit 1;
     }
     sh "$DATA/diagnose-home.sh"
+    if [ -r "$DATA/integration-diagnostics.sh" ]; then
+      sh "$DATA/integration-diagnostics.sh"
+    else
+      echo "Additional upstream compatibility diagnostics unavailable; install updated root tools."
+    fi
     exit 0 ;;
   safe-mode)
     [ -f "$DATA/safe-recovery.sh" ] || { echo "Recovery helper missing" >&2; exit 1; }

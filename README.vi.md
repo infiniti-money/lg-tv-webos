@@ -344,12 +344,23 @@ quốc gia và đời TV.
 Cập nhật app Homebrew: mở app đó trong Homebrew Channel và bấm **Update**. Homebrew Channel lấy app
 từ kho riêng, nên có thể chậm hơn bản mới nhất trên GitHub một chút.
 
+## Nâng cấp dựa trên LG Input Hook, Luma và Free My TV
+
+Đối chiếu các dự án [LG Input Hook](https://github.com/Simon34545/lginputhook), [Luma](https://github.com/ecklf/lg-luma) và [Free My TV](https://github.com/simbasjungles/free-my-tv):
+
+- LG Input Hook hỗ trợ cả **Execute** và **Launch App**. Infiniti ưu tiên Execute để có log và khả năng hoàn tác; không ghi đè binding của ứng dụng khác.
+- Luma hỗ trợ takeover hệ thống từ **webOS 5**, không được bind-mount LG Home trên TV **webOS 3.4** của bạn.
+- Free My TV cho thấy app webOS 3 có thể không đọc được danh sách app. Đồng bộ qua máy tính của Infiniti nay giữ ứng dụng khi icon tải lỗi, giới hạn tải icon từ IP của TV và bảo toàn danh sách nếu Luna trả rỗng tạm thời.
+- Chạy trên SSH root: `sh /home/root/lg-tv-vibehack/integration-diagnostics.sh` hoặc `home-control.sh diagnose` để đọc xung đột Input Hook, Luma, Free My TV, boot hooks; không sửa hệ thống hoặc reboot.
+
+Chi tiết kỹ thuật, bản quyền và rủi ro: [Tương thích LG webOS 3.4](docs/upstream-webos3-compat.md).
+
 ## Xử lý sự cố
 
 <details>
 <summary><b>Lưới ứng dụng trống, nhưng TV vẫn hiển thị bình thường</b></summary>
 
-TV đã root: trong **phiên SSH root trên TV**, chạy `node /home/root/lg-tv-vibehack/sync.js`, sau đó mở lại Infiniti TV Home. Kiểm tra ứng dụng đã cài thực sự có launchpoint; không hiển thị dịch vụ hệ thống hoặc gói ẩn. TV không root: chạy lại `./install-noroot.sh` trên máy tính đã kết nối TV.
+TV đã root: trong **phiên SSH root trên TV**, chạy `node /home/root/lg-tv-vibehack/sync.js`, sau đó mở lại Infiniti TV Home. Kiểm tra ứng dụng đã cài thực sự có launchpoint; không hiển thị dịch vụ hệ thống hoặc gói ẩn. TV không root: chạy lại `./install-noroot.sh` trên máy tính đã kết nối TV. Bộ đồng bộ mới giữ danh sách ứng dụng nếu icon lỗi hoặc Luna trả dữ liệu rỗng tạm thời.
 
 **Không dùng `sync.js` để xử lý TV bị đen toàn bộ màn hình, không có menu LG hoặc thanh âm lượng.** Đây là sự cố khác với lưới ứng dụng trống.
 </details>
@@ -377,9 +388,10 @@ Phím Home đã xác minh: **HEX `0305` = thập phân `773`**. Cài và mở **
 "773": {"action":"exec","command":"/home/root/lg-tv-vibehack/golauncher.sh"}
 ```
 
-Kiểm tra chỉ đọc:
+Kiểm tra chỉ đọc (kể cả xung đột với Luma và Free My TV):
 
 ```sh
+sh /home/root/lg-tv-vibehack/integration-diagnostics.sh
 sh /home/root/lg-tv-vibehack/home-control.sh status
 sh /home/root/lg-tv-vibehack/home-control.sh diagnose
 tail -n 30 /tmp/infiniti-homekey.log
@@ -399,7 +411,7 @@ Mặc định an toàn, TV giữ giao diện LG. Khi bật tính năng `--enable
 <details>
 <summary><b>Bấm Home không có phản ứng</b></summary>
 
-Kiểm tra `cat /home/root/.config/lginputhook/keybinds.json`. Ánh xạ `773` cần dùng **`exec`**, không phải mặc định `{"action":"launch","id":"com.infinitimoney.tvhome"}` như tài liệu cũ. Kiểm tra `home-enabled`, bản sao `home-key-backup.json` và log:
+Kiểm tra `cat /home/root/.config/lginputhook/keybinds.json`. Infiniti ưu tiên **`exec`** đến `golauncher.sh` để có log và dễ khôi phục; **LG Input Hook thực tế hỗ trợ cả `exec` lẫn `launch`**. Bản `{"action":"launch","id":"com.infinitimoney.tvhome"}` cũ không tự động sai, nhưng cần kiểm tra backup và kết quả thực thi trước khi chuyển đổi. Kiểm tra `home-enabled`, bản sao `home-key-backup.json` và log:
 
 ```sh
 sh /home/root/lg-tv-vibehack/home-control.sh status

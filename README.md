@@ -278,6 +278,17 @@ your country and TV model.
 To update a Homebrew app, open it in the Homebrew Channel and press **Update**. The channel follows
 its own repository, which can lag a little behind the app's GitHub releases.
 
+## Interoperability with LG Input Hook, Luma and Free My TV
+
+The upstream projects [LG Input Hook](https://github.com/Simon34545/lginputhook), [Luma](https://github.com/ecklf/lg-luma) and [Free My TV](https://github.com/simbasjungles/free-my-tv) inform these separately implemented compatibility improvements:
+
+- Input Hook supports **both Execute and Launch App**. Infiniti prefers the audited Execute wrapper and preserves other bindings.
+- Luma's native LG Home takeover is documented for **webOS 5 and newer**, not for the affected **webOS 3.4** TV; do not copy bind mounts over native LG Home.
+- Free My TV documents restricted app discovery on webOS 3. Infiniti's no-root sync preserves apps when icon retrieval fails, only fetches icons hosted by the TV, and protects the prior app list from a temporary empty Luna response.
+- On a rooted TV use `sh /home/root/lg-tv-vibehack/integration-diagnostics.sh` for read-only conflict reporting across Input Hook, Luma, Free My TV and startup hooks.
+
+See [source compatibility, credits and safety details](docs/upstream-webos3-compat.md). Real hardware Power/standby/wake acceptance is still required.
+
 ## Troubleshooting
 
 <details>
@@ -311,9 +322,10 @@ Confirmed remote key: **HEX `0305` = decimal `773`**. Install and open LG Input 
 "773": {"action":"exec","command":"/home/root/lg-tv-vibehack/golauncher.sh"}
 ```
 
-Read-only diagnostics:
+Read-only diagnostics (also check Luma conflicts and other launchers):
 
 ```sh
+sh /home/root/lg-tv-vibehack/integration-diagnostics.sh
 sh /home/root/lg-tv-vibehack/home-control.sh status
 sh /home/root/lg-tv-vibehack/home-control.sh diagnose
 tail -n 30 /tmp/infiniti-homekey.log
@@ -333,7 +345,7 @@ Short Power/standby resume is **not the same as a cold boot**. We deliberately d
 <details>
 <summary><b>The Home key does nothing</b></summary>
 
-Check `cat /home/root/.config/lginputhook/keybinds.json`. Modern builds use the **`exec`** action pointing to `golauncher.sh`, not the old `{"action":"launch","id":"com.infinitimoney.tvhome"}` example.
+Check `cat /home/root/.config/lginputhook/keybinds.json`. Infiniti prefers the logged **`exec`** action pointing to `golauncher.sh`; upstream LG Input Hook also supports **`launch`**. An older `{"action":"launch","id":"com.infinitimoney.tvhome"}` binding is not inherently invalid and must be handled with its existing backup intact.
 
 ```sh
 sh /home/root/lg-tv-vibehack/home-control.sh status

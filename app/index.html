@@ -80,6 +80,7 @@
         <button type="button" id="customizeCalendarTab">Âm · dương lịch</button>
         <button type="button" id="customizeAITab">Trợ lý AI</button>
         <button type="button" id="customizeAppsTab">Ứng dụng</button>
+        <button type="button" id="customizePrivacyTab">Chặn quảng cáo</button>
         <button type="button" id="customizeDevModeTab">Dev Mode</button>
       </div>
       <div class="customizeContent">
@@ -144,8 +145,24 @@
         </div>
         <div id="customizeAppsView" class="hidden">
           <p>Thêm hoặc ẩn biểu tượng trên Infiniti TV Home. Không gỡ ứng dụng khỏi TV.</p>
+          <div class="customizeChoice">
+            <button id="customizeHideLGApps" type="button">Ẩn nhanh ứng dụng LG mặc định</button>
+          </div>
+          <p class="customizeHint">Chỉ ẩn biểu tượng trong Infiniti. Không xóa hoặc vô hiệu hóa các ứng dụng LG, Input Hook, Homebrew, HDMI và Live TV.</p>
           <div id="customizeAppList"></div>
           <button id="customizeResetApps" type="button">Khôi phục ứng dụng mặc định</button>
+        </div>
+        <div id="customizePrivacyView" class="hidden">
+          <h3>Chặn quảng cáo bằng DNS — không sửa root</h3>
+          <p>Trên LG webOS 3.4.0, mở Cài đặt LG → Mạng → Wi-Fi hoặc kết nối có dây → Cài đặt nâng cao / Chỉnh sửa → DNS thủ công.</p>
+          <div class="customizeChoice">
+            <div class="customizeSelectedCity">AdGuard DNS chính: 94.140.14.14</div>
+            <div class="customizeSelectedCity">AdGuard DNS phụ: 94.140.15.15</div>
+          </div>
+          <p>Ghi lại DNS hiện tại trước khi đổi. Chọn lưu và kiểm tra Netflix, YouTube, LG Content Store và tự cập nhật. Nếu xảy ra lỗi mạng, khôi phục DNS tự động hoặc DNS cũ.</p>
+          <p class="customizeHint">Đây là hướng dẫn thao tác thủ công trong cài đặt mạng LG; Infiniti không tự ghi /etc/hosts, không thêm hook khởi động, không sửa firewall hay cài DNS ngầm.</p>
+          <p class="customizeHint">DNS chỉ chặn một phần quảng cáo và theo dõi; không bảo đảm chặn quảng cáo nằm trong video YouTube. Nếu TV dùng DNS riêng/hardcoded, một số yêu cầu có thể không đi qua bộ lọc.</p>
+          <p class="customizeHint">Nguồn: adguard-dns.io/en/public-dns.html. Để lọc theo thiết bị hoặc dùng danh sách LG chuyên biệt, có thể cấu hình AdGuard Home/Pi-hole trên router.</p>
         </div>
         <div id="customizeDevModeView" class="hidden">
           <h3>Developer Mode / Trạng thái root</h3>

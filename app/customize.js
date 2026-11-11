@@ -47,6 +47,25 @@
     return id === 'com.infinitimoney.tvhome' || id === 'com.webos.app.livetv' ||
       /^com\.webos\.app\.hdmi[0-9]+$/.test(id || '');
   }
+  // Hide only icons INSIDE Infiniti; never uninstall/disable LG packages.
+  // Homebrew, Input Hook, external streaming apps, Live TV and inputs are
+  // deliberately outside this preset. Users can individually restore icons.
+  function isLGDefaultApp(id) {
+    if (!id || isProtected(id)) return false;
+    return /^com\.(webos|palm)\.app\./.test(id) ||
+      /^com\.lge\./.test(id) ||
+      id === 'tv.amasian.webos.vn1.channels';
+  }
+  function hideLGDefaultApps() {
+    var apps = (root.TV_APPS && root.TV_APPS.apps) || [];
+    var hidden = 0;
+    apps.forEach(function (app) {
+      if (app && isLGDefaultApp(app.id) && isVisible(app.id, (root.CONFIG || {}).hiddenApps)) {
+        if (setVisible(app.id, false)) hidden++;
+      }
+    });
+    return hidden;
+  }
   function isVisible(id, hiddenDefaults) {
     if (isProtected(id)) return false;
     var map = safeRead(VISIBILITY_KEY);
@@ -135,7 +154,8 @@
     getAppearance:getAppearance, saveAppearance:saveAppearance,
     getWeather:getWeather, saveWeather:saveWeather,
     getAIEnabled:getAIEnabled, setAIEnabled:setAIEnabled,
-    validCoords:validCoords, isProtected:isProtected
+    validCoords:validCoords, isProtected:isProtected,
+    isLGDefaultApp:isLGDefaultApp, hideLGDefaultApps:hideLGDefaultApps
   };
   root.INFINITI_PREFS = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -147,12 +167,14 @@
   var tabs = {
     apps:$('customizeAppsTab'), style:$('customizeStyleTab'),
     weather:$('customizeWeatherTab'), calendar:$('customizeCalendarTab'),
-    ai:$('customizeAITab'), devmode:$('customizeDevModeTab')
+    ai:$('customizeAITab'), devmode:$('customizeDevModeTab'),
+    privacy:$('customizePrivacyTab')
   };
   var views = {
     apps:$('customizeAppsView'), style:$('customizeStyleView'),
     weather:$('customizeWeatherView'), calendar:$('customizeCalendarView'),
-    ai:$('customizeAIView'), devmode:$('customizeDevModeView')
+    ai:$('customizeAIView'), devmode:$('customizeDevModeView'),
+    privacy:$('customizePrivacyView')
   };
   var appsList = $('customizeAppList'), themeBox = $('customizeThemes');
   var fontBox = $('customizeFonts'), status = $('customizeStatus');
@@ -517,6 +539,13 @@
     tabs[name].addEventListener('click', function () { activateTab(name); tabs[name].focus(); });
   });
   $('customizeClose').addEventListener('click', hide);
+  $('customizeHideLGApps').addEventListener('click', function () {
+    var count = hideLGDefaultApps();
+    refreshLauncher();
+    renderApps();
+    message(count ? 'Đã ẩn ' + count + ' biểu tượng ứng dụng LG trong Infiniti.' :
+      'Không còn biểu tượng LG mặc định nào cần ẩn.');
+  });
   $('customizeResetApps').addEventListener('click', function () {
     resetVisible(); refreshLauncher(); renderApps();
     message('Đã khôi phục danh sách ứng dụng mặc định.');

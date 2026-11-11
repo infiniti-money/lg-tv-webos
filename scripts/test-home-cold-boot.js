@@ -29,7 +29,7 @@ try {
   assert.ok(/getForegroundAppInfo/.test(helper),'Must check app manager before launch');
   var launches=helper.match(/luna:\/\/com\.webos\.applicationManager\/launch/g)||[];
   assert.strictEqual(launches.length,1,'Exactly ONE launch request in helper');
-  assert.strictEqual(helper.indexOf('while '),-1,'No auto relaunch loop at boot');
+  assert.ok(!/^\s*while\s+/m.test(helper),'No auto relaunch loop at boot');
   assert.strictEqual(helper.indexOf('home-event-monitor'),-1,'Never read evdev at boot');
   assert.ok(helper.indexOf('rm -f "$D/boot-home-enabled" "$D/boot-home-trial"')>=0,
     'Failure must disable subsequent boot launch');

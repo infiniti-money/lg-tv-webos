@@ -53,7 +53,7 @@ var document = {
   addEventListener:function (type,cb) { docEvents[type]=cb; }
 };
 var panel=node('customizePanel'); panel.className='hidden';
-['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizeAITab','customizeDevModeTab'].forEach(function (id) {
+['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizeAITab','customizeDevModeTab','customizePrivacyTab'].forEach(function (id) {
   panel.appendChild(node(id,'button'));
 });
 var groups = {
@@ -64,7 +64,8 @@ var groups = {
     'customizeWeatherSearch','customizeWeatherSearchBtn','customizeWeatherResults',
     'customizeWeatherEnable','customizeWeatherUnit'],
   customizeCalendarView:['customizeSolar','customizeLunar','customizeCalendarNote'],
-  customizeAppsView:['customizeAppList','customizeResetApps'],
+  customizeAppsView:['customizeAppList','customizeHideLGApps','customizeResetApps'],
+  customizePrivacyView:[],
   customizeAIView:['customizeAIToggle','customizeAIState'],
   customizeDevModeView:['customizeRootModeState','customizeDevModeState','customizeDevModeWarning']
 };
@@ -72,7 +73,7 @@ Object.keys(groups).forEach(function (name) {
   var view=node(name); view.className='hidden'; panel.appendChild(view);
   groups[name].forEach(function (id) {
     view.appendChild(node(id,id==='customizeWeatherSearch'?'input':
-      /Btn$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeAIToggle/.test(id)?'button':'div'));
+      /Btn$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
   });
 });
 panel.appendChild(node('customizeStatus'));
@@ -136,6 +137,19 @@ node('customizeDevModeTab').click();
 assert.ok(node('customizeDevModeState').textContent.indexOf('chỉ thông tin')>=0,
   'Companion discovery must remain informational even when installed');
 assert.equal(node('customizeDevModeView').querySelectorAll('button').length,0);
+// Privacy page is informational: never silently changes DNS or root.
+node('customizePrivacyTab').click();
+assert.equal(node('customizePrivacyView').hasClass('hidden'),false);
+assert.equal(node('customizeAppsView').hasClass('hidden'),true);
+node('customizeAppsTab').click();
+assert.equal(node('customizeAppsView').hasClass('hidden'),false);
+window.TV_APPS.apps.push({id:'com.webos.app.browser',title:'LG Browser'});
+window.TV_APPS.apps.push({id:'org.webosbrew.hbchannel',title:'Homebrew'});
+node('customizeHideLGApps').click();
+assert.equal(window.INFINITI_PREFS.isVisible('com.webos.app.browser',[]),false);
+assert.equal(window.INFINITI_PREFS.isVisible('org.webosbrew.hbchannel',[]),true);
+node('customizeResetApps').click();
+assert.equal(window.INFINITI_PREFS.isVisible('com.webos.app.browser',[]),true);
 node('customizeWeatherTab').click();
 assert.equal(node('customizeWeatherView').hasClass('hidden'),false);
 assert.equal(node('customizeStyleView').hasClass('hidden'),true);

@@ -147,16 +147,18 @@
   var tabs = {
     apps:$('customizeAppsTab'), style:$('customizeStyleTab'),
     weather:$('customizeWeatherTab'), calendar:$('customizeCalendarTab'),
-    ai:$('customizeAITab')
+    ai:$('customizeAITab'), devmode:$('customizeDevModeTab')
   };
   var views = {
     apps:$('customizeAppsView'), style:$('customizeStyleView'),
     weather:$('customizeWeatherView'), calendar:$('customizeCalendarView'),
-    ai:$('customizeAIView')
+    ai:$('customizeAIView'), devmode:$('customizeDevModeView')
   };
   var appsList = $('customizeAppList'), themeBox = $('customizeThemes');
   var fontBox = $('customizeFonts'), status = $('customizeStatus');
   var opened = false, activeTab = 'style', searchRequest = null;
+  var devmodeConfirmUntil = 0;
+  var DEVMODE_APP = 'com.lennylxx.devmodeforever';
 
   function applyAppearance() {
     var a = getAppearance(), body = document.body;
@@ -406,6 +408,28 @@
     var d = new Date();
     $('customizeCalendarNote').textContent = 'Dương lịch dùng ngày giờ TV; âm lịch tính theo múi giờ Việt Nam (UTC+7).';
   }
+  // Companion integration is intentionally read-only until a deliberate
+  // two-click OPEN. The independent app can reboot the TV on a counter reset,
+  // so never arm its service when showing settings or during boot.
+  function devModeInstalled() {
+    var list = (root.TV_APPS && root.TV_APPS.apps) || [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && list[i].id === DEVMODE_APP) return true;
+    }
+    return false;
+  }
+  function renderDevMode() {
+    var available = devModeInstalled();
+    var state = $('customizeDevModeState'), control = $('customizeDevModeOpen');
+    devmodeConfirmUntil = 0;
+    state.textContent = available ?
+      'Đã tìm thấy Dev Mode Forever trong danh sách ứng dụng đã đồng bộ.' :
+      'Chưa tìm thấy Dev Mode Forever trong danh sách ứng dụng đã đồng bộ. Cài ứng dụng riêng, sau đó đồng bộ lại danh sách ứng dụng.';
+    control.disabled = !available;
+    control.textContent = 'Mở Dev Mode Forever (cần xác nhận 2 lần)';
+    $('customizeDevModeWarning').textContent =
+      'Chưa mở ứng dụng. Nếu mở, watchdog của ứng dụng riêng có thể khởi động lại TV.';
+  }
   function activateTab(name) {
     activeTab = name;
     var key;
@@ -419,6 +443,7 @@
     else if (name === 'style') renderStyle();
     else if (name === 'weather') renderWeather();
     else if (name === 'ai') renderAI();
+    else if (name === 'devmode') renderDevMode();
     else renderCalendar();
     message('');
   }
@@ -429,6 +454,7 @@
     tabs.style.focus();
   }
   function hide() {
+    devmodeConfirmUntil = 0;
     if (searchRequest) { searchRequest.abort(); searchRequest = null; }
     opened = false;
     panel.classList.add('hidden');
@@ -488,6 +514,30 @@
   document.addEventListener('keyup', keyHandler, true);
   Object.keys(tabs).forEach(function (name) {
     tabs[name].addEventListener('click', function () { activateTab(name); tabs[name].focus(); });
+  });
+  $('customizeDevModeOpen').addEventListener('click', function () {
+    if (!devModeInstalled()) {
+      renderDevMode();
+      message('Cần cài Dev Mode Forever riêng trước khi mở từ Infiniti.');
+      return;
+    }
+    var now = Date.now();
+    if (now > devmodeConfirmUntil || !devmodeConfirmUntil) {
+      devmodeConfirmUntil = now + 8000;
+      $('customizeDevModeWarning').textContent =
+        'XÁC NHẬN: App này có thể reset Developer Mode và REBOOT TV. ' +
+        'Chỉ mở sau khi đã kiểm tra TV ổn định. Nhấn lại trong 8 giây nếu đồng ý.';
+      message('Chưa gửi lệnh. Nhấn nút lần hai để mở ứng dụng độc lập.');
+      return;
+    }
+    devmodeConfirmUntil = 0;
+    $('customizeDevModeWarning').textContent = 'Đang mở ứng dụng độc lập…';
+    if (typeof root.INFINITI_DEVMODE_OPEN !== 'function') {
+      message('Không có bộ gọi app. Kiểm tra lại bộ cài và cập nhật Infiniti TV Home.');
+      return;
+    }
+    hide();
+    root.INFINITI_DEVMODE_OPEN();
   });
   $('customizeClose').addEventListener('click', hide);
   $('customizeResetApps').addEventListener('click', function () {

@@ -1,50 +1,40 @@
 #!/usr/bin/env node
 'use strict';
-// Offline policy checks: linking to a reboot-capable companion must never
-// silently enable a Developer Mode service on a known black-screen LG TV.
+// Root/Failsafe regression: Dev Mode is informational even when the external
+// companion is present. Launching a reboot-capable watchdog is not safe here.
 var assert=require('assert'),fs=require('fs');
 var html=fs.readFileSync('app/index.html','utf8');
 var settings=fs.readFileSync('app/customize.js','utf8');
 var app=fs.readFileSync('app/app.js','utf8');
-var en=fs.readFileSync('README.md','utf8');
 var vi=fs.readFileSync('README.vi.md','utf8');
-var meta=JSON.parse(fs.readFileSync('app/appinfo.json','utf8'));
 [
   'customizeDevModeTab','customizeDevModeView','customizeDevModeState',
-  'customizeDevModeOpen','customizeDevModeWarning'
-].forEach(function(id) {
-  assert.ok(html.indexOf('id="'+id+'"')>=0,'Dev Mode settings missing '+id);
+  'customizeRootModeState','customizeDevModeWarning'
+].forEach(function(id){
+  assert.ok(html.indexOf('id="'+id+'"')>=0, 'Dev Mode status missing '+id);
 });
-assert.ok(html.indexOf('com.lennylxx.devmodeforever')>=0,'Exact companion app ID must be visible');
+assert.strictEqual(html.indexOf('id="customizeDevModeOpen"'),-1,
+  'Rooted/unknown TV cannot open reboot-capable companion from settings');
+assert.ok(html.indexOf('TV đã root: KHÔNG cài, bật hoặc gia hạn Developer Mode')>=0,
+  'Do not suggest official Developer Mode on rooted Homebrew');
+assert.ok(html.indexOf('Không thể xác nhận quyền root')>=0,
+  'Root is unknown to the web UI until independently verified');
+assert.ok(html.indexOf('REBOOT')>=0 && html.indexOf('Failsafe')>=0,
+  'Dangerous reboot and failsafe warnings must be visible');
 assert.ok(settings.indexOf("var DEVMODE_APP = 'com.lennylxx.devmodeforever'")>=0,
-  'Companion detection must use verified upstream app ID');
-assert.ok(settings.indexOf('var devmodeConfirmUntil = 0')>=0 &&
-  settings.indexOf('devmodeConfirmKeyReleased')>=0 &&
-  settings.indexOf('if (e.repeat) return')>=0,
-  'Companion open needs two distinct physical OK presses, not a held button');
-assert.ok(settings.indexOf('root.INFINITI_DEVMODE_OPEN()')>=0,
-  'Opening companion should be an intentional user-triggered event');
-assert.ok(app.indexOf("launch('com.lennylxx.devmodeforever', 'Dev Mode Forever')")>=0,
-  'Launcher must use normal app manager to open the installed companion');
+  'Existing companion may be displayed as a read-only installed-app status');
+assert.strictEqual(settings.indexOf('root.INFINITI_DEVMODE_OPEN'),-1);
+assert.strictEqual(app.indexOf('INFINITI_DEVMODE_OPEN'),-1);
+assert.strictEqual(settings.indexOf("$('customizeDevModeOpen')"),-1);
 ['watchdogArm','watchdogToggle','extendDevSession','setDevMode',
-  'luna://com.lennylxx.devmodeforever.service/'].forEach(function(api) {
-    assert.strictEqual(app.indexOf(api),-1,
-      'Infiniti app must not independently trigger a privileged reboot-capable API: '+api);
-    assert.strictEqual(settings.indexOf(api),-1,
-      'Customization must not call the companion service on startup: '+api);
+  'machineReboot','luna://com.lennylxx.devmodeforever.service/'].forEach(function(api) {
+  assert.strictEqual(settings.indexOf(api),-1,
+    'No rebooter or privileged Developer Mode API in Customize: '+api);
+  assert.strictEqual(app.indexOf(api),-1,
+    'No rebooter or privileged Developer Mode API in launcher: '+api);
 });
-assert.ok(html.indexOf('không tự')>=0 &&
-  html.indexOf('REBOOT')>=0,'Explicit safety warning before opening companion');
-assert.ok(vi.indexOf('## Xử lý sự cố')>=0 &&
-  vi.indexOf('RECOVERY_PARTIAL')>=0 &&
-  vi.indexOf('0305')>=0 && vi.indexOf('773')>=0,
-  'Vietnamese troubleshooting must keep confirmed Home 0305/773 and safe recovery');
-assert.strictEqual(vi.indexOf('ps -ef | grep homewatch phải'),-1,
-  'Do not suggest obsolete foreground watcher as required process');
-assert.ok(vi.indexOf('"action":"exec"')>=0,
-  'Home key troubleshooting must use safe Execute action');
-assert.ok(vi.indexOf('github.com/infiniti-money/lg-devmode-forever')>=0 &&
-  en.indexOf('github.com/infiniti-money/lg-devmode-forever')>=0,
-  'Integration should link to independent source instead of inventing an IPK download');
-assert.ok(meta.version==='1.5.6','Version must match Dev Mode integration release');
-console.log('Dev Mode companion safe integration verified: no silent service calls, guarded remote launch, explicit power-off caveats and updated troubleshooting.');
+assert.ok(vi.indexOf('RECOVERY_PARTIAL')>=0 && vi.indexOf('0305')>=0,
+  'Keep Home rollback and remote mapping guidance');
+assert.ok(vi.indexOf('Developer Mode chính thức')>=0,
+  'Troubleshooting must distinguish rooted vs no-root');
+console.log('Dev Mode safe: no reboot-capable app launcher, rooted/unknown warnings and non-mutating status.');

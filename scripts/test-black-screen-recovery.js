@@ -101,9 +101,13 @@ try {
     'boot must not start evdev monitor on power/wake');
   assert.ok(/HOME_BTN=""; UNINSTALL=""/.test(install),
     'installer must default to no Home takeover');
-  assert.ok(install.indexOf('sh /tmp/infiniti-safe-recovery.sh') <
-    install.indexOf('say "Installing the launcher (latest release)"'),
-    'first uninstall old startup hooks before IPK install');
+  assert.ok(install.indexOf('if [ -n "$RECOVER_HOME" ]; then') <
+    install.indexOf('sh /tmp/infiniti-safe-recovery.sh'),
+    'Home recovery must only run when explicitly requested');
+  assert.ok(install.indexOf('if [ -e /var/luna/preferences/webosbrew_failsafe ]; then') >= 0,
+    'Regular installs must stop in Homebrew Failsafe state');
+  assert.ok(install.indexOf('APP_ONLY_COMPLETE')>=0,
+    'A user who has lost root services needs an app-only installation option');
   assert.ok(install.indexOf('if [ -n "$WALL_SERVICE" ]; then')>=0 &&
     install.indexOf('cp "$DATA/boot.sh" "$INITD"') >
       install.indexOf('if [ -n "$WALL_SERVICE" ]; then'),

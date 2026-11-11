@@ -22,6 +22,9 @@ try {
   make(path.join(data,'home-enabled'));
   make(path.join(data,'home-event-device'),'/dev/input/event3');
   make(path.join(data,'boot-services-enabled'));
+  make(path.join(data,'boot-home-armed'));
+  make(path.join(data,'boot-home-trial'));
+  make(path.join(data,'boot-home-enabled'));
   make(path.join(ini,'lg-tv-vibehack'),'previous boot script');
   make(path.join(ini,'97-homekey'),'sleep 25; while true; do :; done');
   make(path.join(data,'home-key-backup.json'),'{"present":true,"binding":{"action":"launch"}}');
@@ -46,7 +49,8 @@ try {
   assert.ok(a.stdout.indexOf('BOOT_AUTOSTART_DISABLED:')>=0,
     'Autostart still disabled when Home mapping needs manual inspection');
   assert.ok((a.stdout+a.stderr).indexOf('WARNING')>=0,'keymap conflict reported');
-  ['home-enabled','home-event-device','boot-services-enabled'].forEach(function(f){
+  ['home-enabled','home-event-device','boot-services-enabled',
+    'boot-home-armed','boot-home-trial','boot-home-enabled'].forEach(function(f){
     assert.strictEqual(fs.existsSync(path.join(data,f)),false,'disarmed '+f);
   });
   ['lg-tv-vibehack','97-homekey'].forEach(function(f){
@@ -58,6 +62,10 @@ try {
   assert.strictEqual(only(path.join(backup,'97-homekey')).indexOf('sleep 25'),0,
     'user custom 25-second loop must be backed up without deletion');
   assert.strictEqual(only(path.join(backup,'home-enabled')),'original');
+  assert.ok(fs.existsSync(path.join(backup,'boot-home-armed')) &&
+    fs.existsSync(path.join(backup,'boot-home-trial')) &&
+    fs.existsSync(path.join(backup,'boot-home-enabled')),
+    'Recovery should retain evidence of all boot takeover flags');
   assert.ok(fs.existsSync(path.join(backup,'home-key-backup.json')),
     'conflicting Input Hook backup must survive recovery');
   assert.ok(fs.existsSync(path.join(backup,'keybinds.json')),

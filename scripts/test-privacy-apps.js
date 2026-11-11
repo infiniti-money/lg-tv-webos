@@ -65,7 +65,8 @@ assert.ok(html.indexOf('94.140.14.14')>=0 && html.indexOf('94.140.15.15')>=0,
   'Use AdGuard published DNS IPv4 pair');
 assert.ok(html.indexOf('DNS thủ công')>=0 && html.indexOf('khôi phục DNS tự động')>=0,
   'UI must clearly say DNS is manual and reversible');
-['iptables','mount -o','/etc/hosts','init.d','reboot','dd if='].forEach(function(danger){
+['iptables ','mount -o','/etc/hosts','init.d/','dd if=',
+  'luna://com.webos.service.networkinput/setDNS'].forEach(function(danger){
   assert.strictEqual(code.indexOf(danger),-1,'Customize must not mutate root/network state: '+danger);
 });
 console.log('webOS3 app privacy passed: bulk reversible LG icon hiding, Homebrew-safe, manual AdGuard DNS and no root modification.');

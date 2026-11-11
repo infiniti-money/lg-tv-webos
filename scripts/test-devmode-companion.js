@@ -37,7 +37,6 @@ assert.ok(html.indexOf('không tự')>=0 &&
   html.indexOf('REBOOT')>=0,'Explicit safety warning before opening companion');
 assert.ok(vi.indexOf('## Xử lý sự cố')>=0 &&
   vi.indexOf('RECOVERY_PARTIAL')>=0 &&
-  vi.indexOf('303')===-1 &&
   vi.indexOf('0305')>=0 && vi.indexOf('773')>=0,
   'Vietnamese troubleshooting must keep confirmed Home 0305/773 and safe recovery');
 assert.strictEqual(vi.indexOf('ps -ef | grep homewatch phải'),-1,

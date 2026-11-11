@@ -1,3 +1,17 @@
+# Infiniti TV Home v1.5.7 — Ẩn ứng dụng LG và hướng dẫn chặn quảng cáo DNS
+
+- Tùy chỉnh → Ứng dụng → **Ẩn nhanh ứng dụng LG mặc định**: ẩn biểu tượng app LG trong Infiniti, không xóa gói hệ thống, không thay Home LG. Từng ứng dụng có thể hiện lại hoặc khôi phục cấu hình mặc định.
+- **Tùy chỉnh → Chặn quảng cáo**: hướng dẫn cấu hình DNS AdGuard theo cách thủ công tại Cài đặt mạng TV. DNS chính `94.140.14.14`, DNS phụ `94.140.15.15`. Đổi về DNS tự động nếu chức năng LG Store hoặc mạng bị lỗi.
+- Không chỉnh `/etc/hosts`, firewall, `init.d`, phân vùng root, Developer Mode, LG Home hay hành vi khởi động. Không có tác vụ cài adblock tự động khi cài IPK.
+- Bổ sung kiểm thử tương thích ES5/webOS 3.4, thao tác ẩn/khôi phục, CSS tab và kiểm soát không thay đổi root.
+- TV đã từng bị màn hình đen sau Power/standby: **chưa nghiệm thu trực tiếp trên TV thực tế**. Không tự động triển khai hoặc bật lại Home takeover.
+
+Bản phát hành: https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.5.7
+
+---
+
+## Lịch sử — v1.5.6
+
 # Infiniti TV Home v1.5.6 — Dev Mode Forever và chẩn đoán an toàn
 
 Bản v1.5.6 bổ sung mục **Tùy chỉnh → Dev Mode** để phát hiện và mở ứng dụng **LG Dev Mode Forever** đã cài riêng. Người dùng phải xác nhận **hai lần nhấn** để mở, vì watchdog của ứng dụng đi kèm có thể **khởi động lại TV** khi kiểm tra phiên Developer Mode hoặc bộ đếm tắt nguồn. Infiniti không tự cài hoặc tự kích hoạt dịch vụ Developer Mode.

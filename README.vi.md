@@ -378,6 +378,21 @@ Chỉ khi người dùng **chủ động cần gỡ xung đột Home**, dùng `-
 
 **Lưu ý:** RootMyTV hướng dẫn gỡ ứng dụng Developer Mode chính thức trước quá trình root; bật Developer Mode có thể gây reboot và không phải một bước sửa mất root. Trên TV đã root hãy dùng Homebrew Channel, kiểm tra trạng thái root/failsafe trước. Không áp dụng factory reset, nâng cấp firmware hoặc thao tác vô hiệu hóa root không xác minh.
 
+## Ẩn ứng dụng LG mặc định và chặn quảng cáo an toàn (webOS 3.4.0)
+
+Infiniti TV Home hỗ trợ **Tùy chỉnh → Ứng dụng → Ẩn nhanh ứng dụng LG mặc định**: ẩn biểu tượng các ứng dụng hệ thống LG đã được đồng bộ vào Infiniti, ví dụ trình duyệt LG, LG Channels, cài đặt LG. Có thể nhấn **Thêm vào Home** cho từng ứng dụng hoặc **Khôi phục ứng dụng mặc định** để hoàn tác. Chức năng này chỉ thay đổi lựa chọn hiển thị qua `localStorage` trong Infiniti, **không xóa app, không chặn Home LG, không can thiệp package database**. Homebrew Channel, Input Hook, các ứng dụng do người dùng cài, Live TV và HDMI không bị lệnh ẩn hàng loạt tác động.
+
+**Ẩn ứng dụng trong thanh Home LG gốc** là phạm vi khác và chưa có API an toàn được xác minh cho webOS 3.4.0: không chỉnh sửa `/usr/palm/applications`, `/media/cryptofs`, `/usr/bin/com.webos.app.home` hay tệp hệ thống để ép ẩn app. Vì TV đã từng bị đen màn hình/mất SSH tạm thời, Infiniti không triển khai kỹ thuật takeover hoặc gỡ app hệ thống.
+
+Để **giảm quảng cáo/tracking trên TV**, vào **Tùy chỉnh → Chặn quảng cáo** để xem hướng dẫn cấu hình DNS thủ công. Địa chỉ IPv4 của [AdGuard DNS](https://adguard-dns.io/en/public-dns.html) do nhà cung cấp công bố:
+
+- DNS chính: `94.140.14.14`
+- DNS phụ: `94.140.15.15`
+
+Trên LG webOS 3, mở **Cài đặt LG → Mạng → Kết nối Wi-Fi/Có dây → Cài đặt nâng cao → Chỉnh sửa**, bỏ DNS tự động và điền DNS lọc tương ứng nếu TV cho phép. Tên menu phụ thuộc firmware/model. **Ghi lại DNS cũ** trước khi đổi, kiểm tra LG Content Store, dịch vụ video, tài khoản LG và cập nhật ứng dụng. Nếu có lỗi, đổi về **DNS tự động** hoặc địa chỉ cũ; không cần root hay reboot để khôi phục cài đặt mạng thông thường.
+
+Có thể dùng **AdGuard Home / Pi-hole** trên router với danh sách LG loại an toàn, ví dụ [LG webOS Blocklist](https://github.com/samsapti/LG-webOS-Blocklist); cần thử nghiệm trước vì không phải mọi mẫu LG dùng cùng domain quảng cáo. DNS không chặn triệt để quảng cáo nhúng bên trong luồng video như YouTube, và một số truy vấn có thể sử dụng DNS khác. **Chưa tự bật** bộ lọc: trang Infiniti chỉ hướng dẫn cấu hình, không ghi đè `/etc/hosts`, chỉnh firewall, thêm init.d hook, xóa LG Home, hay kích hoạt Developer Mode.
+
 ## Xử lý sự cố
 
 <details>

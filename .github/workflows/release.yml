@@ -55,6 +55,7 @@ jobs:
           node scripts/test-customize.js
           node scripts/test-app-structure.js
           node scripts/test-settings-ui.js
+          node scripts/test-privacy-apps.js
           node scripts/test-devmode-companion.js
           node scripts/test-homebrew-failsafe.js
           node scripts/test-upstream-compat.js
@@ -92,11 +93,11 @@ jobs:
           mkdir -p build/infiniti-root-tools/tv build/infiniti-root-tools/scripts
           cp tv/* build/infiniti-root-tools/tv/
           cp scripts/recover-lg-tv.ps1 build/infiniti-root-tools/scripts/
-          cp install.sh README.vi.md RELEASE_NOTES_v1.5.6.md build/infiniti-root-tools/
-          (cd build && zip -qr infiniti-tv-home-root-tools-v1.5.6.zip infiniti-root-tools)
-          (cd build && sha256sum infiniti-tv-home-root-tools-v1.5.6.zip > infiniti-tv-home-root-tools-v1.5.6.zip.sha256)
-          unzip -l build/infiniti-tv-home-root-tools-v1.5.6.zip | grep -q 'tv/safe-recovery.sh'
-          unzip -l build/infiniti-tv-home-root-tools-v1.5.6.zip | grep -q 'scripts/recover-lg-tv.ps1'
+          cp install.sh README.vi.md RELEASE_NOTES_v1.5.7.md build/infiniti-root-tools/
+          (cd build && zip -qr infiniti-tv-home-root-tools-v1.5.7.zip infiniti-root-tools)
+          (cd build && sha256sum infiniti-tv-home-root-tools-v1.5.7.zip > infiniti-tv-home-root-tools-v1.5.7.zip.sha256)
+          unzip -l build/infiniti-tv-home-root-tools-v1.5.7.zip | grep -q 'tv/safe-recovery.sh'
+          unzip -l build/infiniti-tv-home-root-tools-v1.5.7.zip | grep -q 'scripts/recover-lg-tv.ps1'
 
       - name: Upload IPK artifact
         uses: actions/upload-artifact@v4
@@ -105,12 +106,12 @@ jobs:
           path: |
             build/infiniti-tv-home.ipk
             build/infiniti-tv-home.ipk.sha256
-            build/infiniti-tv-home-root-tools-v1.5.6.zip
-            build/infiniti-tv-home-root-tools-v1.5.6.zip.sha256
+            build/infiniti-tv-home-root-tools-v1.5.7.zip
+            build/infiniti-tv-home-root-tools-v1.5.7.zip.sha256
           if-no-files-found: error
           retention-days: 30
 
-      # Release v1.5.6 once from the deliberate main merge commit with the
+      # Release v1.5.7 once from the deliberate main merge commit with the
       # exact prefix below. All checks, packaging and artifact upload run first.
       # Manual workflow_dispatch publishing is retained as the fallback.
       # Future ordinary main pushes cannot trigger the release gate.
@@ -118,7 +119,7 @@ jobs:
         if: >-
           ${{ (github.event_name == 'workflow_dispatch' && inputs.publish_release) ||
               (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
-               startsWith(github.event.head_commit.message, 'release: publish verified v1.5.6')) }}
+               startsWith(github.event.head_commit.message, 'release: publish verified v1.5.7')) }}
         shell: bash
         run: |
           set -euo pipefail
@@ -126,7 +127,7 @@ jobs:
           VERSION=$(node -p "require('./app/appinfo.json').version")
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'ERROR: Invalid app version'; exit 1; }
           if [ "${{ github.event_name }}" = "push" ]; then
-            test "$VERSION" = "1.5.6" || { echo 'ERROR: One-shot publish only permits v1.5.6'; exit 1; }
+            test "$VERSION" = "1.5.7" || { echo 'ERROR: One-shot publish only permits v1.5.7'; exit 1; }
           fi
           TAG="v$VERSION"
           echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
@@ -147,15 +148,15 @@ jobs:
           ${{ startsWith(github.ref, 'refs/tags/v') ||
               (github.event_name == 'workflow_dispatch' && inputs.publish_release) ||
               (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
-               startsWith(github.event.head_commit.message, 'release: publish verified v1.5.6')) }}
+               startsWith(github.event.head_commit.message, 'release: publish verified v1.5.7')) }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG || github.ref_name }}
           files: |
             build/infiniti-tv-home.ipk
             build/infiniti-tv-home.ipk.sha256
-            build/infiniti-tv-home-root-tools-v1.5.6.zip
-            build/infiniti-tv-home-root-tools-v1.5.6.zip.sha256
+            build/infiniti-tv-home-root-tools-v1.5.7.zip
+            build/infiniti-tv-home-root-tools-v1.5.7.zip.sha256
           fail_on_unmatched_files: true
           generate_release_notes: true
-          body_path: RELEASE_NOTES_v1.5.6.md
+          body_path: RELEASE_NOTES_v1.5.7.md

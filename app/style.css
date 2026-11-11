@@ -539,14 +539,17 @@ body.solar-hidden #date, body.lunar-hidden #lunarDate { display:none; }
 #customizeWeatherView.hidden,
 #customizeAIView.hidden,
 #customizeCalendarView.hidden,
-#customizeAppsView.hidden { display:none; }
+#customizeAppsView.hidden,
+#customizeDevModeView.hidden,
+#customizePrivacyView.hidden { display:none; }
 .customizeDialog { margin:0 auto; width:100%; max-width:1640px; height:100%; overflow:hidden;
   padding:26px 37px; border-radius:28px; border:2px solid #49536b;
   background:#151e30; font-size:25px; color:white; display:flex; flex-direction:column; }
 .customizeHead { display:flex; flex-shrink:0; align-items:center; justify-content:space-between;
   font-size:37px; padding-bottom:12px; }
 .customizeEyebrow { font-size:18px; letter-spacing:.20em; font-weight:600; color:#8ebbd8; }
-.customizeTabs { display:flex; flex-shrink:0; margin:10px 0 20px; }
+.customizeTabs { display:flex; flex-wrap:wrap; flex-shrink:0; margin:10px 0 14px; }
+.customizeTabs button { padding:9px 14px; margin-right:7px; font-size:20px; }
 .customizeDialog button { background:#25354b; color:#fff; border:2px solid #53657c;
   border-radius:14px; padding:12px 21px; font-size:22px; line-height:1.15;
   margin:5px 12px 5px 0; cursor:pointer; }

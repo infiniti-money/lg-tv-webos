@@ -355,6 +355,29 @@ từ kho riêng, nên có thể chậm hơn bản mới nhất trên GitHub mộ
 
 Chi tiết kỹ thuật, bản quyền và rủi ro: [Tương thích LG webOS 3.4](docs/upstream-webos3-compat.md).
 
+## Bảo vệ root và Homebrew Failsafe khi cài Infiniti
+
+**Cập nhật an toàn v1.5.6+:** Việc cài hoặc cập nhật Infiniti **không được tự chạy** script `safe-recovery.sh` hay chuyển hook khởi động của Homebrew. Để điều tra TV mất SSH/root sau khi cài, trước tiên chỉ chạy lệnh **đọc trạng thái**, không xóa marker và không reset TV.
+
+Trong phiên SSH của TV (nếu còn truy cập):
+
+```sh
+sh /home/root/lg-tv-vibehack/root-safety-check.sh
+```
+
+Nếu chưa có công cụ này, từ SSH có `curl` có thể chạy `sh /tmp/infiniti-install.sh --diagnose-root` sau khi tải bộ cài phiên bản mới, hoặc kiểm tra thủ công `id -u`, `ls -ld /var/lib/webosbrew` và `test -e /var/luna/preferences/webosbrew_failsafe`. Công cụ chỉ báo `ROOT_OK`, `ROOT_NOT_ACTIVE`, `ROOT_UNVERIFIED` hoặc `ROOT_FAILSAFE`; **không sửa** Homebrew, SSH hay marker Failsafe.
+
+- `ROOT_OK`: UID=0 và thư mục Homebrew còn tồn tại trong phiên SSH hiện tại; chưa chứng minh root sẽ tồn tại sau reboot.
+- `ROOT_NOT_ACTIVE`: phiên SSH hiện tại chưa phải root; không đồng nghĩa quyền root bị xóa vĩnh viễn.
+- `ROOT_FAILSAFE`: Homebrew có dấu hiệu tạm ngừng tùy chỉnh root sau lỗi khởi động. **Không tự xóa** `/var/luna/preferences/webosbrew_failsafe` hoặc reboot trước khi xác định nguyên nhân.
+- `ROOT_UNVERIFIED`: UID=0 nhưng thiếu thư mục Homebrew; không cố cài hoặc tự kích hoạt root lại.
+
+Đối với **cài IPK đơn thuần** trên TV vẫn xác minh được root và không ở Failsafe, dùng `sh /tmp/infiniti-install.sh --app-only`: bộ cài sẽ **không sửa root sidecar, boot hook, LG Input Hook hay cấu hình Homebrew**. Không tự bật `--enable-home`, `--auto-update` hoặc `--start-home-on-boot` khi TV chưa ổn định.
+
+Chỉ khi người dùng **chủ động cần gỡ xung đột Home**, dùng `--recover-home` hoặc script `safe-recovery.sh` riêng, xem các bản sao và trạng thái `RECOVERY_COMPLETE / RECOVERY_PARTIAL / RECOVERY_INCOMPLETE` trước khi khởi động lại. Công cụ này có thể tạm chuyển hook `97-homekey` và `lg-tv-vibehack` ra khỏi `init.d` nhưng **không gỡ root, không xóa Homebrew**. Khi `--uninstall`, giữ nguyên thư mục script và bản sao thay vì `rm -rf`.
+
+**Lưu ý:** RootMyTV hướng dẫn gỡ ứng dụng Developer Mode chính thức trước quá trình root; bật Developer Mode có thể gây reboot và không phải một bước sửa mất root. Trên TV đã root hãy dùng Homebrew Channel, kiểm tra trạng thái root/failsafe trước. Không áp dụng factory reset, nâng cấp firmware hoặc thao tác vô hiệu hóa root không xác minh.
+
 ## Xử lý sự cố
 
 <details>
@@ -424,9 +447,9 @@ Nếu `HOME Execute invoked` không xuất hiện, LG Input Hook chưa thực th
 <details>
 <summary><b>Developer Mode tự hết hạn hoặc Dev Mode Forever không hoạt động</b></summary>
 
-**Dev Mode Forever là ứng dụng đi kèm riêng**, nguồn tại [infiniti-money/lg-devmode-forever](https://github.com/infiniti-money/lg-devmode-forever), mã `com.lennylxx.devmodeforever`. Giữ ứng dụng **Developer Mode chính thức** của LG. Cài Dev Mode Forever riêng theo hướng dẫn của repository, sau đó đồng bộ danh sách ứng dụng và vào **Tùy chỉnh → Dev Mode**.
+**Dev Mode Forever là ứng dụng đi kèm riêng**, nguồn tại [infiniti-money/lg-devmode-forever](https://github.com/infiniti-money/lg-devmode-forever), mã `com.lennylxx.devmodeforever`. **Nếu TV đã root, không cài, bật hoặc gia hạn Developer Mode chính thức của LG để sửa mất root.** Developer Mode chính thức chỉ dành cho quy trình cài ứng dụng trên TV chưa root. Ở bản hiện tại, **Tùy chỉnh → Dev Mode chỉ hiển thị cảnh báo và trạng thái ứng dụng**, không tự mở Dev Mode Forever vì bản thân nó có thể kích hoạt watchdog/reboot.
 
-Ứng dụng này có watchdog quản lý bộ đếm số lần tắt nguồn và phiên Dev Mode. **Nó có thể reboot TV** khi cần đặt lại bộ đếm; mở app cũng kích hoạt kiểm tra. Vì vậy Infiniti chỉ cho phép mở qua **hai lần xác nhận**, không tự bật, không tự gọi reset hay gia hạn. Tính tương thích với TV webOS 3.4.0 từng đen màn hình **chưa được nghiệm thu**; không khởi động thử khi TV đang mất hình.
+Ứng dụng này có watchdog quản lý bộ đếm số lần tắt nguồn và phiên Dev Mode. **Nó có thể reboot TV** khi đặt lại bộ đếm; ngay cả việc mở ứng dụng cũng có thể kích hoạt kiểm tra. Vì thế Infiniti **đã bỏ nút mở trực tiếp**, không tự bật, không tự gia hạn hoặc gọi reset. Nếu chỉ cần xem ứng dụng đã cài, sử dụng danh sách ứng dụng LG sau khi đã xác nhận trạng thái TV. Tính tương thích với webOS 3.4.0 từng đen màn hình **chưa được nghiệm thu**.
 
 Nếu đã cài và cần kiểm tra log trên TV có quyền truy cập thích hợp:
 

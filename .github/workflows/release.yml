@@ -56,6 +56,7 @@ jobs:
           node scripts/test-app-structure.js
           node scripts/test-settings-ui.js
           node scripts/test-devmode-companion.js
+          node scripts/test-homebrew-failsafe.js
           node scripts/test-upstream-compat.js
           python3 scripts/test-sync-noroot.py
           node scripts/test-weather-ui.js

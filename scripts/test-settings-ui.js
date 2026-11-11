@@ -143,6 +143,21 @@ assert.equal(devmodeOpens,1,'Second click must launch companion exactly once');
 assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),false,
   'Settings should close before intentionally opening external companion');
 window.INFINITI_CUSTOMIZE_OPEN();
+node('customizeDevModeTab').click();
+node('customizeDevModeOpen').focus();
+var pressOk={type:'keydown',keyCode:13,preventDefault:function(){},
+  stopPropagation:function(){},stopImmediatePropagation:function(){}};
+var releaseOk={type:'keyup',keyCode:13,preventDefault:function(){},
+  stopPropagation:function(){},stopImmediatePropagation:function(){}};
+docEvents.keydown(pressOk);
+assert.equal(devmodeOpens,1,'First remote OK must not open reboot-capable companion');
+docEvents.keydown(pressOk);
+assert.equal(devmodeOpens,1,'Repeated OK keydowns without keyup must not confirm');
+docEvents.keyup(releaseOk);
+docEvents.keydown(pressOk);
+assert.equal(devmodeOpens,2,'A separate second OK press may explicitly open companion');
+assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),false);
+window.INFINITI_CUSTOMIZE_OPEN();
 node('customizeWeatherTab').click();
 assert.equal(node('customizeWeatherView').hasClass('hidden'),false);
 assert.equal(node('customizeStyleView').hasClass('hidden'),true);

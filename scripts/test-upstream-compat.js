@@ -17,7 +17,7 @@ assert.ok(diag.indexOf('com.ecklf.luma')>=0 &&
   diag.indexOf('org.webosbrew.inputhook')>=0,
   'Read-only integration check should recognize all three upstream apps');
 assert.ok(diag.indexOf('/var/lib/luma-home')>=0 &&
-  diag.indexOf('/var/lib/webosbrew/init.d/97-homekey')>=0,
+  diag.indexOf('$INIT/97-homekey')>=0,
   'Detect unsupported takeover artifacts and conflicting Home key loops');
 assert.ok(diag.indexOf('773')>=0 && diag.indexOf('0305')>=0);
 assert.ok(!/(?:^|\n)\s*(?:rm|mv|cp|mount|umount|reboot|shutdown|systemctl|initctl|kill|pkill|touch|tee)\s/m.test(diag),

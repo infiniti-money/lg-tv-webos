@@ -1,3 +1,30 @@
+# Phát hành Infiniti TV Home v1.5.5 — Home 0305 / 773
+
+- **Phím Home remote:** `0305` HEX = `773` thập phân. LG Input Hook mở `com.infinitimoney.tvhome` thông qua lệnh `golauncher.sh`, sao lưu ánh xạ trước đó.
+- **Tự khởi động Infiniti:** bật có chủ đích bằng `--enable-home --start-home-on-boot`, chỉ chạy **một lần ở lần khởi động lạnh đầu tiên**. Chờ 55 giây cho hệ thống, không thực hiện vòng lặp, không đọc /dev/input/event3.
+- **An toàn màn hình đen:** phải xem TV hiển thị bình thường rồi chạy `home-control.sh boot-confirm` mới duy trì việc tự mở ở các lần khởi động lạnh sau. Nếu không xác nhận, lần khởi động lạnh kế tiếp về Home LG. Không ép tự mở khi TV thức dậy khỏi standby.
+- **Khôi phục:** `home-control.sh boot-disable` giữ phím Home nhưng tắt tự khởi động. `safe-recovery.sh` vô hiệu hóa tất cả cờ và cố phục hồi ánh xạ Home, không xóa Home LG.
+- **Chưa nghiệm thu trên TV vật lý**: GitHub CI chỉ kiểm tra mã và giả lập các lần cold boot. Kiểm tra lại lỗi đen màn hình trước khi xác nhận.
+
+Trên phiên SSH root của TV đã chạy ổn định:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh -o /tmp/infiniti-install.sh
+sh /tmp/infiniti-install.sh --enable-home --start-home-on-boot
+```
+
+Sau khi đã lưu LG Input Hook, thử Home và xác nhận lần boot thử hiển thị tốt:
+
+```sh
+sh /home/root/lg-tv-vibehack/home-control.sh boot-confirm
+```
+
+Tải phiên bản và bộ công cụ root: https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.5.5
+
+---
+
+## Lịch sử — v1.5.4
+
 # Phát hành Infiniti TV Home v1.5.4
 
 **Gộp biểu tượng lớn bo tròn, hình nền trong Tùy chỉnh và cập nhật ứng dụng tự động có xác minh.**

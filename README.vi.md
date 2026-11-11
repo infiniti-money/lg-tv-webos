@@ -108,6 +108,30 @@ Chỉ chọn thêm \`--rebind-home\` nếu nhận lỗi ánh xạ và biết rõ
 
 Muốn khôi phục chế độ an toàn: \`sh /home/root/lg-tv-vibehack/safe-recovery.sh\`. Giữ nguyên LG Home như phương án cứu hộ.
 
+## V1.5.5 — Phím Home 0305/773 và tự mở Infiniti khi TV khởi động
+
+**Phím Home trên remote của TV:** HEX `0305` = thập phân `773`. Dùng **LG Input Hook** để đổi hành động phím Home thành Execute `/home/root/lg-tv-vibehack/golauncher.sh`; script gọi ứng dụng `com.infinitimoney.tvhome`. Bộ cài tạo backup ánh xạ cũ để khôi phục được. LG Home hệ thống không bị xóa.
+
+**Khởi động cùng hệ thống (lần khởi động lạnh):** do TV từng bị **màn hình đen sau nút nguồn**, tính năng này cần kích hoạt và nghiệm thu theo hai giai đoạn, không tự bật mặc định cho các TV khác. Chỉ khi Home LG đã hiển thị ổn định qua ít nhất **hai chu kỳ nguồn/standby/wake**, vào SSH root:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh -o /tmp/infiniti-install.sh
+sh /tmp/infiniti-install.sh --enable-home --start-home-on-boot
+```
+
+Mở **LG Input Hook**, chọn Home 773 → Execute, kiểm tra câu lệnh và nhấn **Save changes**. Bấm Home để thử gọi Infiniti. Sau đó khởi động lạnh TV một lần. Script chỉ đợi **55 giây và mở Infiniti đúng một lần**, không lặp lại, không giành giao diện khi TV thức dậy từ standby. Trước lần thử, script tự chuyển trạng thái khởi động sang **đã thử**; nếu bị đen màn hình, lần khởi động lạnh sau sẽ trở về Home LG.
+
+**Chỉ khi TV hiển thị Infiniti bình thường**, chạy:
+
+```sh
+sh /home/root/lg-tv-vibehack/home-control.sh boot-confirm
+sh /home/root/lg-tv-vibehack/home-control.sh status
+```
+
+Lúc này Infiniti sẽ mở **một lần ở mỗi lần khởi động lạnh** về sau. Để ngừng tự mở khi bật nguồn nhưng vẫn gán phím Home, dùng `sh /home/root/lg-tv-vibehack/home-control.sh boot-disable`. Để tắt tất cả và khôi phục Home LG/ánh xạ trước đó: `sh /home/root/lg-tv-vibehack/safe-recovery.sh`.
+
+**Quan trọng:** Bấm nút nguồn trên một số TV chỉ đưa TV vào *standby*, không phải khởi động lạnh. Phiên bản này **không ép Infiniti xuất hiện mỗi lần thoát standby** vì đây là hành vi đã gây sự cố màn hình đen; cần nghiệm thu riêng trên thiết bị nếu muốn thêm chế độ đó. Cài IPK riêng không cập nhật được script root.
+
 ## V1.5.4 — Biểu tượng lớn, hình nền trong Tùy chỉnh và tự cập nhật có kiểm soát
 
 - **Giao diện:** dock vẫn một hàng trong suốt, biểu tượng ứng dụng tăng khoảng 10–12% và bo tròn 24px; phím điều hướng TV vẫn cuộn ngang.

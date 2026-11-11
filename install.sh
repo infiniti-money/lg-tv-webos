@@ -17,7 +17,9 @@
 #   --no-wallpaper          Back to plain black
 #   --dim 0-0.8             Darken the wallpaper so text stays readable (default: 0.35)
 #   --glow on|off           Coloured glow behind the focused app
-#   --enable-home           EXPLICITLY map Home button; no boot/wake autolaunch
+#   --enable-home           EXPLICITLY map remote Home 0305/773 to Infiniti via LG Input Hook
+#   --start-home-on-boot    Arm one cold-boot Infiniti trial (requires --enable-home);
+#                           confirm after TV displays correctly to persist
 #   --no-home-button        Deprecated alias for the safe default
 #   --rebind-home           Explicitly rebind a conflicting mapping (requires --enable-home)
 #   --auto-update           Enable delayed, SHA-256-verified app updates + wallpaper server
@@ -64,7 +66,7 @@ luna_wait() {
 
 # ---------------------------------------------------------------- options
 LANG_OPT="vi"; CLOCK="on"; COLS=""; CITY=""; FAHR=""; NOWEATHER=""; WALL=""; NOWALL=""; DIM=""; GLOW=""
-HOME_BTN=""; UNINSTALL=""; REBIND_HOME=""; AUTO_UPDATE=""; WALL_SERVICE=""; STOP_AUTO=""
+HOME_BTN=""; UNINSTALL=""; REBIND_HOME=""; AUTO_UPDATE=""; WALL_SERVICE=""; STOP_AUTO=""; START_BOOT=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --lang) LANG_OPT="$2"; shift ;;
@@ -79,6 +81,7 @@ while [ $# -gt 0 ]; do
     --glow) GLOW="$2"; shift ;;
     --no-home-button) HOME_BTN="" ;;
     --enable-home) HOME_BTN=1 ;;
+    --start-home-on-boot) START_BOOT=1 ;;
     --rebind-home) REBIND_HOME=1 ;;
     --auto-update) AUTO_UPDATE=1; WALL_SERVICE=1 ;;
     --wallpaper-service) WALL_SERVICE=1 ;;
@@ -95,6 +98,9 @@ done
 for c in node luna-send curl; do command -v "$c" >/dev/null 2>&1 || die "'$c' not found on this TV."; done
 if [ -n "$REBIND_HOME" ] && [ -z "$HOME_BTN" ]; then
   die "--rebind-home requires --enable-home; safe mode is the default."
+fi
+if [ -n "$START_BOOT" ] && [ -z "$HOME_BTN" ]; then
+  die "--start-home-on-boot requires --enable-home: Home key 773 must be backed up first."
 fi
 
 # Make this the FIRST mutation, before package download/install. Previous
@@ -127,7 +133,7 @@ fi
 # ---------------------------------------------------------------- files
 say "Downloading scripts"
 mkdir -p "$DATA/icons"
-for f in sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh home-control.sh safe-recovery.sh auto-update.sh install-ipk-update.js diagnose-home.sh compat-check.sh; do
+for f in sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh boot-home-once.sh home-control.sh safe-recovery.sh auto-update.sh install-ipk-update.js diagnose-home.sh compat-check.sh; do
   curl -fsSL "$RAW/tv/$f" -o "$DATA/$f" || die "Could not download $f. Is the TV online?"
 done
 chmod +x "$DATA"/*.sh "$DATA"/*.js
@@ -254,8 +260,13 @@ if [ -n "$HOME_BTN" ]; then
       die "Home key was changed externally. Configuration is preserved. After verifying Home key ID 773 in LG Input Hook, rerun installer with --rebind-home to archive the old mapping and rebind safely."
     fi
   fi
-  ok "Manual Home key mapping installed. No automatic launch on boot or wake."
-  warn "Open LG Input Hook and save the Home mapping. Verify power/standby before enabling other services."
+  ok "Manual Home 0305 (773) mapped to Infiniti through LG Input Hook."
+  warn "Open LG Input Hook once and Save changes. Test Home while TV is running."
+  if [ -n "$START_BOOT" ]; then
+    sh "$DATA/home-control.sh" boot-arm ||
+      die "Cold-boot trial not armed. Mapping remains backed up; inspect status."
+    warn "Boot trial ONE SHOT only. Reboot to test. If successful, run: sh $DATA/home-control.sh boot-confirm"
+  fi
 else
   # The first recovery already removed all startup launchers. Do NOT
   # reactivate them or force the launcher into the foreground here.
@@ -263,7 +274,8 @@ else
 fi
 
 echo
-ok "Installation complete. Test LG power off/on twice BEFORE enabling Home interception."
+ok "Installation complete. LG native Home is preserved as rollback."
+[ -z "$START_BOOT" ] || warn "Boot trial is not permanent until boot-confirm after seeing Infiniti on the TV."
 ok "To start Infiniti manually, select it from the TV app list."
 ok "Emergency rollback: sh $DATA/safe-recovery.sh"
 [ -z "$AUTO_UPDATE" ] || ok "Auto update status: sh $DATA/auto-update.sh --status"

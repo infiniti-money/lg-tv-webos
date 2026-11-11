@@ -158,6 +158,7 @@
   var fontBox = $('customizeFonts'), status = $('customizeStatus');
   var opened = false, activeTab = 'style', searchRequest = null;
   var devmodeConfirmUntil = 0;
+  var devmodeConfirmKeyReleased = true, devmodeTriggeredByKey = false;
   var DEVMODE_APP = 'com.lennylxx.devmodeforever';
 
   function applyAppearance() {
@@ -422,6 +423,7 @@
     var available = devModeInstalled();
     var state = $('customizeDevModeState'), control = $('customizeDevModeOpen');
     devmodeConfirmUntil = 0;
+    devmodeConfirmKeyReleased = true;
     state.textContent = available ?
       'Đã tìm thấy Dev Mode Forever trong danh sách ứng dụng đã đồng bộ.' :
       'Chưa tìm thấy Dev Mode Forever trong danh sách ứng dụng đã đồng bộ. Cài ứng dụng riêng, sau đó đồng bộ lại danh sách ứng dụng.';
@@ -455,6 +457,7 @@
   }
   function hide() {
     devmodeConfirmUntil = 0;
+    devmodeConfirmKeyReleased = true;
     if (searchRequest) { searchRequest.abort(); searchRequest = null; }
     opened = false;
     panel.classList.add('hidden');
@@ -497,10 +500,19 @@
       return;
     }
     stopKey(e);
-    if (e.type === 'keyup') return;
+    if (e.type === 'keyup') {
+      if (code === 13) devmodeConfirmKeyReleased = true;
+      return;
+    }
     if (code === 461 || code === 27) { hide(); return; }
     var buttons = visibleControls(), i = buttons.indexOf(active);
-    if (code === 13) { if (active && typeof active.click === 'function') active.click(); return; }
+    if (code === 13) {
+      if (e.repeat) return; // Holding OK must never auto-confirm a reboot-capable app.
+      devmodeTriggeredByKey = active === $('customizeDevModeOpen');
+      if (active && typeof active.click === 'function') active.click();
+      devmodeTriggeredByKey = false;
+      return;
+    }
     if (code === 37 || code === 38 || code === 39 || code === 40) {
       var step = code === 37 || code === 38 ? -1 : 1;
       var next = Math.max(0, Math.min(buttons.length - 1, i + step));
@@ -524,13 +536,19 @@
     var now = Date.now();
     if (now > devmodeConfirmUntil || !devmodeConfirmUntil) {
       devmodeConfirmUntil = now + 8000;
+      devmodeConfirmKeyReleased = !devmodeTriggeredByKey;
       $('customizeDevModeWarning').textContent =
         'XÁC NHẬN: App này có thể reset Developer Mode và REBOOT TV. ' +
         'Chỉ mở sau khi đã kiểm tra TV ổn định. Nhấn lại trong 8 giây nếu đồng ý.';
       message('Chưa gửi lệnh. Nhấn nút lần hai để mở ứng dụng độc lập.');
       return;
     }
+    if (devmodeTriggeredByKey && !devmodeConfirmKeyReleased) {
+      message('Hãy thả nút OK rồi nhấn lại để xác nhận.');
+      return;
+    }
     devmodeConfirmUntil = 0;
+    devmodeConfirmKeyReleased = true;
     $('customizeDevModeWarning').textContent = 'Đang mở ứng dụng độc lập…';
     if (typeof root.INFINITI_DEVMODE_OPEN !== 'function') {
       message('Không có bộ gọi app. Kiểm tra lại bộ cài và cập nhật Infiniti TV Home.');

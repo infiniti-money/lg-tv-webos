@@ -34,7 +34,11 @@ if [ -f "$DIR/boot-home-armed" ] || [ -f "$DIR/boot-home-enabled" ]; then
 fi
 
 if [ ! -f "$DIR/boot-services-enabled" ]; then
-  echo "$(date) Infiniti boot SAFE MODE: no autostart, no Home watcher" >> "$LOG"
+  if [ -f "$DIR/boot-home-enabled" ] || [ -f "$DIR/boot-home-trial" ]; then
+    echo "$(date) Infiniti background maintenance off; cold-boot trial handled separately" >> "$LOG"
+  else
+    echo "$(date) Infiniti boot SAFE MODE: no autostart, no Home watcher" >> "$LOG"
+  fi
   exit 0
 fi
 

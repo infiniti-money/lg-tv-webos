@@ -313,6 +313,16 @@ An app-only installation requires a functioning root session and is blocked in H
 
 If the TV still has a black screen, do not attempt a factory reset, firmware update, or unverified Developer Mode activation as a workaround. Real LG webOS 3.4 hardware validation remains required.
 
+## Hide default LG app icons and block ads safely (webOS 3.4)
+
+Go to **Customize → Apps → Hide default LG apps** to hide LG system-app icons that appear **within Infiniti TV Home**. This changes only locally stored launcher preferences, not installed packages or native LG Home. It deliberately leaves Live TV, HDMI, Homebrew Channel, Input Hook, and other user apps outside the bulk action. Use individual **Show on Home** or **Restore default apps** to reverse the change.
+
+Infiniti does **not** delete or disable built-in LG system applications: on the affected rooted webOS 3.4 TV, editing protected system launchers/partitions could cause another black-screen or boot failure.
+
+For ads/tracking, open **Customize → Ad blocking** to see instructions for manually configuring DNS in LG's **Settings → Network** menu. The AdGuard public filtered IPv4 pair is **`94.140.14.14`** and **`94.140.15.15`** (source: https://adguard-dns.io/en/public-dns.html). Back up the previous network/DNS setting and restore automatic DNS if LG Store, streaming or login fails. Network-side AdGuard Home or Pi-hole can also accept a conservative LG blocklist: https://github.com/samsapti/LG-webOS-Blocklist.
+
+This is a user-configured DNS solution, **not automatic TV-wide ad blocking** just from installing the IPK. DNS filtering cannot guarantee removal of ads embedded in YouTube video, and some TV requests may bypass the configured resolver. We never edit `/etc/hosts`, install boot-time firewall hooks, patch the native LG launcher or restart the TV to block advertising.
+
 ## Troubleshooting
 
 <details>

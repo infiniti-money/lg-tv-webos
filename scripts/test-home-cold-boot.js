@@ -11,7 +11,7 @@ var recovery=fs.readFileSync('tv/safe-recovery.sh','utf8');
 var temp=fs.mkdtempSync(path.join(os.tmpdir(),'infiniti-boot-773-'));
 try {
   var data=path.join(temp,'sidecar'), log=path.join(temp,'boot.log'),
-    trace=path.join(temp,'trace.log');
+    trace=path.join(temp,'trace.log'), failsafe=path.join(temp,'webosbrew_failsafe');
   fs.mkdirSync(data);
   fs.writeFileSync(path.join(data,'home-enabled'),'');
   fs.writeFileSync(path.join(data,'boot-home-once.sh'),'');
@@ -43,6 +43,7 @@ try {
     'Emergency rescue must disarm all boot modes');
   var shell=boot.replace('DIR=/home/root/lg-tv-vibehack','DIR='+data)
     .replace('LOG=/tmp/lg-tv-vibehack.log','LOG='+log)
+    .replace('/var/luna/preferences/webosbrew_failsafe',failsafe)
     .replace('/var/lib/webosbrew/init.d/97-homekey',path.join(temp,'97-homekey'))
     .replace(/nohup setsid sh "\$DIR\/boot-home-once.sh" trial[^\n]+/g,
       'printf "trial\\n" >> '+trace)
@@ -65,6 +66,12 @@ try {
   fs.unlinkSync(path.join(data,'boot-home-trial'));
   assert.deepStrictEqual(start(),['trial','confirmed'],
     'After manual confirmation, each cold boot starts one invocation');
+  fs.writeFileSync(failsafe,'preserve Homebrew Failsafe marker');
+  assert.deepStrictEqual(start(),['trial','confirmed'],
+    'Failsafe marker must suppress all launch and maintenance hooks');
+  assert.strictEqual(fs.readFileSync(failsafe,'utf8'),'preserve Homebrew Failsafe marker',
+    'Boot path must not delete the Failsafe marker');
+  fs.unlinkSync(failsafe);
   fs.writeFileSync(path.join(temp,'97-homekey'),'legacy script');
   assert.deepStrictEqual(start(),['trial','confirmed'],
     'Legacy 97-homekey must block every boot launch to avoid conflicts');

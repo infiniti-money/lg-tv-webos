@@ -347,37 +347,82 @@ từ kho riêng, nên có thể chậm hơn bản mới nhất trên GitHub mộ
 ## Xử lý sự cố
 
 <details>
-<summary><b>Lưới app trống hoặc màn hình đen</b></summary>
+<summary><b>Lưới ứng dụng trống, nhưng TV vẫn hiển thị bình thường</b></summary>
 
-TV đã root: chạy `node /home/root/lg-tv-vibehack/sync.js` qua SSH rồi mở lại launcher.
-Không root: chạy lại `./install-noroot.sh`.
+TV đã root: trong **phiên SSH root trên TV**, chạy `node /home/root/lg-tv-vibehack/sync.js`, sau đó mở lại Infiniti TV Home. Kiểm tra ứng dụng đã cài thực sự có launchpoint; không hiển thị dịch vụ hệ thống hoặc gói ẩn. TV không root: chạy lại `./install-noroot.sh` trên máy tính đã kết nối TV.
+
+**Không dùng `sync.js` để xử lý TV bị đen toàn bộ màn hình, không có menu LG hoặc thanh âm lượng.** Đây là sự cố khác với lưới ứng dụng trống.
+</details>
+
+<details>
+<summary><b>Nhấn Power rồi bật lại: TV đen màn hình</b></summary>
+
+Nếu TV còn kết nối SSH, ưu tiên **chế độ cứu hộ**, không reset gốc hoặc xóa LG Home:
+
+```sh
+sh /home/root/lg-tv-vibehack/safe-recovery.sh
+```
+
+Script lưu bản sao cấu hình và chuyển các hook `lg-tv-vibehack`, `97-homekey` ra khỏi `/var/lib/webosbrew/init.d`, tắt cờ tự mở Home, dịch vụ nền tùy chọn, trình theo dõi phím và trạng thái thử cold boot. `RECOVERY_COMPLETE` nghĩa là không phát hiện lỗi khi khôi phục; `RECOVERY_PARTIAL` nghĩa là còn ánh xạ LG Input Hook cần kiểm tra; `RECOVERY_INCOMPLETE` nghĩa là chưa tắt được tất cả các hook đã biết.
+
+**Chỉ khởi động lại sau khi xem kết quả cứu hộ.** Script `97-homekey` cũ có thể còn chạy trong RAM tới lần reboot kế tiếp. Nếu TV vẫn đen ngay cả khi không còn hook tùy chỉnh, kiểm tra nguồn, đèn nền, cáp và hỗ trợ sửa chữa LG.
 </details>
 
 <details>
 <summary><b>Bấm Home vẫn ra Home của LG</b></summary>
 
-1. Đã cài **LG Input Hook** và mở nó 1 lần chưa? Cài xong thì chạy lại lệnh cài.
-2. Khởi động lại TV 1 lần sau khi cài.
-3. Kiểm tra watcher: `ps -ef | grep homewatch` phải thấy một tiến trình `node`.
-4. Xem log: `tail -30 /tmp/lg-tv-vibehack.log`
+Phím Home đã xác minh: **HEX `0305` = thập phân `773`**. Cài và mở **LG Input Hook**, kiểm tra ánh xạ `773` rồi **Save changes**. Trong bản mới, ánh xạ ưu tiên `Execute`:
+
+```json
+"773": {"action":"exec","command":"/home/root/lg-tv-vibehack/golauncher.sh"}
+```
+
+Kiểm tra chỉ đọc:
+
+```sh
+sh /home/root/lg-tv-vibehack/home-control.sh status
+sh /home/root/lg-tv-vibehack/home-control.sh diagnose
+tail -n 30 /tmp/infiniti-homekey.log
+```
+
+`INFINITI ACTIVE` chỉ xác nhận cấu hình JSON, **không chứng minh LG Input Hook đã chặn Home LG ở tầng compositor**. `Launch accepted` chỉ xác nhận ứng dụng được yêu cầu mở; native LG ribbon có thể vẫn xuất hiện trên webOS 3.x. **Không chạy lại watcher `homewatch.js --boot`, không bật `evdev-enable` hoặc script `97-homekey`** để cố chiếm lại màn hình.
 </details>
 
 <details>
-<summary><b>Bật TV lên thấy truyền hình hoặc Home LG vài giây rồi mới vào launcher</b></summary>
+<summary><b>Bật TV trước tiên thấy truyền hình hoặc Home LG</b></summary>
 
-Bình thường. webOS mở màn hình của nó trước, launcher sẽ chiếm lại ngay khi webOS sẵn sàng
-(thường vài giây, lâu hơn nếu đang có bảng thông báo của LG như thông báo cập nhật phần mềm).
+Mặc định an toàn, TV giữ giao diện LG. Khi bật tính năng `--enable-home --start-home-on-boot`, launcher thử mở **một lần sau 55 giây ở lần khởi động lạnh**, và chỉ lặp ở các lần khởi động lạnh sau khi chạy `home-control.sh boot-confirm` trong lúc Infiniti hiển thị bình thường.
+
+**Standby/wake khác khởi động lạnh**: bản này không ép mở Infiniti khi vừa thức dậy vì TV trước đó bị đen màn hình. Kiểm tra bằng `sh /home/root/lg-tv-vibehack/home-control.sh status` và `tail -n 30 /tmp/infiniti-boot-home.log`; không coi việc chờ 12–25 giây do script cũ là bình thường.
 </details>
 
 <details>
-<summary><b>Bấm Home không có phản ứng gì</b></summary>
+<summary><b>Bấm Home không có phản ứng</b></summary>
 
-LG Input Hook đã bắt được phím nhưng lệnh lỗi. Kiểm tra:
-Chạy `cat /home/root/.config/lginputhook/keybinds.json` và kiểm tra phím Home `773` có
-`{"action":"launch","id":"com.infinitimoney.tvhome"}`. Nếu chưa đúng, hãy xem
-`/home/root/lg-tv-vibehack/home-key-backup.json` trước khi thử lại. Trình quản lý phím Home có thể
-khôi phục lần bật bị gián đoạn, nhưng sẽ không ghi đè thay đổi của ứng dụng khác.
-Kiểm tra thêm bằng `sh /home/root/lg-tv-vibehack/home-control.sh status`.
+Kiểm tra `cat /home/root/.config/lginputhook/keybinds.json`. Ánh xạ `773` cần dùng **`exec`**, không phải mặc định `{"action":"launch","id":"com.infinitimoney.tvhome"}` như tài liệu cũ. Kiểm tra `home-enabled`, bản sao `home-key-backup.json` và log:
+
+```sh
+sh /home/root/lg-tv-vibehack/home-control.sh status
+tail -n 30 /tmp/infiniti-homekey.log
+```
+
+Nếu `HOME Execute invoked` không xuất hiện, LG Input Hook chưa thực thi lệnh. Nếu có dòng này nhưng `Launch failed`, kiểm tra ứng dụng `com.infinitimoney.tvhome` đã được cài và lỗi Luna. Không tự ghi đè JSON của ứng dụng khác; chỉ sử dụng `--rebind-home` kèm `--enable-home` khi đã sao lưu và hiểu ánh xạ cũ.
+</details>
+
+<details>
+<summary><b>Developer Mode tự hết hạn hoặc Dev Mode Forever không hoạt động</b></summary>
+
+**Dev Mode Forever là ứng dụng đi kèm riêng**, nguồn tại [infiniti-money/lg-devmode-forever](https://github.com/infiniti-money/lg-devmode-forever), mã `com.lennylxx.devmodeforever`. Giữ ứng dụng **Developer Mode chính thức** của LG. Cài Dev Mode Forever riêng theo hướng dẫn của repository, sau đó đồng bộ danh sách ứng dụng và vào **Tùy chỉnh → Dev Mode**.
+
+Ứng dụng này có watchdog quản lý bộ đếm số lần tắt nguồn và phiên Dev Mode. **Nó có thể reboot TV** khi cần đặt lại bộ đếm; mở app cũng kích hoạt kiểm tra. Vì vậy Infiniti chỉ cho phép mở qua **hai lần xác nhận**, không tự bật, không tự gọi reset hay gia hạn. Tính tương thích với TV webOS 3.4.0 từng đen màn hình **chưa được nghiệm thu**; không khởi động thử khi TV đang mất hình.
+
+Nếu đã cài và cần kiểm tra log trên TV có quyền truy cập thích hợp:
+
+```sh
+cat /media/internal/devmodeforever/service.log
+```
+
+Không sửa `start-devmode.sh`, `start-devmode.sig`, `pub.pem` hoặc token của Developer Mode chính thức.
 </details>
 
 <details>
@@ -487,11 +532,11 @@ Nếu muốn giữ Home LG ngay từ lúc cài, dùng tùy chọn `--no-home-but
 
 ### Gán phím Home qua LG Input Hook
 
-Trên TV đã root, cài **LG Input Hook** từ Homebrew Channel và **mở ứng dụng ít nhất một lần** để kích hoạt. Trong LG Input Hook, chọn **Add keybind**, tìm mã nút Home trong phần log của remote (nhiều remote LG dùng mã `773`), chọn **Launch App** → **Infiniti TV Home** (`com.infinitimoney.tvhome`) rồi **Save changes**.
+Trên TV đã root, cài **LG Input Hook** từ Homebrew Channel và **mở ứng dụng ít nhất một lần** để kích hoạt. Trong LG Input Hook, chọn **Add keybind**, mã Home đã xác minh **`0305` HEX = `773` decimal**, chọn **Execute** với lệnh `/home/root/lg-tv-vibehack/golauncher.sh` rồi **Save changes**.
 
-Tính năng `home-control.sh enable` tự tạo cấu hình tương đương `{"773":{"action":"launch","id":"com.infinitimoney.tvhome"}}` khi tìm thấy LG Input Hook. Trước đó script lưu ánh xạ Home cũ vào `home-key-backup.json`; `disable` sẽ khôi phục lại. **Không dùng lệnh `luna://org.webosbrew.inputhook/setMapping`** nếu chưa xác thực API trên firmware của bạn. `initctl status inputhook` cũng không phải phép thử đủ tin cậy trên mọi webOS; hãy kiểm tra trực tiếp nhật ký trong ứng dụng.
+Tính năng `home-control.sh enable` tự tạo cấu hình `{"773":{"action":"exec","command":"/home/root/lg-tv-vibehack/golauncher.sh"}}` khi tìm thấy LG Input Hook. Trước đó script lưu ánh xạ Home cũ vào `home-key-backup.json`; `disable` sẽ khôi phục lại. **Không dùng lệnh `luna://org.webosbrew.inputhook/setMapping`** nếu chưa xác thực API trên firmware của bạn. `initctl status inputhook` cũng không phải phép thử đủ tin cậy trên mọi webOS; hãy kiểm tra trực tiếp nhật ký trong ứng dụng.
 
-Sau khi cài gói `.ipk`, thử mở Infiniti TV Home từ danh sách ứng dụng trước khi kích hoạt Home Watcher và gán nút Home. Chỉ thay đổi khi đã xác minh khả năng quay về LG Home.
+Sau khi cài gói `.ipk`, thử mở Infiniti TV Home từ danh sách ứng dụng trước khi gán nút Home qua Input Hook. Home Watcher không còn được dùng để ép chiếm foreground trên webOS 3.x. Chỉ thay đổi khi đã xác minh khả năng quay về LG Home.
 
 ## Hỗ trợ LG webOS TV 3.x (2016–2017)
 
@@ -652,7 +697,7 @@ sh /home/root/lg-tv-vibehack/home-control.sh disable
 reboot
 ```
 
-**Không được xóa thư mục LG Home hệ thống.** Nếu firmware không hỗ trợ keyhook hoặc phím Home dùng mã khác, LG Home có thể xuất hiện thoáng qua trước khi watcher mở Infiniti TV Home; kiểm tra log trong LG Input Hook để xác nhận mã phím đúng.
+**Không được xóa thư mục LG Home hệ thống.** Nếu firmware không hỗ trợ keyhook hoặc phím Home dùng mã khác, LG Home có thể xuất hiện cùng với Infiniti vì phím Home còn được compositor hệ thống xử lý; kiểm tra log trong LG Input Hook để xác nhận mã phím đúng.
 
 ## V1.5.2 — Chỉ ứng dụng đã cài, dock trong suốt và sửa xung đột Home
 
@@ -666,7 +711,7 @@ Danh sách ứng dụng được đặt thành **một hàng biểu tượng nh�
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh -o /tmp/infiniti-install.sh
-sh /tmp/infiniti-install.sh --rebind-home
+sh /tmp/infiniti-install.sh --enable-home --rebind-home
 reboot
 ```
 

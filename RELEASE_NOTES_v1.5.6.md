@@ -1,5 +1,14 @@
 # Infiniti TV Home v1.5.6 — Safe Troubleshooting and Dev Mode Forever Companion
 
+## Upstream compatibility improvements and CI repair
+
+- Studied **Simon34545/lginputhook (BSD-3-Clause)**: both `exec` and `launch` are supported. Infiniti keeps its logged, reversible Execute wrapper for Home 0305/773 but no longer incorrectly claims a legacy Launch App binding is universally invalid.
+- Studied **ecklf/lg-luma (MIT)**: separates autostart from native takeover; Luma's takeover is documented for **webOS 5+**, so no bind mounts of the native Home or compositor modifications have been imported to **webOS 3.4**.
+- Studied **simbasjungles/free-my-tv (MIT)**: its webOS 3 computer-side app-discovery fallback inspired improvements to Infiniti's `sync-apps.py`. On a TV without root, apps are now preserved when icons are missing or not reachable; icons only download from the TV's own host with a 2 MiB bound, and `app/apps.js` is written atomically. A transient empty Luna response no longer replaces a working app list.
+- Added **read-only** `tv/integration-diagnostics.sh` (available via `home-control.sh diagnose`) to report other launcher installations, known boot hook conflicts, and redacted Home 773 mapping status. It never executes a Home takeover, changes a keymap, mounts, reboots or accesses Developer Mode tokens.
+- Fixed the previous `v1.5.6` CI error by ensuring the Dev Mode Forever settings page explicitly warns users that opening the companion **may REBOOT** the TV. Added offline compatibility and no-root recovery regression tests.
+
+Technical details, source links and license notes: [docs/upstream-webos3-compat.md](docs/upstream-webos3-compat.md). No code or third-party compiled binaries from these projects are bundled.
 ## What changed
 - **Corrected the recovery guide:** an empty app dock (launcher still visible) is distinct from a completely black LG TV screen. Run `sync.js` only for an empty app list; use the separate `safe-recovery.sh` path when the TV panel/menus remain black but SSH is accessible.
 - **Corrected the remote Home binding:** `0305` HEX = `773` decimal, using LG Input Hook's `exec` action and `/home/root/lg-tv-vibehack/golauncher.sh`. Old documentation incorrectly required a `homewatch` process and described the older `launch` JSON action. These are no longer the safe webOS 3.x defaults.

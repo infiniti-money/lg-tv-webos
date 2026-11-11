@@ -53,7 +53,7 @@ var document = {
   addEventListener:function (type,cb) { docEvents[type]=cb; }
 };
 var panel=node('customizePanel'); panel.className='hidden';
-['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizeAITab'].forEach(function (id) {
+['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizeAITab','customizeDevModeTab'].forEach(function (id) {
   panel.appendChild(node(id,'button'));
 });
 var groups = {
@@ -65,17 +65,18 @@ var groups = {
     'customizeWeatherEnable','customizeWeatherUnit'],
   customizeCalendarView:['customizeSolar','customizeLunar','customizeCalendarNote'],
   customizeAppsView:['customizeAppList','customizeResetApps'],
-  customizeAIView:['customizeAIToggle','customizeAIState']
+  customizeAIView:['customizeAIToggle','customizeAIState'],
+  customizeDevModeView:['customizeDevModeState','customizeDevModeOpen','customizeDevModeWarning']
 };
 Object.keys(groups).forEach(function (name) {
   var view=node(name); view.className='hidden'; panel.appendChild(view);
   groups[name].forEach(function (id) {
     view.appendChild(node(id,id==='customizeWeatherSearch'?'input':
-      /Btn$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeAIToggle/.test(id)?'button':'div'));
+      /Btn$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeAIToggle|customizeDevModeOpen/.test(id)?'button':'div'));
   });
 });
 panel.appendChild(node('customizeStatus'));
-var storage={};
+var storage={}, devmodeOpens=0;
 var localStorage={
   getItem:function(k){return storage[k]||null;},
   setItem:function(k,v){storage[k]=v;}
@@ -87,7 +88,8 @@ var window={
   INFINITI_LAUNCHER_LAYOUT_REFRESH:function(){},
   INFINITI_WALLPAPER_GET_URL:function(cb) {
     cb('http://192.168.2.154:8090/?k=abcdef123456');
-  }
+  },
+  INFINITI_DEVMODE_OPEN:function () { devmodeOpens++; }
 };
 function qrcode() {
   return {addData:function(url){assert.ok(url.indexOf('192.168.2.154')>=0);},
@@ -120,6 +122,27 @@ assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true,
 assert.ok(document.body.children.some(function(el) {
   return el.id==='updateStatusJs' && el.src.indexOf('update-status.js?ts=')===0;
 }), 'Settings should load current automatic-update status from TV');
+// Dev Mode is a separate app with a reboot-capable watchdog. A TV settings
+// page must not trigger service calls or app launch while simply browsing it.
+node('customizeDevModeTab').click();
+assert.equal(node('customizeDevModeView').hasClass('hidden'),false);
+assert.equal(node('customizeDevModeOpen').disabled,true,
+  'Missing companion must not offer an active launch');
+assert.equal(devmodeOpens,0,'Navigating into Dev Mode must never arm the external service');
+window.TV_APPS.apps.push({id:'com.lennylxx.devmodeforever',title:'Dev Mode Forever'});
+node('customizeAppsTab').click();
+node('customizeDevModeTab').click();
+assert.equal(node('customizeDevModeOpen').disabled,false,
+  'Installed companion becomes available after app list refresh');
+node('customizeDevModeOpen').click();
+assert.equal(devmodeOpens,0,'First click must only show the reboot warning');
+assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true,'First click must keep dialog open');
+assert.ok(node('customizeDevModeWarning').textContent.indexOf('REBOOT TV')>=0);
+node('customizeDevModeOpen').click();
+assert.equal(devmodeOpens,1,'Second click must launch companion exactly once');
+assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),false,
+  'Settings should close before intentionally opening external companion');
+window.INFINITI_CUSTOMIZE_OPEN();
 node('customizeWeatherTab').click();
 assert.equal(node('customizeWeatherView').hasClass('hidden'),false);
 assert.equal(node('customizeStyleView').hasClass('hidden'),true);
@@ -172,4 +195,4 @@ var back={type:'keydown',keyCode:461,preventDefault:function(){},
   stopPropagation:function(){},stopImmediatePropagation:function(){}};
 docEvents.keydown(back);
 assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),false,'Back closes settings');
-console.log('Settings TV remote, weather region, search, appearance and calendar smoke tests passed.');
+console.log('Settings TV remote, DevMode Forever guarded launch, weather region, search, appearance and calendar smoke tests passed.');

@@ -11,6 +11,13 @@ export PATH=/usr/sbin:/usr/bin:/sbin:/bin:$PATH
 DIR=/home/root/lg-tv-vibehack
 LOG=/tmp/lg-tv-vibehack.log
 
+# Homebrew Failsafe indicates a boot crash. Never attempt launcher startup,
+# wallpaper services or updates while the root supervisor is recovering.
+if [ -e /var/luna/preferences/webosbrew_failsafe ]; then
+  echo "$(date) Infiniti boot blocked by Homebrew FAILSAFE" >> "$LOG"
+  exit 0
+fi
+
 # Home 0x0305 (773) is captured by LG Input Hook, independently from boot.
 # In safe mode, all of these flags are absent. Never arm from a timer.
 if [ -f "$DIR/boot-home-armed" ] || [ -f "$DIR/boot-home-enabled" ]; then

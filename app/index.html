@@ -80,6 +80,7 @@
         <button type="button" id="customizeCalendarTab">Âm · dương lịch</button>
         <button type="button" id="customizeAITab">Trợ lý AI</button>
         <button type="button" id="customizeAppsTab">Ứng dụng</button>
+        <button type="button" id="customizeDevModeTab">Dev Mode</button>
       </div>
       <div class="customizeContent">
         <div id="customizeStyleView">
@@ -145,6 +146,17 @@
           <p>Thêm hoặc ẩn biểu tượng trên Infiniti TV Home. Không gỡ ứng dụng khỏi TV.</p>
           <div id="customizeAppList"></div>
           <button id="customizeResetApps" type="button">Khôi phục ứng dụng mặc định</button>
+        </div>
+        <div id="customizeDevModeView" class="hidden">
+          <h3>LG Dev Mode Forever</h3>
+          <p>Ứng dụng độc lập để theo dõi và gia hạn phiên Developer Mode. Cần giữ ứng dụng Developer Mode chính thức của LG. Không cần root.</p>
+          <p id="customizeDevModeState" role="status">Đang kiểm tra danh sách ứng dụng đã cài…</p>
+          <p class="customizeHint">Nguồn: github.com/infiniti-money/lg-devmode-forever · Mã ứng dụng: com.lennylxx.devmodeforever. Cài riêng qua Homebrew Channel hoặc webOS CLI.</p>
+          <p class="customizeHint">CẢNH BÁO: Dev Mode Forever có thể tự khởi động lại TV khi xử lý bộ đếm tắt nguồn. Chưa xác nhận tương thích trên LG webOS 3.4.0 từng bị màn hình đen. Infiniti không tự cài, không tự gọi thao tác gia hạn/reset và không khởi chạy dịch vụ này khi bật TV.</p>
+          <div class="customizeChoice">
+            <button type="button" id="customizeDevModeOpen">Mở Dev Mode Forever (cần xác nhận 2 lần)</button>
+          </div>
+          <p id="customizeDevModeWarning" role="status">Chưa có lệnh thay đổi Developer Mode nào được gửi.</p>
         </div>
       </div>
       <div id="customizeStatus" role="status" aria-live="polite"></div>

@@ -86,6 +86,14 @@
   var cachedHeaderBottom = null, lastArrowAt = 0;
   var editing = null;           // {item, snapshot} while a tile is being moved
   var pressTimer = null, pressedLong = false;   // long press with the pointer
+  var lifecycle = window.INFINITI_LIFECYCLE || null;
+  function launcherCovered() {
+    return lifecycle ? lifecycle.isCovered() : !!document.hidden;
+  }
+  var entranceTimers = [];
+  function clearEntranceTimers() {
+    while (entranceTimers.length) clearTimeout(entranceTimers.pop());
+  }
 
   // ---- luna bus ------------------------------------------------------------------------------
 
@@ -269,9 +277,13 @@
   function lastDock() { return items.length - 1; }
 
   function animateIn() {
+    clearEntranceTimers();
+    if (launcherCovered()) return;
     items.forEach(function (it, i) {
       it.el.classList.remove('shown');
-      setTimeout(function () { it.el.classList.add('shown'); }, 60 + Math.min(i, 16) * 40);
+      entranceTimers.push(setTimeout(function () {
+        if (!launcherCovered()) it.el.classList.add('shown');
+      }, 60 + Math.min(i, 16) * 40));
     });
   }
 
@@ -747,6 +759,7 @@
 
   // On tiles OK acts on release, so a held OK can start rearranging instead of opening the app.
   document.addEventListener('keyup', function (e) {
+    if (launcherCovered()) return;
     // Leave remote and LG keyboard events to the active settings/AI dialog.
     if (window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()) return;
     if (window.INFINITI_AI_IS_OPEN && window.INFINITI_AI_IS_OPEN()) return;
@@ -760,6 +773,7 @@
   });
 
   document.addEventListener('keydown', function (e) {
+    if (launcherCovered()) return;
     // Leave remote and LG keyboard events to the active settings/AI dialog.
     if (window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()) return;
     if (window.INFINITI_AI_IS_OPEN && window.INFINITI_AI_IS_OPEN()) return;
@@ -838,7 +852,12 @@
   // ---- lifecycle -----------------------------------------------------------------------------
 
   /** Back from another app (or opened again from the shortcut): replay the entrance, keep the tile. */
+  var lastResumeAt = 0;
   function resume() {
+    if (launcherCovered()) return;
+    var now = Date.now();
+    if (now - lastResumeAt < 850) return; // one repaint per Home/wake burst
+    lastResumeAt = now;
     if (editing) finishEdit(false);
     if (arranging) { arranging = false; document.body.classList.remove('arranging'); }
     updateClock();
@@ -848,7 +867,11 @@
     pills.forEach(function (p) { p.classList.remove('focused'); });
     zone = 'none';
     refreshApps(function (changed) {
-      if (!changed) { animateIn(); focusTile(focused); }
+      if (launcherCovered()) return;
+      if (!changed) {
+        animateIn();
+        if (items.length) focusTile(Math.max(0, Math.min(focused, items.length - 1)));
+      }
     });
   }
 
@@ -863,12 +886,14 @@
   var appsSeen = appsFingerprint();
 
   function refreshApps(cb) {
+    if (launcherCovered()) { cb(false); return; }
     var old = $('appsJs');
     if (old) old.parentNode.removeChild(old);
     var sc = document.createElement('script');
     sc.id = 'appsJs';
     sc.src = 'apps.js?t=' + Date.now();
     sc.onload = function () {
+      if (launcherCovered()) { cb(false); return; }
       var now = appsFingerprint();
       if (now === appsSeen) { cb(false); return; }   // nothing installed or removed
       appsSeen = now;
@@ -889,7 +914,48 @@
     if (p.reload) { location.reload(); return; }
     resume();
   });
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) resume(); });
+  // Glasshouse owns Home and wake; this app never launches itself on resume.
+  var clockTicker = null, appsTicker = null;
+  function pauseForeground() {
+    if (clockTicker !== null) { clearInterval(clockTicker); clockTicker = null; }
+    if (appsTicker !== null) { clearInterval(appsTicker); appsTicker = null; }
+    clearEntranceTimers();
+    clearTimeout(hero.swap);
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+    resetDialogOk();
+    document.body.classList.add('launcher-covered');
+  }
+  function startForeground() {
+    if (launcherCovered()) return;
+    document.body.classList.remove('launcher-covered');
+    if (clockTicker === null) clockTicker = setInterval(updateClock, 10000);
+    if (appsTicker === null) appsTicker = setInterval(function () {
+      if (!launcherCovered() &&
+          !(window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()))
+        refreshApps(function () {});
+    }, 30000);
+  }
+  function onLauncherVisible() {
+    startForeground();
+    resume();
+  }
+  if (lifecycle) {
+    lifecycle.subscribe(function (covered) {
+      if (covered) pauseForeground();
+      else onLauncherVisible();
+    });
+    lifecycle.onHome(function () {
+      if (launcherCovered()) return;
+      if (window.INFINITI_CUSTOMIZE_CLOSE) window.INFINITI_CUSTOMIZE_CLOSE();
+      if (window.INFINITI_AI_CLOSE) window.INFINITI_AI_CLOSE();
+      onLauncherVisible();
+    });
+  } else {
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) pauseForeground();
+      else onLauncherVisible();
+    });
+  }
 
   window.INFINITI_LAUNCHER_REFRESH = function () {
     if (editing) finishEdit(false);
@@ -922,17 +988,13 @@
   // Wallpaper settings now open within the Customize panel.
   build();
   updateClock();
-  setInterval(updateClock, 10000);
-  // Some firmware never fires webOSRelaunch or visibilitychange for this app, so returning to the
-  // launcher is not a reliable moment to look for new apps. Checking apps.js on a timer is.
-  setInterval(function () {
-    if (!document.hidden && !(window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()))
-      refreshApps(function () { });
-  }, 30000);
+  // Foreground timers are started below and suspended while Glasshouse covers the launcher.
   document.documentElement.lang = CONFIG.language === 'vi' ? 'vi' : 'en';
   pills[0].querySelector('span').textContent = L.inputs;
   pills[2].querySelector('span').textContent = L.settings;
   watchNetwork();
+  if (launcherCovered()) pauseForeground();
+  else startForeground();
   animateIn();
   zone = 'none';
   if (items.length) focusTile(0);

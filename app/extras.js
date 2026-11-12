@@ -16,7 +16,14 @@
   var el = document.getElementById('weather');
   var area = document.getElementById('forecastArea');
   var week = document.getElementById('weekWeather');
-  var active = null, sequence = 0, lastRegion = '';
+  var active = null, sequence = 0, lastRegion = '', weatherTimer = null;
+  var lifecycle = window.INFINITI_LIFECYCLE || null;
+  function covered() { return lifecycle ? lifecycle.isCovered() : !!document.hidden; }
+  function pauseWeather() {
+    sequence++; // invalidate callbacks from a request that was in flight
+    if (active) { try { active.abort(); } catch (e) {} active = null; }
+    if (weatherTimer !== null) { clearInterval(weatherTimer); weatherTimer = null; }
+  }
   var vi = C.language !== 'en';
   var NAMES = vi ? {
     0:'Trời quang',1:'Ít mây',2:'Có mây',3:'Nhiều mây',45:'Sương mù',48:'Sương mù',
@@ -67,7 +74,7 @@
     area.classList.remove('hidden');
   }
   function load() {
-    if (!el || !area || !week) return;
+    if (covered() || !el || !area || !week) return;
     var w = weather(), valid = typeof w.latitude === 'number' && isFinite(w.latitude) &&
       typeof w.longitude === 'number' && isFinite(w.longitude) &&
       w.latitude >= -90 && w.latitude <= 90 && w.longitude >= -180 && w.longitude <= 180;
@@ -129,7 +136,22 @@
     if (!week.children.length) renderDays(null);
   }
   // Available after startup, even when weather is initially disabled.
-  window.INFINITI_WEATHER_RELOAD=load;
-  load();
-  setInterval(function () { if (!document.hidden) load(); }, 30*60*1000);
+  window.INFINITI_WEATHER_RELOAD = load;
+  function resumeWeather() {
+    if (covered()) return;
+    load();
+    if (weatherTimer === null) weatherTimer = setInterval(load, 30 * 60 * 1000);
+  }
+  if (lifecycle) {
+    lifecycle.subscribe(function (hidden) {
+      if (hidden) pauseWeather();
+      else resumeWeather();
+    });
+  } else if (document.addEventListener) {
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) pauseWeather();
+      else resumeWeather();
+    });
+  }
+  if (!covered()) resumeWeather();
 })();

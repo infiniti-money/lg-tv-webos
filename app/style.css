@@ -680,3 +680,14 @@ body.font-large .item.dock .name { font-size:21px; }
 .customizeWallpaperText p { margin:6px 0 14px; }
 #customizeWallHost { font-size:18px; color:#a5c5ed; word-break:break-all; }
 #customizeUpdateState { color:#b0d5ed; font-size:21px; }
+
+/* Glasshouse keeps Custom Launcher alive behind other apps. Do not animate in the background. */
+body.launcher-covered .item .card,
+body.launcher-covered .ambient,
+body.launcher-covered #glass,
+body.launcher-covered #hero {
+  -webkit-animation-play-state: paused !important;
+  animation-play-state: paused !important;
+  -webkit-transition: none !important;
+  transition: none !important;
+}

@@ -588,6 +588,7 @@
     renderWeather(); reloadWeather();
   });
   root.INFINITI_CUSTOMIZE_OPEN = show;
+  root.INFINITI_CUSTOMIZE_CLOSE = function () { if (opened) hide(); };
   root.INFINITI_CUSTOMIZE_IS_OPEN = function () { return opened; };
   applyAppearance();
 })(typeof window !== 'undefined' ? window : this);

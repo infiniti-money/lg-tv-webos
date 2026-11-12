@@ -57,6 +57,14 @@
 </p>
 
 
+## Dùng Infiniti TV Home trong Glasshouse Custom Launcher (webOS 3.x)
+
+Infiniti có bộ điều khiển vòng đời theo Glasshouse Custom Launcher: khi launcher bị che, tạm dừng đồng hồ, cập nhật danh sách ứng dụng, thời tiết/lịch âm và hiệu ứng; phím Home chỉ đưa về màn hình chính (không tự gọi mở ứng dụng sau wake). Chế độ này dùng `Glasshouse.onCovered` và `Glasshouse.onHome`, tự dự phòng `visibilitychange` ngoài Glasshouse.
+
+**Trên TV từng đen màn hình sau standby**, phải để **Open Home at power-on = OFF** trong giai đoạn thử nghiệm. Glasshouse có thể chủ động mở Custom Launcher trên wake; bản sửa phía Infiniti **không** thay đổi logic này của Glasshouse. Không chạy đồng thời LG Input Hook/Home hook cũ với Glasshouse.
+
+[Hướng dẫn nghiệm thu và khôi phục Glasshouse trên webOS 3.4](docs/glasshouse-webos3-safe-wake.vi.md).
+
 ## Cứu hộ màn hình đen khi bật nguồn — ưu tiên cao
 
 Áp dụng với các TV LG đã root từng chạy Infiniti TV Home hoặc script thí nghiệm /var/lib/webosbrew/init.d/97-homekey có sleep 25. Các nguyên nhân có thể: nhiều chương trình cùng mở Home khi bật TV; script cũ chạy sau 25 giây; ánh xạ LG Input Hook chưa được khôi phục. Đây là biện pháp loại trừ tác nhân phần mềm, **không khẳng định khắc phục được lỗi phần cứng**.

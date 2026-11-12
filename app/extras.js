@@ -147,7 +147,7 @@
       if (hidden) pauseWeather();
       else resumeWeather();
     });
-  } else {
+  } else if (document.addEventListener) {
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) pauseWeather();
       else resumeWeather();

@@ -85,7 +85,7 @@
     notifyWhenReady = false;
     // A user of refresh(cb) redraws the launcher itself. The initial load
     // and Glasshouse.onChanged notifications have no callback and redraw here.
-    if (notify && (changed || bridge.lastError) &&
+    if (notify && !callbacks.length && (changed || (!previous && bridge.lastError)) &&
         typeof root.INFINITI_LAUNCHER_REFRESH === 'function') {
       root.INFINITI_LAUNCHER_REFRESH();
     }

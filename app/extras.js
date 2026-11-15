@@ -17,6 +17,15 @@
   var area = document.getElementById('forecastArea');
   var week = document.getElementById('weekWeather');
   var active = null, sequence = 0, lastRegion = '', retryPending = false;
+  var weatherTimer = null, retryTimer = null;
+  var lifecycle = window.INFINITI_LIFECYCLE || null;
+  function covered() { return lifecycle ? lifecycle.isCovered() : !!document.hidden; }
+  function pauseWeather() {
+    sequence++;
+    if (active) { try { active.abort(); } catch (e) {} active = null; }
+    if (weatherTimer !== null) { clearInterval(weatherTimer); weatherTimer = null; }
+    if (retryTimer !== null) { clearInterval(retryTimer); retryTimer = null; }
+  }
   var vi = C.language !== 'en';
   var NAMES = vi ? {
     0:'Trời quang',1:'Ít mây',2:'Có mây',3:'Nhiều mây',45:'Sương mù',48:'Sương mù',
@@ -67,7 +76,7 @@
     area.classList.remove('hidden');
   }
   function load() {
-    if (!el || !area || !week) return;
+    if (covered() || !el || !area || !week) return;
     var w = weather(), valid = typeof w.latitude === 'number' && isFinite(w.latitude) &&
       typeof w.longitude === 'number' && isFinite(w.longitude) &&
       w.latitude >= -90 && w.latitude <= 90 && w.longitude >= -180 && w.longitude <= 180;
@@ -149,11 +158,24 @@
     el.className = 'shown';
     if (!week.children.length) renderDays(null);
   }
-  // Available after startup, even when weather is initially disabled.
-  window.INFINITI_WEATHER_RELOAD=load;
-  load();
-  // Startup connectivity (Wi-Fi and old webOS TLS) is often delayed. Retry
-  // failed requests every two minutes; keep the normal 30-minute refresh.
-  setInterval(function () { if (!document.hidden && retryPending) load(); }, 2*60*1000);
-  setInterval(function () { if (!document.hidden) load(); }, 30*60*1000);
+  // Weather is only refreshed while Glasshouse Custom is visible.
+  window.INFINITI_WEATHER_RELOAD = load;
+  function resumeWeather() {
+    if (covered()) return;
+    load();
+    if (retryTimer === null) retryTimer = setInterval(function () {
+      if (!covered() && retryPending) load();
+    }, 2 * 60 * 1000);
+    if (weatherTimer === null) weatherTimer = setInterval(load, 30 * 60 * 1000);
+  }
+  if (lifecycle) {
+    lifecycle.subscribe(function (hidden) {
+      if (hidden) pauseWeather(); else resumeWeather();
+    });
+  } else if (document.addEventListener) {
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) pauseWeather(); else resumeWeather();
+    });
+  }
+  if (!covered()) resumeWeather();
 })();

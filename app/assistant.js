@@ -140,5 +140,6 @@
     if (!on) { prompt.value = ''; access.value = ''; answer.textContent = ''; }
   };
   window.INFINITI_AI_OPEN = show;
+  window.INFINITI_AI_CLOSE = function () { if (opened) hide(); };
   window.INFINITI_AI_IS_OPEN = isOpen;
 })();

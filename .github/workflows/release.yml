@@ -39,6 +39,7 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/check-webos3.js
+          node scripts/test-glasshouse-lifecycle.js
           node scripts/check-branding.js
           node scripts/test-homewatch.js
           node scripts/test-homekey-runtime.js

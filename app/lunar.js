@@ -106,8 +106,27 @@
   root.INFINITI_LUNAR = {convert: convert, yearName: yearName};
   if (typeof module !== 'undefined' && module.exports) module.exports = root.INFINITI_LUNAR;
   if (typeof document !== 'undefined') {
-    render();
-    setInterval(render, 30 * 60 * 1000);
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) render(); });
+    var lifecycle = root.INFINITI_LIFECYCLE || null, lunarTimer = null;
+    function covered() { return lifecycle ? lifecycle.isCovered() : !!document.hidden; }
+    function stopLunar() {
+      if (lunarTimer !== null) { clearInterval(lunarTimer); lunarTimer = null; }
+    }
+    function startLunar() {
+      if (covered()) return;
+      render();
+      if (lunarTimer === null) lunarTimer = setInterval(render, 30 * 60 * 1000);
+    }
+    if (lifecycle) {
+      lifecycle.subscribe(function (hidden) {
+        if (hidden) stopLunar();
+        else startLunar();
+      });
+    } else {
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) stopLunar();
+        else startLunar();
+      });
+    }
+    if (!covered()) startLunar();
   }
 })(typeof window !== 'undefined' ? window : this);

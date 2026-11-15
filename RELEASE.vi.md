@@ -1,3 +1,17 @@
+# Infiniti TV Home v1.5.9 — Quay về Home LG an toàn, bỏ Autostart EIM không hiệu quả
+
+- **Thu hồi thử nghiệm phụ Autostart 0.1.5:** phiên bản đã không khắc phục được tình trạng chuyển Live TV và màn hình bi lăn trên TV webOS 3.4.x. Không còn đóng gói IPK Autostart cùng Release mới.
+- **Thay bằng cơ chế gọi Homebrew từ máy tính trong LAN:** công cụ `scripts/tv-service-wake.py` sử dụng kết nối SSAP WebSocket 3001, gọi ứng dụng Homebrew Channel khi cả SSH 22 và Glasshouse 8080 chưa chạy. Không chỉnh EIM, không ép chuyển Live TV và không thay Homebrew Channel chính thức.
+- **Giữ nguyên các sửa Glasshouse trước đó**, phiên bản giao diện TV Home và chức năng thời tiết.
+- Tệp khôi phục và hướng dẫn: `docs/revert-autostart-and-host-wake.vi.md`.
+- Không thể tự hoàn tác Autostart đã cài trên TV chỉ bằng cập nhật IPK Infiniti; cần kiểm tra đăng ký EIM trước khi gỡ app.
+
+Bản phát hành: https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.5.9
+
+---
+
+## Lịch sử — v1.5.8
+
 # Infiniti TV Home v1.5.8 — Glasshouse Custom và Autostart phụ an toàn hơn
 
 - **Glasshouse lifecycle:** gộp PR #24, PR #25 và PR #26; dừng tác vụ khi Custom Launcher bị che, giảm làm mới lặp sau khi TV thức dậy; giữ trạng thái thời tiết và danh sách app.

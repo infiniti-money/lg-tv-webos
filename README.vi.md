@@ -59,6 +59,8 @@
 </p>
 
 
+> **webOS 3.4.x — dừng dùng Autostart companion v0.1.5:** bản vá chuyển về Live TV phát hành kèm v1.5.8 không khắc phục màn hình bi lăn trên TV thực. v1.5.9 không còn phân phối IPK phụ này. Để khởi động dịch vụ Homebrew mà không can thiệp EIM, xem [công cụ từ Windows/PC](docs/revert-autostart-and-host-wake.vi.md). Không gỡ Autostart phụ khi chưa xác nhận trạng thái EIM và bản sao lưu.
+
 ## Dùng Infiniti TV Home trong Glasshouse Custom Launcher (webOS 3.x)
 
 Infiniti có bộ điều khiển vòng đời theo Glasshouse Custom Launcher: khi launcher bị che, tạm dừng đồng hồ, cập nhật danh sách ứng dụng, thời tiết/lịch âm và hiệu ứng; phím Home chỉ đưa về màn hình chính (không tự gọi mở ứng dụng sau wake). Chế độ này dùng `Glasshouse.onCovered` và `Glasshouse.onHome`, tự dự phòng `visibilitychange` ngoài Glasshouse.

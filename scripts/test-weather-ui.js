@@ -22,7 +22,7 @@ var document={
   hidden:false,documentElement:{style:{}},body:get('body'),
   getElementById:get,createElement:function(){return new FakeElement('cell');}
 };
-var calls=[], weather={
+var calls=[], intervals=[], failNext=false, weather={
   enabled:false,latitude:0,longitude:0,place:'',unit:'celsius'
 };
 var window={
@@ -34,6 +34,7 @@ function XMLHttpRequest(){this.status=200;calls.push(this);}
 XMLHttpRequest.prototype.open=function(method,url){this.url=url;};
 XMLHttpRequest.prototype.abort=function(){};
 XMLHttpRequest.prototype.send=function(){
+  if (failNext) { this.onerror(); return; }
   this.responseText=JSON.stringify({
     current:{temperature_2m:26,weather_code:1},
     daily:{time:['2026-11-10','2026-11-11','2026-11-12','2026-11-13'],
@@ -43,10 +44,16 @@ XMLHttpRequest.prototype.send=function(){
   if(this.onload)this.onload();
 };
 vm.runInNewContext(source,{window:window,document:document,
-  XMLHttpRequest:XMLHttpRequest,setInterval:function(){},console:console});
+  XMLHttpRequest:XMLHttpRequest,setInterval:function(fn, ms){
+    intervals.push({fn:fn, ms:ms});
+  },console:console});
 assert.equal(typeof window.INFINITI_WEATHER_RELOAD,'function');
 assert.equal(calls.length,0,'Disabled weather must never fetch');
 assert.ok(get('forecastArea').className.indexOf('hidden')!==-1);
+assert.ok(get('weather').textContent.indexOf('Chưa chọn khu vực')!==-1,
+  'Weather location hint must be visible rather than transparent');
+assert.ok(get('weather').className.indexOf('shown')!==-1,
+  'Weather hint must not be hidden by opacity: 0');
 weather={enabled:true,latitude:21.0285,longitude:105.8542,place:'Hà Nội',unit:'celsius'};
 window.INFINITI_WEATHER_RELOAD();
 assert.equal(calls.length,1);
@@ -65,4 +72,22 @@ window.INFINITI_WEATHER_RELOAD();
 assert.equal(calls.length,2,'Turning weather off never performs a request');
 assert.equal(get('weekWeather').children.length,0);
 assert.ok(get('forecastArea').className.indexOf('hidden')!==-1);
-console.log('Dynamic three-day weather loading, location switching and disabled-state tests passed.');
+assert.ok(get('weather').textContent.indexOf('đang tắt')!==-1,
+  'User should see why weather stopped updating');
+weather={enabled:true,latitude:21.0285,longitude:105.8542,place:'Hà Nội',unit:'celsius'};
+failNext=true;
+window.INFINITI_WEATHER_RELOAD();
+assert.equal(calls.length,3);
+assert.ok(get('weather').textContent.indexOf('Không tải được thời tiết')!==-1);
+assert.ok(get('weather').textContent.indexOf('Internet')!==-1);
+assert.ok(get('weather').className.indexOf('shown')!==-1);
+var retry=intervals.filter(function(x){return x.ms===2*60*1000;})[0];
+assert.ok(retry, 'Network failures must automatically retry after two minutes');
+failNext=false;
+retry.fn();
+assert.equal(calls.length,4);
+assert.ok(get('weather').textContent.indexOf('Hà Nội')!==-1);
+assert.ok(get('weather').textContent.indexOf('26')!==-1);
+retry.fn();
+assert.equal(calls.length,4,'Recovered weather must not retry needlessly');
+console.log('Dynamic weather, setup hints, offline errors, recovery and settings tests passed.');

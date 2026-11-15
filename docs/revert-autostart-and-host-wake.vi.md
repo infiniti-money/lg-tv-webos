@@ -20,7 +20,19 @@ cat /var/lib/eim/lastinput
 \`\`\`
 
 3. Nếu muốn trở lại **bản ứng dụng phụ cũ 0.1.4** ngay, tải bản gốc từ https://github.com/speed47/webosbrew-autostart/releases/tag/v1.0.4 và cài đè IPK bằng webOS Dev Manager khi TV đang hoạt động. **Không gỡ Homebrew Channel.** Việc hạ phiên bản không tự xóa đăng ký nguồn vào EIM.
-4. Phương án **ổn định hơn** là hoàn tất vô hiệu hóa đăng ký Autostart/EIM sau khi có bản sao lưu và xác minh mount. Không gỡ ứng dụng trước khi đảm bảo webOS không còn gọi app đó lúc boot.
+4. Phương án **ổn định hơn** là vô hiệu hóa đăng ký EIM bằng script rollback có chế độ xem trước. Script này nằm trong bộ root-tools mới, không tự chạy khi cập nhật IPK:
+
+\`\`\`sh
+sh /home/root/lg-tv-vibehack/autostart-rollback.sh --inspect
+\`\`\`
+
+Chỉ khi có bản sao lưu \`eim-before\`, xác nhận mount đúng và đã đọc nội dung script, chạy:
+
+\`\`\`sh
+sh /home/root/lg-tv-vibehack/autostart-rollback.sh --disable
+\`\`\`
+
+Script sẽ sao lưu thêm EIM, chỉ tháo bind-overlay khi nhận diện đúng, sao lưu EIM gốc, rồi yêu cầu webOS gỡ đăng ký Autostart khỏi EIM thật bằng API. Nếu thất bại hoặc mount bất thường, **không reboot hay gỡ ứng dụng**. Chỉ khi API thông báo thành công mới gỡ **ứng dụng phụ Autostart** bằng webOS Dev Manager. Nếu script chưa có trên TV, chép riêng từ bộ root-tools mới; không dùng lệnh --disable trước khi kiểm tra.
 
 ## Bật Homebrew từ Windows thay vì EIM/Autostart
 

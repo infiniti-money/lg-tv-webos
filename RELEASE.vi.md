@@ -1,3 +1,16 @@
+# Infiniti TV Home v1.5.8 — Glasshouse Custom và Autostart phụ an toàn hơn
+
+- **Glasshouse lifecycle:** gộp PR #24, PR #25 và PR #26; dừng tác vụ khi Custom Launcher bị che, giảm làm mới lặp sau khi TV thức dậy; giữ trạng thái thời tiết và danh sách app.
+- **Autostart độc lập 0.1.5 (thử nghiệm):** thêm chuyển màn hình về nguồn vào trước đó với số lần thử và thời hạn rõ ràng, tự đóng cửa sổ phụ; kiểm tra EIM overlay bằng inode, không dùng mỗi lệnh `findmnt`.
+- Homebrew Channel chính thức v0.7.3 vẫn nguyên trạng, không thay LG Home, không tự bật Home khi boot.
+- Chưa có xác nhận thực tế rằng bản Autostart mới xử lý hoàn toàn màn hình bi lăn trên TV webOS 3.4.x. Sao lưu EIM trước khi cài; các tệp IPK có checksum SHA-256.
+
+Bản phát hành: https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.5.8
+
+---
+
+## Lịch sử — v1.5.7
+
 # Infiniti TV Home v1.5.7 — Ẩn ứng dụng LG và hướng dẫn chặn quảng cáo DNS
 
 - Tùy chỉnh → Ứng dụng → **Ẩn nhanh ứng dụng LG mặc định**: ẩn biểu tượng app LG trong Infiniti, không xóa gói hệ thống, không thay Home LG. Từng ứng dụng có thể hiện lại hoặc khôi phục cấu hình mặc định.

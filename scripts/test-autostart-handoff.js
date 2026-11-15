@@ -1,0 +1,23 @@
+#!/usr/bin/env node
+'use strict';
+var assert = require('assert');
+var fs = require('fs');
+var handoff = require('../companion/autostart/frontend/handoff');
+assert.equal(handoff.chooseAppId('{"type":"ATV","appId":"com.webos.app.livetv"}'), 'com.webos.app.livetv');
+assert.equal(handoff.chooseAppId('{"type":"HDMI","appId":"com.webos.app.hdmi1"}'), 'com.webos.app.hdmi1');
+assert.equal(handoff.chooseAppId('{"appId":"org.webosbrew.autostart"}'), 'com.webos.app.livetv');
+assert.equal(handoff.chooseAppId('{"appId":"x;reboot"}'), 'com.webos.app.livetv');
+assert.equal(handoff.chooseAppId('not json'), 'com.webos.app.livetv');
+assert.equal(handoff.chooseAppId(''), 'com.webos.app.livetv');
+assert.equal(handoff.overlayVerified({stdoutString:'cp ok\nEIM_OVERLAY_OK\n'}), true);
+assert.equal(handoff.overlayVerified({stdoutString:'EIM_OVERLAY_FAILED\n'}), false);
+assert.equal(handoff.overlayVerified({stdoutString:'EIM_OVERLAY_OK\n',error:'mount failure'}), false);
+assert.equal(handoff.overlayVerified({stdoutString:'EIM_OVERLAY_OK\n',returnValue:false}), false);
+var src = fs.readFileSync('companion/autostart/frontend/index.js','utf8');
+assert(src.indexOf('var delays = [1200, 2500, 4000]') >= 0, 'bounded handoff schedule');
+assert(src.indexOf('window.close()') >= 0, 'must eventually relinquish foreground');
+assert(src.indexOf('EIM overlay not verified; skip deleting') >= 0, 'fail-closed EIM cleanup');
+assert(src.indexOf('stat -c "%d:%i"') >= 0, 'compare actual mount inodes');
+assert(src.indexOf('findmnt /var/lib/eim') < 0, 'original findmnt bug must not return');
+assert(src.indexOf('rm -rf') < 0 && src.indexOf('umount ') < 0, 'no destructive EIM recovery');
+console.log('Autostart handoff and EIM safety checks passed.');

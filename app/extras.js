@@ -16,13 +16,15 @@
   var el = document.getElementById('weather');
   var area = document.getElementById('forecastArea');
   var week = document.getElementById('weekWeather');
-  var active = null, sequence = 0, lastRegion = '', weatherTimer = null;
+  var active = null, sequence = 0, lastRegion = '', retryPending = false;
+  var weatherTimer = null, retryTimer = null;
   var lifecycle = window.INFINITI_LIFECYCLE || null;
   function covered() { return lifecycle ? lifecycle.isCovered() : !!document.hidden; }
   function pauseWeather() {
-    sequence++; // invalidate callbacks from a request that was in flight
+    sequence++;
     if (active) { try { active.abort(); } catch (e) {} active = null; }
     if (weatherTimer !== null) { clearInterval(weatherTimer); weatherTimer = null; }
+    if (retryTimer !== null) { clearInterval(retryTimer); retryTimer = null; }
   }
   var vi = C.language !== 'en';
   var NAMES = vi ? {
@@ -90,10 +92,21 @@
       lastRegion = region;
     }
     if (!w.enabled || !valid) {
-      el.textContent='';
-      el.className='';
+      // The old UI made #weather completely transparent when unset. In
+      // Glasshouse Custom this looks like a broken feature because app
+      // preferences are not shared with the separately installed IPK.
+      el.textContent = !w.place ?
+        (vi ? 'Chưa chọn khu vực thời tiết · Tùy chỉnh → Thời tiết' :
+          'Choose a weather location · Customize → Weather') :
+        (!w.enabled ?
+          (vi ? 'Thời tiết đang tắt · Tùy chỉnh → Thời tiết' :
+            'Weather is off · Customize → Weather') :
+          (vi ? 'Khu vực thời tiết không hợp lệ · Vui lòng chọn lại' :
+            'Invalid weather location · Please select again'));
+      el.className = 'shown';
+      retryPending = false;
       area.classList.add('hidden');
-      week.innerHTML='';
+      week.innerHTML = '';
       return;
     }
     var fahrenheit=w.unit === 'fahrenheit';
@@ -111,7 +124,10 @@
     xhr.onload=function () {
       if (serial!==sequence) return;
       active=null;
-      if (xhr.status<200 || xhr.status>=300) { failure(w); return; }
+      if (xhr.status<200 || xhr.status>=300) {
+        failure(w, 'HTTP ' + xhr.status);
+        return;
+      }
       try {
         var data=JSON.parse(xhr.responseText), current=data.current || {}, daily=data.daily || {};
         var line=w.place || (vi ? 'Thời tiết khu vực' : 'Local weather');
@@ -120,37 +136,45 @@
           if (NAMES[current.weather_code]) line+=' · '+NAMES[current.weather_code];
         }
         el.textContent=line;
+        retryPending = false;
         renderDays(daily);
-      } catch (e) { failure(w); }
+      } catch (e) { failure(w, 'JSON'); }
     };
     xhr.onerror=xhr.ontimeout=function () {
       if (serial!==sequence) return;
       active=null;
-      failure(w);
+      failure(w, 'TLS/mạng');
     };
     xhr.send();
   }
-  function failure(w) {
-    el.textContent=(w.place ? w.place+' · ' : '')+
-      (vi ? 'Không thể tải thời tiết. Vui lòng kiểm tra mạng.' : 'Weather unavailable. Check network.');
+  function failure(w, reason) {
+    // Show a readable error, including the HTTP/network class, rather than
+    // leaving the previous location's result or a blank screen on a TV.
+    retryPending = true;
+    el.textContent = (w.place ? w.place + ' · ' : '') +
+      (vi ? 'Không tải được thời tiết; kiểm tra Internet và ngày giờ TV' :
+        'Weather unavailable; check Internet and TV clock') +
+      (reason ? ' (' + reason + ')' : '');
+    el.className = 'shown';
     if (!week.children.length) renderDays(null);
   }
-  // Available after startup, even when weather is initially disabled.
+  // Weather is only refreshed while Glasshouse Custom is visible.
   window.INFINITI_WEATHER_RELOAD = load;
   function resumeWeather() {
     if (covered()) return;
     load();
+    if (retryTimer === null) retryTimer = setInterval(function () {
+      if (!covered() && retryPending) load();
+    }, 2 * 60 * 1000);
     if (weatherTimer === null) weatherTimer = setInterval(load, 30 * 60 * 1000);
   }
   if (lifecycle) {
     lifecycle.subscribe(function (hidden) {
-      if (hidden) pauseWeather();
-      else resumeWeather();
+      if (hidden) pauseWeather(); else resumeWeather();
     });
-  } else if (document.addEventListener) {
+  } else {
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden) pauseWeather();
-      else resumeWeather();
+      if (document.hidden) pauseWeather(); else resumeWeather();
     });
   }
   if (!covered()) resumeWeather();

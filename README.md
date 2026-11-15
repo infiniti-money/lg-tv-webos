@@ -19,6 +19,8 @@
 
 ---
 
+> **Glasshouse Custom Home (no LG Input Hook):** On a rooted TV, the IPK built with `app/glasshouse.js` uses Glasshouse's live application catalogue and app/input opening API while preserving Infiniti's UI. Use **Home → Custom → Upload launcher** in Glasshouse; do not enable Infiniti's legacy Home/boot hooks. See [Glasshouse integration and safe recovery](docs/GLASSHOUSE.md). webOS 3.x requires experimental Glasshouse Home support and real-TV testing.
+
 ## Contents
 
 - [Features](#features)

@@ -19,6 +19,8 @@
 
 ---
 
+> **Dùng Glasshouse làm Home (không cần LG Input Hook):** Khi tải gói IPK mới lên **Glasshouse → Home → Custom**, Infiniti TV Home tự lấy danh sách ứng dụng, biểu tượng và nguồn HDMI từ API Glasshouse, giữ nguyên giao diện. Không bật hook Home/khởi động cũ của Infiniti. Xem [hướng dẫn tích hợp Glasshouse và khôi phục LG Home](docs/GLASSHOUSE.md). Trên webOS 3.x, chức năng Home của Glasshouse còn thử nghiệm và cần kiểm tra trực tiếp trên TV.
+
 ## Mục lục
 
 - [Tính năng](#tính-năng)

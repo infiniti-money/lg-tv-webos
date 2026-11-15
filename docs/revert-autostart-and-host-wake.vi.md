@@ -20,20 +20,16 @@ cat /var/lib/eim/lastinput
 ```
 
 3. Nếu muốn trở lại **bản ứng dụng phụ cũ 0.1.4** ngay, tải bản gốc từ https://github.com/speed47/webosbrew-autostart/releases/tag/v1.0.4 và cài đè IPK bằng webOS Dev Manager khi TV đang hoạt động. **Không gỡ Homebrew Channel.** Việc hạ phiên bản không tự xóa đăng ký nguồn vào EIM.
-4. Phương án **ổn định hơn** là vô hiệu hóa đăng ký EIM bằng script rollback có chế độ xem trước. Script này nằm trong bộ root-tools mới, không tự chạy khi cập nhật IPK:
+4. **DỪNG hoàn tác EIM tự động trên webOS 3.4.x.** Một TV đã sao lưu EIM thành công nhưng sau khi script phiên bản v1.5.9 thực hiện `umount /var/lib/eim`, bước kiểm tra lại báo `Underlying EIM mount unavailable, STOP`. Quan sát tiếp theo lại thấy bind overlay xuất hiện. Chưa xác định nguyên nhân, vì vậy `--disable` đã bị **khóa an toàn**. Không thử gọi lại script cũ đang nằm trong `/tmp`.
+
+Tải phiên bản mới từ nhánh main để **chỉ xem trạng thái**:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/tv/autostart-rollback.sh -o /tmp/autostart-rollback.sh
 sh /tmp/autostart-rollback.sh --inspect
 ```
 
-Chỉ khi có bản sao lưu `eim-before`, xác nhận mount đúng và đã đọc nội dung script, chạy:
-
-```sh
-sh /tmp/autostart-rollback.sh --disable
-```
-
-Script sẽ sao lưu thêm EIM, chỉ tháo bind-overlay khi nhận diện đúng, sao lưu EIM gốc, rồi yêu cầu webOS gỡ đăng ký Autostart khỏi EIM thật bằng API. Nếu thất bại hoặc mount bất thường, **không reboot hay gỡ ứng dụng**. Chỉ khi API thông báo thành công mới gỡ **ứng dụng phụ Autostart** bằng webOS Dev Manager. Trước khi chạy chế độ --disable, mở và đọc tệp /tmp/autostart-rollback.sh. Không chạy --disable nếu bước xem trước báo mount bất thường.
+Chế độ `--disable` của bản đã sửa sẽ từ chối với mã lỗi khác 0, **không gọi umount, mount, deleteDevice hoặc sửa tệp**. Sau đó cần chẩn đoán nhiều lớp mount và hoạt động của EIM trên TV thật trước khi thiết kế lại quy trình khôi phục. Không gỡ `org.webosbrew.autostart` và không reboot cho tới khi trạng thái nền được xác minh. Nếu đã xảy ra thao tác umount, giữ nguyên các bản sao `/home/root/autostart-backup/eim-before` và `disable-*` để khôi phục khi có quy trình đáng tin cậy.
 
 ## Bật Homebrew từ Windows thay vì EIM/Autostart
 

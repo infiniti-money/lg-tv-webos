@@ -108,6 +108,15 @@
   }
 
   function launch(id, title, params) {
+    // In a Glasshouse-hosted launcher, app launches must go through its
+    // catalogue/open API. Native IPK installs continue to use Luna.
+    var gh = window.INFINITI_GLASSHOUSE;
+    if (gh && gh.enabled) {
+      gh.openApp(id, function (err) {
+        if (err) toast(L.cantOpen + (title || id));
+      });
+      return;
+    }
     luna('luna://com.webos.applicationManager/launch', { id: id, params: params || {} }, function (res) {
       if (res.returnValue === false) toast(L.cantOpen + (title || id));
     });
@@ -235,7 +244,10 @@
     if (!items.length) {
       var msg = document.createElement('div');
       msg.id = 'noApps';
-      msg.textContent = L.noApps;
+      var gh = window.INFINITI_GLASSHOUSE;
+      msg.textContent = gh && gh.enabled ?
+        (gh.lastError ? 'Không thể lấy ứng dụng từ Glasshouse: ' + gh.lastError :
+          'Đang lấy danh sách ứng dụng từ Glasshouse…') : L.noApps;
       tilesEl.appendChild(msg);
     }
     layout();
@@ -658,8 +670,14 @@
     panel.innerHTML = '';
     inputRows = [];
     var inputs = (window.TV_APPS && TV_APPS.inputs) || [];
-    inputs.forEach(function (inp) { addInputRow(ICON_INPUT, inp.label, inp.appId); });
-    if (CONFIG.liveTvApp) {
+    var gh = window.INFINITI_GLASSHOUSE;
+    var hasTuner = false;
+    inputs.forEach(function (inp) {
+      if (inp.tuner) hasTuner = true;
+      addInputRow(ICON_INPUT, inp.label, inp.appId, inp.kind);
+    });
+    // The Glasshouse catalogue already includes Live TV as a tuner input.
+    if (CONFIG.liveTvApp && !(gh && gh.enabled && hasTuner)) {
       if (inputRows.length) {
         var separator = document.createElement('div');
         separator.className = 'separator';
@@ -680,18 +698,31 @@
     focusInput(0);
   }
 
-  function addInputRow(icon, label, appId) {
+  function addInputRow(icon, label, appId, kind) {
     var row = document.createElement('div');
     row.className = 'inputRow';
     row.innerHTML = '<svg viewBox="0 0 24 24"><path d="' + icon + '"/></svg>';
     row.appendChild(document.createTextNode(label));
     var idx = inputRows.length;
     row.addEventListener('mouseover', function () { focusInput(idx); });
-    row.addEventListener('click', function () { hideInputs(); launch(appId, label); });
+    row.addEventListener('click', function () { hideInputs(); openInputRow(row); });
     row.appId = appId;
     row.label = label;
+    row.kind = kind || 'app';
     inputRows.push(row);
     panel.appendChild(row);
+  }
+
+  function openInputRow(row) {
+    if (!row) return;
+    var gh = window.INFINITI_GLASSHOUSE;
+    if (row.kind === 'input' && gh && gh.enabled) {
+      gh.openInput(row.appId, function (err) {
+        if (err) toast(L.cantOpen + row.label);
+      });
+      return;
+    }
+    launch(row.appId, row.label);
   }
 
   function focusInput(i) {
@@ -780,7 +811,7 @@
     } else if (zone === 'inputs') {
       if (k === KEY.UP) focusInput(inputFocus - 1);
       else if (k === KEY.DOWN) focusInput(inputFocus + 1);
-      else if (k === KEY.OK) { var row = inputRows[inputFocus]; hideInputs(); launch(row.appId, row.label); }
+      else if (k === KEY.OK) { var row = inputRows[inputFocus]; hideInputs(); openInputRow(row); }
       else if (k === KEY.BACK || k === KEY.ESC || k === KEY.LEFT || k === KEY.RIGHT) hideInputs();
       else return;
     } else if (zone === 'cols') {
@@ -863,6 +894,19 @@
   var appsSeen = appsFingerprint();
 
   function refreshApps(cb) {
+    var gh = window.INFINITI_GLASSHOUSE;
+    if (gh && gh.enabled) {
+      gh.refresh(function (changed) {
+        if (!changed) { cb(false); return; }
+        appsSeen = appsFingerprint();
+        build();
+        focused = Math.max(0, Math.min(focused, items.length - 1));
+        animateIn();
+        if (items.length) focusTile(focused);
+        cb(true);
+      });
+      return;
+    }
     var old = $('appsJs');
     if (old) old.parentNode.removeChild(old);
     var sc = document.createElement('script');
@@ -896,6 +940,7 @@
     if (arranging) stopArrange();
     var oldIndex = focused;
     build();
+    appsSeen = appsFingerprint();
     focused = Math.max(0, Math.min(oldIndex, items.length - 1));
     animateIn();
     if (items.length) focusTile(focused);

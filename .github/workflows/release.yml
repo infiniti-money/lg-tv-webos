@@ -61,6 +61,7 @@ jobs:
           node scripts/test-privacy-apps.js
           node scripts/test-devmode-companion.js
           node scripts/test-homebrew-failsafe.js
+          node scripts/test-autostart-rollback.js
           node scripts/test-upstream-compat.js
           python3 scripts/test-sync-noroot.py
           node scripts/test-weather-ui.js

@@ -47,7 +47,7 @@ assert.equal(p.saveAppStyle('netflix','x','https://example.com/icon.svg'),false)
 assert.equal(p.saveAppStyle('netflix','x','pack:../../:video'),false);
 assert.equal(p.saveAppStyle('com.infinitimoney.tvhome','x',''),false);
 assert.equal(p.setIconPack('gold'),true);
-assert.equal(p.styledApp({id:'spotify',title:'Spotify',icon:'old.png'}).icon,'icons/packs/gold-music.svg');
+assert.equal(p.styledApp({id:'spotify',title:'Spotify',icon:'old.png'}).icon,'icons/packs/gold-spotify.svg');
 assert.equal(p.saveAppStyle('spotify','','original'),true);
 assert.equal(p.styledApp({id:'spotify',title:'Spotify',icon:'old.png'}).icon,'old.png');
 assert.equal(p.saveAppStyle('netflix','',''),true);
@@ -64,9 +64,13 @@ assert.equal(p.setIconPack('neon'),true);
 assert.equal(p.saveAppStyle('netflix','','original'),true);
 assert.equal(p.styledApp({id:'netflix',title:'Netflix',icon:'native.png'}).icon,'native.png');
 assert.equal(p.saveAppStyle('netflix','',''),true);
-assert.equal(p.styledApp({id:'netflix',title:'Netflix',icon:'native.png'}).icon,'icons/packs/neon-video.svg');
+assert.equal(p.styledApp({id:'netflix',title:'Netflix',icon:'native.png'}).icon,'icons/packs/neon-netflix.svg');
 
 assert.equal(p.getAppearance().idleSeconds,60);assert.equal(p.getAppearance().idleRain,true);
 assert.equal(p.saveAppearance({idleSeconds:120,idleRain:false}).idleSeconds,120);
 assert.equal(p.getAppearance().idleRain,false);assert.equal(p.saveAppearance({idleSeconds:-1}).idleSeconds,60);
 assert.equal(p.saveAppearance({idleSeconds:0}).idleSeconds,0);
+
+var extra=["youtube","netflix","prime","disney","tiktok","jellyfin","spotify","radio","hdmi","store","files","network"];
+['minimal','neon','glass','pastel','gold'].forEach(function(pack){var seen={};extra.forEach(function(g){var f='app/'+p.iconSource(p.packIcon(pack,g),'');assert.ok(fs.existsSync(f));var s=fs.readFileSync(f,'utf8');assert.ok(!seen[s]);seen[s]=true;});});
+assert.equal(p.iconCategory({id:'netflix'}),'netflix');assert.equal(p.iconCategory({id:'youtube.leanback.v4'}),'youtube');assert.equal(p.iconCategory({id:'amazon'}),'prime');assert.equal(p.iconCategory({id:'spotify'}),'spotify');

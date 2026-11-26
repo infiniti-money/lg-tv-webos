@@ -138,12 +138,24 @@
       id !== 'constructor' && id !== 'prototype' && !isProtected(id);
   }
   var PACKS=['minimal','neon','glass','pastel','gold'];
-  var GLYPHS=['video','music','web','tv','game','settings','home','photo','apps'];
-  var GLYPH_NAMES=['Video','Nhạc','Web','TV','Game','Cài đặt','Home','Ảnh','Ứng dụng'];
+  var GLYPHS=['video','music','web','tv','game','settings','home','photo','apps','youtube','netflix','prime','disney','tiktok','jellyfin','spotify','radio','hdmi','store','files','network'];
+  var GLYPH_NAMES=['Video','Nhạc','Web','TV','Game','Cài đặt','Home','Ảnh','Ứng dụng',"YouTube","Netflix","Prime Video","Disney+","TikTok","Jellyfin","Spotify","Radio","HDMI","Cửa hàng","Tệp / USB","Mạng"];
   function iconCategory(app) {
     var s=String(app.id||'')+' '+String(app.title||'');
-    if(/youtube|netflix|prime|video|jellyfin|kodi|plex|disney|hbo|tiktok/i.test(s))return 'video';
-    if(/spotify|music|soundcloud|nhạc|radio/i.test(s))return 'music';
+    if(/youtube/i.test(s))return 'youtube';
+    if(/netflix/i.test(s))return 'netflix';
+    if(/prime.video|amazon|primevideo/i.test(s))return 'prime';
+    if(/disney/i.test(s))return 'disney';
+    if(/tiktok/i.test(s))return 'tiktok';
+    if(/jellyfin/i.test(s))return 'jellyfin';
+    if(/spotify/i.test(s))return 'spotify';
+    if(/radio/i.test(s))return 'radio';
+    if(/hdmi/i.test(s))return 'hdmi';
+    if(/contentstore|content.store|app.store|cửa hàng/i.test(s))return 'store';
+    if(/file.manager|usb|tệp/i.test(s))return 'files';
+    if(/network|wifi|wi-fi|kết nối mạng/i.test(s))return 'network';
+    if(/video|kodi|plex|hbo/i.test(s))return 'video';
+    if(/music|soundcloud|nhạc/i.test(s))return 'music';
     if(/browser|chromium|trình duyệt|web browser/i.test(s))return 'web';
     if(/game|gaming|trò chơi/i.test(s))return 'game';
     if(/setting|cài đặt/i.test(s))return 'settings';

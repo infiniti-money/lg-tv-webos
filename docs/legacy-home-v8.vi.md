@@ -47,3 +47,5 @@ Log TV ngày 26/11/2026 xác nhận readiness 10,2s, render 1,5s/17 tile, watche
 - Icon gốc vuông/dọc: giữ tỷ lệ, căn giữa khung ngang 380×214; dùng màu nền đồng nhất nếu bốn mẫu mép ảnh tương đồng, nếu không giữ nền trung tính. Icon ngang 16:9 dùng toàn bộ vùng thẻ với contain; không crop hoặc kéo giãn. Giữ cache và hiệu ứng focus, kiểm thử vật lý còn cần thực hiện.
 
 - Chế độ chờ Home: 60 giây mặc định, chọn Tắt/30/60/120/300 giây; tùy chọn mưa hoạt động khi Home rảnh, không chạy khi app khác che phủ hoặc giảm chuyển động. Phím đầu tiên thoát chế độ chờ, không mở app. Không điều khiển nguồn TV, không thay thế bảo vệ màn hình LG.
+
+- Bộ icon: 21 hình khác nhau mỗi chủ đề, 5 chủ đề (105 tệp); tự phân biệt Netflix, YouTube, Spotify, Prime, Disney+, TikTok, Jellyfin và loại chức năng; giữ 45 tệp cũ để không mất tùy chỉnh. Icon dạng minh họa, không phải bộ logo chính thức. Các app không nhận diện được có thể vẫn dùng chung icon chức năng, hoặc chọn icon gốc.

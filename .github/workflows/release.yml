@@ -59,6 +59,7 @@ jobs:
           node scripts/test-lunar.js
           node scripts/test-forecast.js
           node scripts/test-customize.js
+          node scripts/test-remote-settings.js
           node scripts/test-app-structure.js
           node scripts/test-glasshouse.js
           node scripts/test-settings-ui.js

@@ -51,6 +51,7 @@ function loadKey() {
   return k;
 }
 var KEY = loadKey();
+var remote = require('./remote-settings.js').create(DATA,function(){return require('./sync.js').findLauncherDir();},permitted,log);
 
 function tvAddress() {
   var nets = os.networkInterfaces(), names = ['eth0', 'wlan0'].concat(Object.keys(nets));
@@ -156,6 +157,7 @@ function insideUsb(p) {
 function handle(req, res) {
   if(!permitted())return json(res,503,{error:'service disabled'});
   var u = parseUrl(req.url, true), q = u.query, route = req.method + ' ' + u.pathname;
+  if(remote.route(req,res,u,json,q.k===KEY))return;
   if (q.k !== KEY) {
     return send(res, 403, 'text/html; charset=utf-8', page403());
   }
@@ -270,12 +272,12 @@ http.createServer(function (req, res) {
   log('cannot start: ' + e.message);
   process.exit(1);
 }).listen(PORT, function () {
-  writeWallJs();
+  writeWallJs();remote.publish();
   // An app-only auto-update may replace wall.js. Restore the QR URL without
   // reopening the launcher or interacting with LG's Home on wake.
   setInterval(function () {
     if(!permitted()){try{writeWallJs();}catch(e){}process.exit(0);}
-    try {writeWallJs();} catch(e){log('wall.js refresh failed: '+e.message);}
+    try {writeWallJs();remote.publish();} catch(e){log('wall.js refresh failed: '+e.message);}
   }, 5000);
   log('listening on port ' + PORT);
 });

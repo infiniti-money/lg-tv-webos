@@ -90,3 +90,9 @@ assert.ok(weatherHeight<=159,'Five forecast lines and padding must fit: '+weathe
 assert.ok(/overflow:hidden/.test(block('#weekWeather .weekDay')),'No overflowing forecast text');
 assert.ok(/text-overflow:ellipsis/.test(block('#weekWeather .weekDay > div')),'Long forecast labels stay contained');
 console.log('Three-day forecast text height '+weatherHeight+'/159px: fits.');
+
+assert.ok(/background:rgba\(3,7,15,\.12\)/.test(block('#customizePanel')),'Settings scrim must let wallpaper through');
+assert.ok(/background:rgba\(12,21,33,\.62\)/.test(block('.customizeDialog')),'Settings glass must be translucent');
+assert.ok(/background:#fff/.test(block('#customizeWallQr')),'QR keeps white quiet zone');
+assert.ok(/body\.customize-open #viewport/.test(css),'Underlying widgets hidden during settings');
+assert.ok(!/backdrop-filter/.test(block('.customizeDialog')),'Legacy GPU: no modal backdrop blur');

@@ -112,6 +112,7 @@ vm.runInNewContext(source,{window:window, document:document, localStorage:localS
 assert.equal(typeof window.INFINITI_CUSTOMIZE_OPEN,'function');
 window.INFINITI_CUSTOMIZE_OPEN();
 assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true);
+assert.equal(document.body.hasClass('customize-open'),true);
 assert.equal(document.activeElement.id,'customizeStyleTab','appearance page gets initial focus');
 assert.equal(node('customizeStyleView').hasClass('hidden'),false);
 assert.equal(node('customizeWeatherView').hasClass('hidden'),true);
@@ -193,4 +194,5 @@ var back={type:'keydown',keyCode:461,preventDefault:function(){},
   stopPropagation:function(){},stopImmediatePropagation:function(){}};
 docEvents.keydown(back);
 assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),false,'Back closes settings');
+assert.equal(document.body.hasClass('customize-open'),false);
 console.log('Settings TV remote, weather, search, appearance and calendar smoke tests passed.');

@@ -622,6 +622,7 @@
   function show() {
     opened = true;
     panel.classList.remove('hidden');
+    document.body.classList.add('customize-open');
     activateTab('style');
     tabs.style.focus();
   }
@@ -630,6 +631,7 @@
     if (searchRequest) { searchRequest.abort(); searchRequest = null; }
     opened = false;
     panel.classList.add('hidden');
+    document.body.classList.remove('customize-open');
     if (typeof root.INFINITI_CUSTOMIZE_CLOSED === 'function') root.INFINITI_CUSTOMIZE_CLOSED();
   }
   function visibleControls() {

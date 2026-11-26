@@ -127,7 +127,8 @@ jobs:
       # Manual workflow_dispatch publishing is retained as the fallback.
       # Future ordinary main pushes cannot trigger the release gate.
       - name: Create verified RC tag
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.1') }}
+        if: >-
+          ${{ github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.1') }}
         shell: bash
         run: |
           set -euo pipefail
@@ -141,7 +142,8 @@ jobs:
             git push origin "refs/tags/$TAG"
           fi
       - name: Publish release candidate
-        if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.1')) || github.ref == 'refs/tags/v1.6.0-rc.1' }}
+        if: >-
+          ${{ (github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.1')) || github.ref == 'refs/tags/v1.6.0-rc.1' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.6.0-rc.1

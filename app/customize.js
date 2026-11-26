@@ -864,6 +864,7 @@
     saveWeather({unit:getWeather().unit === 'fahrenheit' ? 'celsius' : 'fahrenheit'});
     renderWeather(); reloadWeather();
   });
+  root.INFINITI_REMOTE_REFRESH = function(appearance,apps){if(appearance)applyAppearance();if(apps)refreshLauncher();};
   root.INFINITI_CUSTOMIZE_OPEN = show;
   root.INFINITI_CUSTOMIZE_CLOSE = function () { if (opened) hide(); };
   root.INFINITI_CUSTOMIZE_IS_OPEN = function () { return opened; };

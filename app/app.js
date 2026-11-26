@@ -110,6 +110,7 @@
   }
   ['keydown','keyup','mousemove','mousedown','click','touchstart','wheel'].forEach(function(type){document.addEventListener(type,idleInput,true);});
   window.INFINITI_IDLE_REFRESH=idleReset;
+  window.INFINITI_REMOTE_CAN_APPLY=function(){return !launcherCovered()&&!editing&&!arranging&&!okDown&&!pressTimer&&(zone==='grid'||zone==='top'||zone==='pen');};
   var entranceTimers = [];
   function clearEntranceTimers() {
     while (entranceTimers.length) clearTimeout(entranceTimers.pop());

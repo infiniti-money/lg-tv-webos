@@ -52,6 +52,7 @@ function loadKey() {
 }
 var KEY = loadKey();
 var remote = require('./remote-settings.js').create(DATA,function(){return require('./sync.js').findLauncherDir();},permitted,log);
+var album = require('./idle-album.js').create(DATA,function(){return require('./sync.js').findLauncherDir();},permitted,log);
 
 function tvAddress() {
   var nets = os.networkInterfaces(), names = ['eth0', 'wlan0'].concat(Object.keys(nets));
@@ -162,6 +163,7 @@ function handle(req, res) {
     return send(res, 403, 'text/html; charset=utf-8', page403());
   }
 
+  if(album.route(req,res,u,json,send))return;
   if (route === 'GET /') {
     return fs.readFile(path.join(DATA, 'wallpaper.html'), function (err, buf) {
       if (err) return send(res, 500, 'text/plain', 'wallpaper.html missing, run the installer again');
@@ -272,7 +274,7 @@ http.createServer(function (req, res) {
   log('cannot start: ' + e.message);
   process.exit(1);
 }).listen(PORT, function () {
-  writeWallJs();remote.publish();
+  writeWallJs();remote.publish();album.publish();
   // An app-only auto-update may replace wall.js. Restore the QR URL without
   // reopening the launcher or interacting with LG's Home on wake.
   setInterval(function () {

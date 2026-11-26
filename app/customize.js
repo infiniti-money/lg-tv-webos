@@ -7,6 +7,8 @@
   var APPEARANCE_KEY = 'tvhome.appearance.v1';
   var WEATHER_KEY = 'tvhome.weather.v1';
   var cache = {};
+  var APP_STYLE_KEY = 'tvhome.appstyle.v1';
+  var MAX_ICON = 48000, MAX_STYLE = 900000;
   var defaults = {
     theme:'midnight', font:'lexend', largeText:false, showWeek:true,
     reduceMotion:false, showSolar:true, showLunar:true
@@ -127,7 +129,52 @@
     safeWrite(WEATHER_KEY, current);
     return current;
   }
+  function validAppId(id) {
+    return typeof id === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}$/.test(id) &&
+      id !== 'constructor' && id !== 'prototype' && !isProtected(id);
+  }
+  function validIcon(icon) {
+    return typeof icon === 'string' && icon.length <= MAX_ICON &&
+      /^data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(icon);
+  }
+  function getAppStyle(id) {
+    var map = safeRead(APP_STYLE_KEY), v = validAppId(id) && Object.prototype.hasOwnProperty.call(map,id) ? map[id] : null;
+    return {title:v && typeof v.title==='string' ? v.title.slice(0,48) : '',
+      icon:v && validIcon(v.icon) ? v.icon : ''};
+  }
+  function saveAppStyle(id, title, icon) {
+    if (!validAppId(id) || typeof title !== 'string' || typeof icon !== 'string' ||
+        (icon && !validIcon(icon))) return false;
+    title = title.replace(/[\x00-\x1f\x7f]/g,' ').replace(/^\s+|\s+$/g,'').slice(0,48);
+    var old = safeRead(APP_STYLE_KEY), map = {}, count = 0;
+    Object.keys(old).forEach(function(k) {
+      if (k !== id && validAppId(k) && count < 250) {
+        var v = getAppStyle(k);
+        if (v.title || v.icon) { map[k]=v; count++; }
+      }
+    });
+    if (title || icon) {
+      if (count >= 250) return false;
+      map[id] = {title:title,icon:icon};
+    }
+    var serialized = JSON.stringify(map);
+    if (serialized.length > MAX_STYLE) return false;
+    try {
+      if (typeof localStorage !== 'undefined') localStorage.setItem(APP_STYLE_KEY,serialized);
+    } catch(e) { return false; }
+    cache[APP_STYLE_KEY]=map;
+    return true;
+  }
+  function styledApp(app) {
+    var style = getAppStyle(app.id), out = {};
+    Object.keys(app).forEach(function(k){out[k]=app[k];});
+    out.title = style.title || app.title || app.id;
+    out.originalIcon = app.icon || '';
+    if (style.icon) out.icon = style.icon;
+    return out;
+  }
   var api = {
+    getAppStyle:getAppStyle, saveAppStyle:saveAppStyle, styledApp:styledApp,
     isVisible:isVisible, setVisible:setVisible, resetVisible:resetVisible,
     getAppearance:getAppearance, saveAppearance:saveAppearance,
     getWeather:getWeather, saveWeather:saveWeather,
@@ -185,6 +232,88 @@
     parent.appendChild(button);
     return button;
   }
+  var editingApp = null, pendingIcon = '', uploadSequence = 0, iconBusy = false;
+  function closeAppEditor() {
+    uploadSequence++; iconBusy=false; editingApp=null; pendingIcon='';
+    $('customizeAppEditor').classList.add('hidden');
+    $('customizeAppList').classList.remove('hidden');
+    $('customizeAppFile').value='';
+  }
+  function previewAppIcon() {
+    if (!editingApp) return;
+    $('customizeAppPreview').src = pendingIcon || editingApp.icon || '';
+  }
+  function openAppEditor(app) {
+    var style=getAppStyle(app.id);
+    uploadSequence++; iconBusy=false; editingApp=app; pendingIcon=style.icon;
+    $('customizeAppEditorTitle').textContent='Tùy chỉnh: '+(app.title || app.id);
+    $('customizeAppName').value=style.title || app.title || app.id;
+    $('customizeAppFile').value='';
+    $('customizeAppList').classList.add('hidden');
+    $('customizeAppEditor').classList.remove('hidden');
+    previewAppIcon();
+    $('customizeAppName').focus();
+  }
+  function applyAppEditor(reset) {
+    if (!editingApp) return;
+    if (iconBusy && !reset) { message('Đang xử lý ảnh, chưa thể lưu.'); return; }
+    var id=editingApp.id;
+    var title=reset?'':String($('customizeAppName').value || '').replace(/^\s+|\s+$/g,'').slice(0,48);
+    if (!reset && title===editingApp.title) title='';
+    if (!saveAppStyle(id,title,reset?'':pendingIcon)) {
+      message('Không lưu được. Bộ nhớ có thể đã đầy; hãy thử ảnh nhỏ hơn.'); return;
+    }
+    closeAppEditor(); refreshLauncher(); renderApps();
+    tabs.apps.focus();
+    message(reset?'Đã khôi phục tên và icon gốc.':'Đã lưu tên và icon trong Launcher.');
+  }
+  function makeColorIcon(color) {
+    if (!editingApp) return;
+    uploadSequence++;iconBusy=false;
+    try {
+      var canvas=document.createElement('canvas');canvas.width=256;canvas.height=144;
+      var ctx=canvas.getContext('2d');
+      ctx.fillStyle=color;ctx.fillRect(0,0,256,144);
+      ctx.fillStyle='#fff';ctx.font='bold 78px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      var name=String($('customizeAppName').value || editingApp.title || editingApp.id).replace(/^\s+/,'');
+      ctx.fillText(name.slice(0,1).toUpperCase() || '?',128,76);
+      var result=canvas.toDataURL('image/png');
+      if(!validIcon(result)) throw new Error('invalid icon');
+      pendingIcon=result;previewAppIcon();message('Đã chọn icon màu; nhấn Lưu để áp dụng.');
+    }catch(e){message('TV không tạo được icon màu.');}
+  }
+  function importAppIcon(file) {
+    if (!editingApp || !file) return;
+    if (file.size>8*1024*1024 || !/^image\/(?:png|jpeg|webp)$/i.test(file.type || '')) {
+      message('Chọn ảnh JPG, PNG hoặc WebP dưới 8 MB.');return;
+    }
+    if (!root.FileReader || !root.Image) {message('TV không hỗ trợ chọn ảnh; dùng icon màu.');return;}
+    var seq=++uploadSequence, reader=new root.FileReader();
+    iconBusy=true;message('Đang xử lý icon…');
+    function fail(){if(seq===uploadSequence){iconBusy=false;message('Không đọc được ảnh. Thử JPG/PNG hoặc icon màu.');}}
+    reader.onerror=reader.onabort=fail;
+    reader.onload=function(){
+      if(seq!==uploadSequence || !editingApp)return;
+      var img=new root.Image();
+      img.onerror=fail;
+      img.onload=function(){
+        if(seq!==uploadSequence || !editingApp)return;
+        try{
+          if(!img.width || !img.height || img.width*img.height>24000000)throw new Error('image too large');
+          var canvas=document.createElement('canvas');canvas.width=256;canvas.height=144;
+          var ctx=canvas.getContext('2d'), scale=Math.min(256/img.width,144/img.height);
+          ctx.fillStyle='#202b3b';ctx.fillRect(0,0,256,144);
+          var w=img.width*scale,h=img.height*scale;
+          ctx.drawImage(img,(256-w)/2,(144-h)/2,w,h);
+          var data=canvas.toDataURL('image/jpeg',0.82);
+          if(!validIcon(data))throw new Error('icon too large');
+          pendingIcon=data;iconBusy=false;previewAppIcon();message('Ảnh sẵn sàng. Nhấn Lưu để áp dụng.');
+        }catch(e){fail();}
+      };
+      img.src=reader.result;
+    };
+    try{reader.readAsDataURL(file);}catch(e){fail();}
+  }
   function renderApps() {
     appsList.innerHTML = '';
     var all = (root.TV_APPS && root.TV_APPS.apps) || [], installed = [];
@@ -206,7 +335,9 @@
       var row = document.createElement('div');
       row.className = 'customizeApp';
       var name = document.createElement('span');
-      name.textContent = String(app.title || app.id);
+      var styled=styledApp(app);
+      var thumb=document.createElement('img');thumb.className='customizeAppThumb';thumb.src=styled.icon || '';row.appendChild(thumb);
+      name.textContent = String(styled.title || app.id);
       name.title = app.id;
       row.appendChild(name);
       var visible = isVisible(app.id, (root.CONFIG || {}).hiddenApps);
@@ -219,6 +350,7 @@
         message((visible ? 'Đã thêm: ' : 'Đã ẩn: ') + (app.title || app.id));
       }, visible);
       toggle.setAttribute('aria-label', (visible ? 'Ẩn ' : 'Thêm ') + (app.title || app.id));
+      addButton(row,'Sửa tên / icon',function(){openAppEditor(app);},false);
       appsList.appendChild(row);
     });
   }
@@ -385,6 +517,7 @@
     $('customizeCalendarNote').textContent = 'Dương lịch dùng ngày giờ TV; âm lịch tính theo múi giờ Việt Nam (UTC+7).';
   }
   function activateTab(name) {
+    closeAppEditor();
     activeTab = name;
     var key;
     for (key in tabs) {
@@ -406,6 +539,7 @@
     tabs.style.focus();
   }
   function hide() {
+    closeAppEditor();
     if (searchRequest) { searchRequest.abort(); searchRequest = null; }
     opened = false;
     panel.classList.add('hidden');
@@ -431,6 +565,15 @@
       return;
     }
     var active = document.activeElement, search = $('customizeWeatherSearch');
+    if (editingApp && (code === 461 || code === 27)) {
+      stopKey(e);if(e.type==='keydown'){closeAppEditor();renderApps();tabs.apps.focus();}return;
+    }
+    if (active === $('customizeAppName')) {
+      if ((code===38 || code===40 || code===13) && e.type==='keydown') {
+        stopKey(e);$('customizeAppSave').focus();return;
+      }
+      return;
+    }
     // Let the LG on-screen keyboard enter characters and use Backspace naturally.
     if (active === search) {
       if (code === 461 || code === 27) { stopKey(e); if (e.type === 'keydown') hide(); return; }
@@ -471,6 +614,15 @@
     tabs[name].addEventListener('click', function () { activateTab(name); tabs[name].focus(); });
   });
   $('customizeClose').addEventListener('click', hide);
+  $('customizeAppSave').addEventListener('click',function(){applyAppEditor(false);});
+  $('customizeAppRestore').addEventListener('click',function(){applyAppEditor(true);});
+  $('customizeAppCancel').addEventListener('click',function(){closeAppEditor();renderApps();tabs.apps.focus();});
+  $('customizeAppOriginalIcon').addEventListener('click',function(){uploadSequence++;iconBusy=false;pendingIcon='';previewAppIcon();});
+  $('customizeAppPickFile').addEventListener('click',function(){$('customizeAppFile').click();});
+  $('customizeAppFile').addEventListener('change',function(){importAppIcon(this.files && this.files[0]);});
+  [['customizeAppBlue','#234d89'],['customizeAppGreen','#245b42'],['customizeAppRed','#813448'],['customizeAppDark','#262c3a']].forEach(function(choice){
+    $(choice[0]).addEventListener('click',function(){makeColorIcon(choice[1]);});
+  });
   $('customizeHideLGApps').addEventListener('click', function () {
     var count = hideLGDefaultApps();
     refreshLauncher();

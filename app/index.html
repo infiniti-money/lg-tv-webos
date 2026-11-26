@@ -137,6 +137,31 @@
           </div>
           <p class="customizeHint">Chỉ ẩn biểu tượng trong Infiniti. Không xóa hoặc vô hiệu hóa các ứng dụng LG, Input Hook, Homebrew, HDMI và Live TV.</p>
           <div id="customizeAppList"></div>
+          <div id="customizeAppEditor" class="hidden">
+            <h3 id="customizeAppEditorTitle">Tùy chỉnh ứng dụng</h3>
+            <div class="customizeAppEditorHead">
+              <img id="customizeAppPreview" alt="Xem trước icon">
+              <div class="customizeAppEditorName">
+                <label for="customizeAppName">Tên hiển thị</label>
+                <input id="customizeAppName" type="text" maxlength="48" autocomplete="off">
+              </div>
+            </div>
+            <p>Biểu tượng: chọn màu chữ cái hoặc ảnh riêng nếu TV hỗ trợ chọn tệp.</p>
+            <div class="customizeChoice">
+              <button id="customizeAppBlue" type="button">Xanh dương</button>
+              <button id="customizeAppGreen" type="button">Xanh lá</button>
+              <button id="customizeAppRed" type="button">Đỏ</button>
+              <button id="customizeAppDark" type="button">Tối</button>
+              <button id="customizeAppPickFile" type="button">Chọn ảnh</button>
+              <button id="customizeAppOriginalIcon" type="button">Icon gốc</button>
+              <input id="customizeAppFile" type="file" accept="image/jpeg,image/png,image/webp" style="display:none">
+            </div>
+            <div class="customizeChoice">
+              <button id="customizeAppSave" type="button">Lưu</button>
+              <button id="customizeAppRestore" type="button">Khôi phục tên và icon gốc</button>
+              <button id="customizeAppCancel" type="button">Hủy</button>
+            </div>
+          </div>
           <button id="customizeResetApps" type="button">Khôi phục ứng dụng mặc định</button>
         </div>
         <div id="customizePrivacyView" class="hidden">

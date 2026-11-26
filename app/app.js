@@ -134,6 +134,7 @@
 
   function orderedApps() {
     var all = (window.TV_APPS && TV_APPS.apps) || [];
+    if(window.INFINITI_PREFS && INFINITI_PREFS.styledApp) all=all.map(INFINITI_PREFS.styledApp);
     var byId = {};
     all.forEach(function (a) { byId[a.id] = a; });
     var hidden = {};
@@ -225,6 +226,7 @@
           iconCache[iconKey] = {color:item.color,glyph:item.card.classList.contains('glyph')};
         }
       };
+      img.onerror = function(){if(app.originalIcon && img.src!==app.originalIcon && !img.infinitiFallback){img.infinitiFallback=true;img.src=app.originalIcon;}};
       img.src = app.icon;
       card.appendChild(img);
       el.appendChild(card);

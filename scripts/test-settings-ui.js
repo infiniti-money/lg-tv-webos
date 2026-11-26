@@ -123,7 +123,7 @@ node('customizeWallpaperTab').click();
 assert.ok(node('customizeWallQr').innerHTML.indexOf('data:image/png')>=0,
   'Valid QR must render inside Customize, not on Home');
 assert.equal(node('customizeWallState').textContent,
-  'Quét QR bằng điện thoại cùng Wi-Fi để chỉnh giao diện, icon và album ảnh.');
+  'Quét QR hoặc mở địa chỉ bên dưới và nhập khóa riêng để chỉnh TV.');
 node('customizeWallpaper').click();
 assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true,
   'Wallpaper QR refresh must keep settings open, not return to Home');

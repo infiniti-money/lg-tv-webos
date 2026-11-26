@@ -512,7 +512,7 @@
     root.INFINITI_WALLPAPER_GET_URL(function (url) {
       // The QR links to a TV-local, secret-authenticated phone service.
       // Only display a valid local IP:8090 URL written by the root helper.
-      if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:8090\/\?k=[a-f0-9]{12,48}$/.test(url || '')) {
+      if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:8090\/\?k=[A-Za-z0-9_-]{16,64}$/.test(url || '')) {
         state.textContent = 'Chưa có địa chỉ dịch vụ hình nền. Qua SSH chạy legacy-home.sh wallpaper-on, sau đó bấm Lấy mã QR lại.';
         return;
       }
@@ -521,8 +521,8 @@
         qr.addData(url);
         qr.make();
         code.innerHTML = '<img alt="Quét để đổi hình nền" src="' + qr.createDataURL(6, 24) + '">';
-        state.textContent = 'Quét QR bằng điện thoại cùng Wi-Fi để chỉnh giao diện, icon và album ảnh.';
-        host.textContent = url;
+        state.textContent = 'Quét QR hoặc mở địa chỉ bên dưới và nhập khóa riêng để chỉnh TV.';
+        host.textContent = url.split('?')[0];
       } catch (err) {
         state.textContent = 'Không tạo được mã QR. Hãy kiểm tra bộ cài và thử lại.';
       }

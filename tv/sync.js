@@ -33,8 +33,19 @@ function isFile(p) { try { return !!p && fs.statSync(p).isFile(); } catch (e) { 
 
 // fs.copyFileSync only exists from Node 8.5. webOS 4 TVs run Node 0.12, where calling it threw and
 // every app was skipped, so the launcher ended up empty. Keep every TV script ES5 and Node 0.12 safe.
-function copyFile(src, dest) { fs.writeFileSync(dest, fs.readFileSync(src)); }
+function copyFile(src, dest) {
+  var st=fs.statSync(src);
+  try {
+    var old=fs.statSync(dest);
+    if(old.size===st.size && Math.abs(old.mtime.getTime()-st.mtime.getTime())<1000)return;
+  }catch(e){}
+  var tmp=dest+'.infiniti-'+process.pid+'.tmp';
+  fs.writeFileSync(tmp,fs.readFileSync(src));
+  fs.renameSync(tmp,dest);
+  try{fs.utimesSync(dest,st.atime,st.mtime);}catch(e){}
+}
 function atomicWrite(file, content) {
+  try { if (fs.readFileSync(file,'utf8')===content) return; } catch(e) {}
   var temp = file + '.infiniti-' + process.pid + '.tmp';
   fs.writeFileSync(temp, content);
   fs.renameSync(temp, file);
@@ -55,7 +66,40 @@ function sleep(sec) { try { execFileSync('sleep', [String(sec)]); } catch (e) { 
 
 // For a minute or two after boot, webOS answers with an empty app list (seen on webOS 4.4), so ask
 // again until it has one. Without this, every boot overwrote apps.js with nothing.
+function normalizeLegacyApps(apps) {
+  if (!Array.isArray(apps)) return [];
+  return apps.filter(function (a) {
+    return a && typeof a.id === 'string' && a.id;
+  }).map(function (a) {
+    var base = typeof a.folderPath === 'string' ? a.folderPath : '';
+    function iconPath(v) {
+      if (typeof v !== 'string' || !v) return '';
+      return v.charAt(0) === '/' ? v : (base && !/^[a-z]+:/i.test(v) ? path.join(base, v) : '');
+    }
+    return {id:a.id,title:a.title || a.id,icon:iconPath(a.icon),
+      largeIcon:iconPath(a.largeIcon),iconColor:a.iconColor || a.bgColor || '',
+      visible:a.visible === true && a.noWindow !== true && a.noDisplay !== true &&
+        a.hidden !== true && a.type !== 'service' && a.type !== 'jsservice'};
+  });
+}
 function fromLuna(diskAvailable) {
+  var legacy = path.join(DATA, 'legacy-luna.js');
+  // Prefer the real visible launchpoint catalog on legacy LG, verified on webOS 3.4.3.
+  try {
+    var direct=luna('luna://com.webos.applicationManager/listLaunchPoints');
+    if(direct.returnValue===true && direct.launchPoints && direct.launchPoints.length) return direct.launchPoints;
+  }catch(e){}
+  if (isFile(legacy) && isFile('/usr/bin/node')) {
+    try {
+      var catalog = JSON.parse(execFileSync('/usr/bin/node', [legacy, 'catalog'],
+        {encoding:'utf8', timeout:25000, maxBuffer:10*1024*1024}));
+      var normalized = normalizeLegacyApps(catalog.apps);
+      if (catalog.returnValue === true && normalized.some(function(a){return a.visible;})) {
+        console.error('Legacy listApps catalog ready (stdin held open).');
+        return normalized;
+      }
+    } catch (e) { console.error('Legacy listApps failed: ' + e.message); }
+  }
   var tries = parseInt(process.env.SYNC_TRIES || '', 10) || (diskAvailable ? 3 : 12);
   for (var i = 0; i < tries; i++) {
     var res = null;
@@ -173,12 +217,32 @@ function listPoints() {
   var merged = mergePoints(lunaPoints, diskPoints);
   console.error('App discovery: Luna ' + lunaPoints.length + ', installed packages ' +
     diskPoints.length + ', user-facing apps ' + merged.length + '.');
-  return { points: merged, source: 'Luna+disk' };
+  return { points: merged, source: 'Luna+disk', authoritative: lunaPoints.length > 0 };
+}
+
+function applySettings(){
+  // Personal settings and wallpaper. The copy is named after the photo's timestamp so a new photo
+  // gets a new file name and the launcher never shows a cached old one.
+  var settings = readJSON(path.join(DATA, 'settings.json'), {});
+  var wp = path.join(DATA, 'wallpaper.jpg');
+  var bgName = isFile(wp) ? 'bg-' + fs.statSync(wp).mtime.getTime() + '.jpg' : '';
+  if (bgName && !isFile(path.join(APP_DIR, bgName))) copyFile(wp, path.join(APP_DIR, bgName));
+  settings.wallpaper = bgName;
+  atomicWrite(path.join(APP_DIR, 'user.js'),
+    '// Generated on the TV by sync.js from ' + DATA + '/settings.json\n' +
+    '(function () { var u = ' + JSON.stringify(settings) + '; for (var k in u) window.CONFIG[k] = u[k]; })();\n');
+
+  fs.readdirSync(APP_DIR).forEach(function(f){
+    if(/^bg(-\d+)?\.jpg$/.test(f) && f!==bgName)fs.unlinkSync(path.join(APP_DIR,f));
+  });
 }
 
 function main() {
   APP_DIR = findLauncherDir();
+  if(process.argv.indexOf('--settings-only')!==-1){applySettings();return;}
   var found = listPoints(), points = found.points;
+  var catalogOnly=process.argv.indexOf('--catalog-only')!==-1;
+  if(catalogOnly && !found.authoritative){console.error('Catalog unavailable; preserving existing list');return;}
 
   if (process.argv.indexOf('--list') !== -1) {
     points.forEach(function (p) { console.log((p.id + '                                             ').slice(0, 45) + ' ' + p.title); });
@@ -227,22 +291,11 @@ function main() {
   atomicWrite(path.join(APP_DIR, 'apps.js'),
     '// Generated on the TV by sync.js\nwindow.TV_APPS = ' + JSON.stringify({ apps: apps, inputs: inputs }, null, 1) + ';\n');
 
-  // Personal settings and wallpaper. The copy is named after the photo's timestamp so a new photo
-  // gets a new file name and the launcher never shows a cached old one.
-  var settings = readJSON(path.join(DATA, 'settings.json'), {});
-  var wp = path.join(DATA, 'wallpaper.jpg');
-  var bgName = isFile(wp) ? 'bg-' + Math.floor(fs.statSync(wp).mtime.getTime() / 1000) + '.jpg' : '';
-  fs.readdirSync(APP_DIR).forEach(function (f) {
-    if (/^bg(-\d+)?\.jpg$/.test(f) && f !== bgName) fs.unlinkSync(path.join(APP_DIR, f));
-  });
-  if (bgName && !isFile(path.join(APP_DIR, bgName))) copyFile(wp, path.join(APP_DIR, bgName));
-  settings.wallpaper = bgName;
-  atomicWrite(path.join(APP_DIR, 'user.js'),
-    '// Generated on the TV by sync.js from ' + DATA + '/settings.json\n' +
-    '(function () { var u = ' + JSON.stringify(settings) + '; for (var k in u) window.CONFIG[k] = u[k]; })();\n');
+  if(catalogOnly){console.log('Synced '+apps.length+' apps and '+inputs.length+' inputs (catalog only).');return;}
 
+  applySettings();
   console.log('Synced ' + apps.length + ' apps (from ' + found.source + ') and ' + inputs.length + ' inputs.');
 }
 
 if (require.main === module) main();
-module.exports = {mergePoints:mergePoints, listPoints:listPoints, findLauncherDir:findLauncherDir};
+module.exports = {normalizeLegacyApps:normalizeLegacyApps,mergePoints:mergePoints, listPoints:listPoints, findLauncherDir:findLauncherDir};

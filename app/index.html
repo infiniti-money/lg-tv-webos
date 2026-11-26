@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <title>Infiniti TV Home</title>
+  <title>Designed by Tân Dev</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -36,7 +36,6 @@
         <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04,-0.3 0.06,-0.61 0.06,-0.94c0,-0.32 -0.02,-0.64 -0.07,-0.94l2.030,-1.58c0.18,-0.14 0.23,-0.41 0.12,-0.61l-1.92,-3.32c-0.12,-0.22 -0.37,-0.29 -0.59,-0.22l-2.39,0.96c-0.5,-0.38 -1.03,-0.7 -1.62,-0.94L14.4,2.81c-0.04,-0.24 -0.24,-0.41 -0.48,-0.41h-3.84c-0.24,0 -0.43,0.17 -0.47,0.41L9.25,5.35C8.66,5.59 8.12,5.92 7.63,6.29L5.24,5.33c-0.22,-0.08 -0.47,0 -0.59,0.22L2.74,8.87C2.62,9.08 2.66,9.34 2.86,9.48l2.030,1.58C4.84,11.36 4.8,11.69 4.8,12s0.02,0.64 0.07,0.94l-2.030,1.58c-0.18,0.14 -0.23,0.41 -0.12,0.61l1.92,3.32c0.12,0.22 0.37,0.29 0.59,0.22l2.39,-0.96c0.5,0.38 1.03,0.7 1.62,0.94l0.36,2.54c0.05,0.24 0.24,0.41 0.48,0.41h3.84c0.24,0 0.44,-0.17 0.47,-0.41l0.36,-2.54c0.59,-0.24 1.13,-0.56 1.62,-0.94l2.39,0.96c0.22,0.08 0.47,0 0.59,-0.22l1.92,-3.32c0.12,-0.22 0.07,-0.47 -0.12,-0.61L19.14,12.94zM12,15.6c-1.98,0 -3.6,-1.62 -3.6,-3.6s1.62,-3.6 3.6,-3.6s3.6,1.62 3.6,3.6S13.98,15.6 12,15.6z"/></svg>
         <span>Settings</span>
       </div>
-      <div class="pill" id="btnAI"><span>🎙 AI tiếng Việt</span></div>
       <div class="pill" id="btnCustomize"><span>Tùy chỉnh</span></div>
     </div>
   </header>
@@ -52,10 +51,10 @@
       <div id="dockBand"></div>
       <div id="tiles"></div>
       <div id="glass"></div>
-      <!-- Pencil right of the dock: pick how many tiles per row. -->
-      <div id="penBtn"><svg viewBox="0 0 24 24"><path d="M3,17.25V21h3.75L17.81,9.94l-3.75,-3.75L3,17.25zM20.71,7.04c0.39,-0.39 0.39,-1.02 0,-1.41l-2.34,-2.34c-0.39,-0.39 -1.02,-0.39 -1.41,0l-1.83,1.83 3.75,3.75 1.83,-1.83z"/></svg></div>
     </div>
   </div>
+  <!-- Fixed edit button outside the four-slot scroll viewport. -->
+<div id="penBtn"><svg viewBox="0 0 24 24"><path d="M3,17.25V21h3.75L17.81,9.94l-3.75,-3.75L3,17.25zM20.71,7.04c0.39,-0.39 0.39,-1.02 0,-1.41l-2.34,-2.34c-0.39,-0.39 -1.02,-0.39 -1.41,0l-1.83,1.83 3.75,3.75 1.83,-1.83z"/></svg></div>
 
   <!-- Dropdown under the Inputs pill. -->
   <div id="inputsPanel" class="hidden"></div>
@@ -68,20 +67,18 @@
   <div id="toast"></div>
 
   <!-- Independent launcher settings pages, remote-friendly and scrollable on 1080p. -->
-  <div id="customizePanel" class="hidden" role="dialog" aria-modal="true" aria-label="Cài đặt Infiniti TV Home">
+  <div id="customizePanel" class="hidden" role="dialog" aria-modal="true" aria-label="Cài đặt Designed by Tân Dev">
     <div class="customizeDialog">
       <div class="customizeHead">
-        <div><div class="customizeEyebrow">INFINITI TV HOME</div><strong>Cài đặt giao diện</strong></div>
+        <div><div class="customizeEyebrow">Designed by Tân Dev</div><strong>Cài đặt giao diện</strong></div>
         <button id="customizeClose" type="button">Đóng ×</button>
       </div>
       <div class="customizeTabs" role="navigation" aria-label="Chuyên mục cài đặt">
         <button type="button" id="customizeStyleTab">Giao diện</button>
         <button type="button" id="customizeWeatherTab">Thời tiết</button>
         <button type="button" id="customizeCalendarTab">Âm · dương lịch</button>
-        <button type="button" id="customizeAITab">Trợ lý AI</button>
         <button type="button" id="customizeAppsTab">Ứng dụng</button>
         <button type="button" id="customizePrivacyTab">Chặn quảng cáo</button>
-        <button type="button" id="customizeDevModeTab">Dev Mode</button>
       </div>
       <div class="customizeContent">
         <div id="customizeStyleView">
@@ -112,8 +109,7 @@
         <div id="customizeWeatherView" class="hidden">
           <p>Chọn khu vực trên TV, không cần chỉnh sửa mã nguồn hoặc SSH. Lựa chọn sẽ được lưu trên TV.</p>
           <div class="customizeSelectedCity" id="customizeWeatherChoice">Chưa chọn khu vực</div>
-          <h3>Khu vực nhanh</h3><div id="customizeWeatherPresets" class="customizeChoice"></div>
-          <h3>Tìm tỉnh, thành phố hoặc khu vực khác</h3>
+          <h3>Tìm tỉnh, thành phố hoặc khu vực</h3>
           <div class="customizeSearchRow">
             <input id="customizeWeatherSearch" type="text" maxlength="90" autocomplete="off" placeholder="Ví dụ: Bắc Ninh, Hội An, Nha Trang" aria-label="Tên khu vực">
             <button id="customizeWeatherSearchBtn" type="button">Tìm khu vực</button>
@@ -134,22 +130,42 @@
           </div>
           <p id="customizeCalendarNote" class="customizeHint"></p>
         </div>
-        <div id="customizeAIView" class="hidden">
-          <p>Bật hoặc tắt hoàn toàn trợ lý AI trên màn hình chính.</p>
-          <div class="customizeChoice">
-            <button type="button" id="customizeAIToggle">Trợ lý AI tiếng Việt: Bật</button>
-          </div>
-          <p id="customizeAIState" class="customizeHint"></p>
-          <p class="customizeHint">Khi tắt AI, nút AI biến mất khỏi Home và không gửi câu hỏi hay sử dụng micro.
-          Không lưu mã truy cập API trong phần cài đặt.</p>
-        </div>
         <div id="customizeAppsView" class="hidden">
-          <p>Thêm hoặc ẩn biểu tượng trên Infiniti TV Home. Không gỡ ứng dụng khỏi TV.</p>
+          <p>Thêm hoặc ẩn biểu tượng trên Designed by Tân Dev. Không gỡ ứng dụng khỏi TV.</p>
           <div class="customizeChoice">
             <button id="customizeHideLGApps" type="button">Ẩn nhanh ứng dụng LG mặc định</button>
           </div>
           <p class="customizeHint">Chỉ ẩn biểu tượng trong Infiniti. Không xóa hoặc vô hiệu hóa các ứng dụng LG, Input Hook, Homebrew, HDMI và Live TV.</p>
+          <h3>Bộ icon toàn bộ ứng dụng</h3><div id="customizeGlobalPacks" class="customizeChoice"></div>
           <div id="customizeAppList"></div>
+          <div id="customizeAppEditor" class="hidden">
+            <h3 id="customizeAppEditorTitle">Tùy chỉnh ứng dụng</h3>
+            <div class="customizeAppEditorHead">
+              <img id="customizeAppPreview" alt="Xem trước icon">
+              <div class="customizeAppEditorName">
+                <label for="customizeAppName">Tên hiển thị</label>
+                <input id="customizeAppName" type="text" maxlength="48" autocomplete="off">
+              </div>
+            </div>
+            <p>Bộ icon có sẵn — chọn kiểu, sau đó chọn biểu tượng:</p>
+            <div id="customizeAppPackChoices" class="customizeChoice"></div>
+            <div id="customizeAppGlyphChoices" class="customizeChoice iconPackGrid"></div>
+            <p>Hoặc dùng màu chữ cái / ảnh riêng:</p>
+            <div class="customizeChoice">
+              <button id="customizeAppBlue" type="button">Xanh dương</button>
+              <button id="customizeAppGreen" type="button">Xanh lá</button>
+              <button id="customizeAppRed" type="button">Đỏ</button>
+              <button id="customizeAppDark" type="button">Tối</button>
+              <button id="customizeAppPickFile" type="button">Chọn ảnh</button>
+              <button id="customizeAppOriginalIcon" type="button">Icon gốc</button>
+              <input id="customizeAppFile" type="file" accept="image/jpeg,image/png,image/webp" style="display:none">
+            </div>
+            <div class="customizeChoice">
+              <button id="customizeAppSave" type="button">Lưu</button>
+              <button id="customizeAppRestore" type="button">Khôi phục tên và icon gốc</button>
+              <button id="customizeAppCancel" type="button">Hủy</button>
+            </div>
+          </div>
           <button id="customizeResetApps" type="button">Khôi phục ứng dụng mặc định</button>
         </div>
         <div id="customizePrivacyView" class="hidden">
@@ -164,35 +180,9 @@
           <p class="customizeHint">DNS chỉ chặn một phần quảng cáo và theo dõi; không bảo đảm chặn quảng cáo nằm trong video YouTube. Nếu TV dùng DNS riêng/hardcoded, một số yêu cầu có thể không đi qua bộ lọc.</p>
           <p class="customizeHint">Nguồn: adguard-dns.io/en/public-dns.html. Để lọc theo thiết bị hoặc dùng danh sách LG chuyên biệt, có thể cấu hình AdGuard Home/Pi-hole trên router.</p>
         </div>
-        <div id="customizeDevModeView" class="hidden">
-          <h3>Developer Mode / Trạng thái root</h3>
-          <p id="customizeRootModeState" role="status">Không thể xác nhận quyền root từ giao diện ứng dụng. Kiểm tra Homebrew Channel hoặc SSH trước khi thay đổi chế độ hệ thống.</p>
-          <p class="customizeHint">TV đã root: KHÔNG cài, bật hoặc gia hạn Developer Mode chính thức của LG qua Infiniti. Homebrew Channel có cơ chế SSH và ứng dụng riêng; việc bật Developer Mode có thể làm TV reboot, gây xung đột cấu hình root.</p>
-          <p class="customizeHint">TV chưa root: Developer Mode là một lựa chọn riêng để cài app. Chỉ sử dụng hướng dẫn chính thức của LG sau khi xác nhận TV chưa root, không còn ở Homebrew Failsafe.</p>
-          <p id="customizeDevModeState" role="status">Đang kiểm tra danh sách ứng dụng đã đồng bộ…</p>
-          <p class="customizeHint">Dev Mode Forever là ứng dụng độc lập tại github.com/infiniti-money/lg-devmode-forever · ID: com.lennylxx.devmodeforever. Có thể tự REBOOT khi mở hoặc gia hạn phiên.</p>
-          <p id="customizeDevModeWarning" role="status">AN TOÀN: Infiniti không mở Dev Mode Forever, không kích hoạt watchdog, không tự gia hạn, không đặt lại bộ đếm và không gửi lệnh reboot. Muốn xem ứng dụng đã cài, hãy mở thủ công từ danh sách ứng dụng TV sau khi kiểm tra trạng thái root.</p>
-        </div>
       </div>
       <div id="customizeStatus" role="status" aria-live="polite"></div>
       <p class="customizeHint">Mũi tên: di chuyển · OK: chọn · Back: đóng · Phím đỏ: mở cài đặt</p>
-    </div>
-  </div>
-
-
-  <!-- Vietnamese AI assistant: microphone is optional; LG keyboard dictation remains the fallback. -->
-  <div id="aiPanel" class="hidden" role="dialog" aria-label="Trợ lý AI tiếng Việt">
-    <div class="aiDialog">
-      <div class="aiHead"><strong>Trợ lý AI tiếng Việt</strong><button id="aiClose" type="button">Đóng ×</button></div>
-      <p>Hỏi đáp bằng giọng nói hoặc bàn phím LG. Chỉ gửi câu hỏi sau khi chọn Gửi AI.</p>
-      <div class="aiRow">
-        <input id="aiPrompt" type="text" lang="vi" autocomplete="off" maxlength="1500" placeholder="Ví dụ: Hôm nay có gì hay để xem?">
-        <button id="aiVoice" type="button">🎤 Nói tiếng Việt</button>
-        <button id="aiSend" type="button">Gửi AI</button>
-      </div>
-      <div class="aiRow aiAuth"><label for="aiToken">Mã truy cập AI:</label><input id="aiToken" type="password" autocomplete="off" placeholder="Nhập mã riêng, không lưu trên TV"></div>
-      <div id="aiStatus" role="status"></div>
-      <div id="aiAnswer" aria-live="polite"></div>
     </div>
   </div>
 
@@ -204,10 +194,9 @@
   <script src="qrcode.js"></script>
   <script src="customize.js"></script>
   <script src="lifecycle.js"></script>
+  <script src="lunar.js"></script>
   <script src="app.js"></script>
   <script src="forecast.js"></script>
   <script src="extras.js"></script>
-  <script src="lunar.js"></script>
-  <script src="assistant.js"></script>
 </body>
 </html>

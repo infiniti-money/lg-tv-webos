@@ -53,21 +53,19 @@ var document = {
   addEventListener:function (type,cb) { docEvents[type]=cb; }
 };
 var panel=node('customizePanel'); panel.className='hidden';
-['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizeAITab','customizeDevModeTab','customizePrivacyTab'].forEach(function (id) {
+['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizePrivacyTab'].forEach(function (id) {
   panel.appendChild(node(id,'button'));
 });
 var groups = {
   customizeStyleView:['customizeThemes','customizeFonts','customizeLargeText',
     'customizeShowWeek','customizeMotion','customizeWallpaper','customizeWallQr',
     'customizeWallState','customizeWallHost','customizeUpdateState','customizeResetStyle'],
-  customizeWeatherView:['customizeWeatherChoice','customizeWeatherPresets',
+  customizeWeatherView:['customizeWeatherChoice',
     'customizeWeatherSearch','customizeWeatherSearchBtn','customizeWeatherResults',
     'customizeWeatherEnable','customizeWeatherUnit'],
   customizeCalendarView:['customizeSolar','customizeLunar','customizeCalendarNote'],
   customizeAppsView:['customizeAppList','customizeHideLGApps','customizeResetApps'],
-  customizePrivacyView:[],
-  customizeAIView:['customizeAIToggle','customizeAIState'],
-  customizeDevModeView:['customizeRootModeState','customizeDevModeState','customizeDevModeWarning']
+  customizePrivacyView:[]
 };
 Object.keys(groups).forEach(function (name) {
   var view=node(name); view.className='hidden'; panel.appendChild(view);
@@ -76,6 +74,11 @@ Object.keys(groups).forEach(function (name) {
       /Btn$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
   });
 });
+var editor=node('customizeAppEditor');editor.className='hidden';node('customizeAppsView').appendChild(editor);
+node('customizeAppsView').appendChild(node('customizeGlobalPacks'));
+['customizeAppEditorTitle','customizeAppPreview','customizeAppPackChoices','customizeAppGlyphChoices'].forEach(function(id){editor.appendChild(node(id));});
+['customizeAppName','customizeAppFile'].forEach(function(id){editor.appendChild(node(id,'input'));});
+['customizeAppSave','customizeAppRestore','customizeAppCancel','customizeAppOriginalIcon','customizeAppPickFile','customizeAppBlue','customizeAppGreen','customizeAppRed','customizeAppDark'].forEach(function(id){editor.appendChild(node(id,'button'));});
 panel.appendChild(node('customizeStatus'));
 var storage={};
 var localStorage={
@@ -109,34 +112,20 @@ vm.runInNewContext(source,{window:window, document:document, localStorage:localS
 assert.equal(typeof window.INFINITI_CUSTOMIZE_OPEN,'function');
 window.INFINITI_CUSTOMIZE_OPEN();
 assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true);
+assert.equal(document.body.hasClass('customize-open'),true);
 assert.equal(document.activeElement.id,'customizeStyleTab','appearance page gets initial focus');
 assert.equal(node('customizeStyleView').hasClass('hidden'),false);
 assert.equal(node('customizeWeatherView').hasClass('hidden'),true);
 assert.ok(node('customizeWallQr').innerHTML.indexOf('data:image/png')>=0,
   'Valid QR must render inside Customize, not on Home');
 assert.equal(node('customizeWallState').textContent,
-  'Mở camera điện thoại để chọn ảnh, ảnh USB hoặc xóa hình nền.');
+  'Mở camera điện thoại cùng mạng LAN/Wi-Fi để chọn ảnh, ảnh USB hoặc xóa hình nền.');
 node('customizeWallpaper').click();
 assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true,
   'Wallpaper QR refresh must keep settings open, not return to Home');
 assert.ok(document.body.children.some(function(el) {
   return el.id==='updateStatusJs' && el.src.indexOf('update-status.js?ts=')===0;
 }), 'Settings should load current automatic-update status from TV');
-// Rooted TV may lose access to root/Failsafe. The settings UI must only
-// provide read-only guidance, even if Dev Mode Forever is installed.
-node('customizeDevModeTab').click();
-assert.equal(node('customizeDevModeView').hasClass('hidden'),false);
-assert.ok(node('customizeRootModeState').textContent.indexOf('Chưa xác minh quyền root')>=0);
-assert.ok(node('customizeDevModeWarning').textContent.indexOf('Không gửi lệnh mở ứng dụng')>=0);
-assert.ok(node('customizeDevModeView').querySelectorAll('button').length===0,
-  'No action inside Dev Mode may start an app or reboot the TV');
-assert.equal(typeof window.INFINITI_DEVMODE_OPEN,'undefined');
-window.TV_APPS.apps.push({id:'com.lennylxx.devmodeforever',title:'Dev Mode Forever'});
-node('customizeAppsTab').click();
-node('customizeDevModeTab').click();
-assert.ok(node('customizeDevModeState').textContent.indexOf('chỉ thông tin')>=0,
-  'Companion discovery must remain informational even when installed');
-assert.equal(node('customizeDevModeView').querySelectorAll('button').length,0);
 // Privacy page is informational: never silently changes DNS or root.
 node('customizePrivacyTab').click();
 assert.equal(node('customizePrivacyView').hasClass('hidden'),false);
@@ -150,20 +139,30 @@ assert.equal(window.INFINITI_PREFS.isVisible('com.webos.app.browser',[]),false);
 assert.equal(window.INFINITI_PREFS.isVisible('org.webosbrew.hbchannel',[]),true);
 node('customizeResetApps').click();
 assert.equal(window.INFINITI_PREFS.isVisible('com.webos.app.browser',[]),true);
+var browserRow=node('customizeAppList').children.filter(function(row){return row.children.some(function(el){return el.title==='com.webos.app.browser';});})[0];
+assert.ok(browserRow);
+var edit=browserRow.querySelectorAll('button').filter(function(b){return b.textContent==='Sửa tên / icon';})[0];
+assert.ok(edit);edit.click();
+assert.equal(editor.hasClass('hidden'),false);
+node('customizeAppName').value='Trình duyệt mới';
+node('customizeAppPackChoices').querySelectorAll('button')[1].click();
+node('customizeAppSave').click();
+assert.equal(window.INFINITI_PREFS.getAppStyle('com.webos.app.browser').title,'Trình duyệt mới');
+assert.equal(window.INFINITI_PREFS.getAppStyle('com.webos.app.browser').icon,'pack:neon:web');
+assert.equal(window.INFINITI_PREFS.styledApp(window.TV_APPS.apps[0]).icon,'icons/packs/neon-web.svg');
+assert.equal(editor.hasClass('hidden'),true);
+node('customizeGlobalPacks').querySelectorAll('button')[3].click();
+assert.equal(window.INFINITI_PREFS.getIconPack(),'glass');
+assert.equal(window.INFINITI_PREFS.styledApp(window.TV_APPS.apps[1]).icon,'icons/packs/glass-home.svg');
 node('customizeWeatherTab').click();
 assert.equal(node('customizeWeatherView').hasClass('hidden'),false);
 assert.equal(node('customizeStyleView').hasClass('hidden'),true);
-var presets=node('customizeWeatherPresets').querySelectorAll('button');
-assert.equal(presets.length,8,'offline presets should be visible');
-presets[0].click();
-assert.equal(window.INFINITI_PREFS.getWeather().place,'Hà Nội');
-assert.equal(weatherCalls,1);
 // A D-pad-only remote must be able to reach AND exit the weather search field.
 var arrow={type:'keydown',keyCode:39,preventDefault:function(){},
   stopPropagation:function(){},stopImmediatePropagation:function(){}};
 var down={type:'keydown',keyCode:40,preventDefault:function(){},
   stopPropagation:function(){},stopImmediatePropagation:function(){}};
-node('customizeWeatherPresets').querySelectorAll('button')[7].focus();
+node('customizePrivacyTab').focus();
 docEvents.keydown(arrow);
 assert.equal(document.activeElement.id,'customizeWeatherSearch','Right should focus search input');
 var typed={type:'keydown',keyCode:78,stopped:false,prevented:false,
@@ -180,20 +179,13 @@ node('customizeWeatherSearchBtn').click();
 assert.equal(node('customizeWeatherResults').querySelectorAll('button').length,1);
 node('customizeWeatherResults').querySelector('button').click();
 assert.equal(window.INFINITI_PREFS.getWeather().place,'Nha Trang · Việt Nam');
-assert.equal(weatherCalls,2);
+assert.equal(weatherCalls,1);
 node('customizeCalendarTab').click();
 node('customizeSolar').click();
 assert.equal(window.INFINITI_PREFS.getAppearance().showSolar,false);
 assert.equal(document.body.hasClass('solar-hidden'),true);
 node('customizeLunar').click();
 assert.equal(window.INFINITI_PREFS.getAppearance().showLunar,false);
-node('customizeAITab').click();
-assert.equal(node('customizeAIView').hasClass('hidden'),false);
-node('customizeAIToggle').click();
-assert.equal(window.INFINITI_PREFS.getAIEnabled(),false,'AI off persists');
-assert.equal(document.body.hasClass('ai-disabled'),true,'AI pill gets hidden');
-node('customizeAIToggle').click();
-assert.equal(window.INFINITI_PREFS.getAIEnabled(),true,'AI can be re-enabled');
 node('customizeStyleTab').click();
 node('customizeMotion').click();
 assert.equal(window.INFINITI_PREFS.getAppearance().reduceMotion,true);
@@ -202,4 +194,5 @@ var back={type:'keydown',keyCode:461,preventDefault:function(){},
   stopPropagation:function(){},stopImmediatePropagation:function(){}};
 docEvents.keydown(back);
 assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),false,'Back closes settings');
-console.log('Settings TV remote, read-only DevMode root/Failsafe guidance, weather, search, appearance and calendar smoke tests passed.');
+assert.equal(document.body.hasClass('customize-open'),false);
+console.log('Settings TV remote, weather, search, appearance and calendar smoke tests passed.');

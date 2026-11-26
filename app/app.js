@@ -7,21 +7,12 @@
 (function () {
   'use strict';
 
-  // Compact icon size selected via the pencil; always a single horizontal dock row.
-  var COLS_KEY = 'tvhome.columns', COLS_CHOICES = [4, 5, 6, 7, 8, 9, 10];
-  var COLUMNS = (function () {
-    var n = 0;
-    try { n = parseInt(localStorage.getItem(COLS_KEY), 10); } catch (e) { /* storage unavailable */ }
-    return n >= 3 && n <= 10 ? n : Math.max(1, CONFIG.columns || 4);
-  })();
-  // Compact, transparent single-row dock. COLUMNS now controls icon size,
-  // not the number of rows or how many installed apps can be reached.
-  var TILE_W = Math.max(96, Math.min(158, Math.round(203 - COLUMNS * 11)));
-  var TILE_H = Math.round(TILE_W * 0.85);
-  var CELL_W = TILE_W + 26;
-  var DOCK_TOP = 1030 - TILE_H - 34;
-  var FOCUS_SCALE = 1.06;
-  var GLASS_PAD = 5;
+  // Four landscape cards across a 1920x1080 logical stage.
+  // Ignore legacy saved compact sizes so in-place upgrades get the new layout.
+  var COLUMNS = 4, COLS_CHOICES = [4];
+  var TILE_W = 380, TILE_H = 214, CELL_W = 420;
+  var DOCK_TOP = 1030 - TILE_H - 46;
+  var FOCUS_SCALE = 1.07, GLASS_PAD = 3;
 
   var KEY = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, OK: 13, BACK: 461, ESC: 27 };
 
@@ -39,7 +30,7 @@
       moveHint: 'Arrows or pointer to move  ·  OK to place  ·  Back to cancel',
       noApps: 'No apps were found on this TV. Run the installer again over SSH; if it keeps happening, ' +
         'please report your TV model and webOS version at github.com/infiniti-money/lg-tv-webos/issues',
-      colsTitle: 'Icon size (higher = smaller)', arrange: 'Rearrange apps', done: 'Done',
+      colsTitle: 'Layout: 4 apps per screen', arrange: 'Rearrange apps', done: 'Done',
       arrangeHint: 'Click an app to pick it up, point where it should go, click again to drop it.',
       wallTitle: 'Change wallpaper',
       wallScan: 'Scan this code with your phone camera, then pick a photo.',
@@ -54,7 +45,7 @@
       moveHint: 'Mũi tên hoặc con trỏ để di chuyển  ·  OK để đặt  ·  Back để huỷ',
       noApps: 'Không tìm thấy ứng dụng nào trên TV này. Chạy lại lệnh cài qua SSH; nếu vẫn vậy, ' +
         'báo giúp model TV và phiên bản webOS tại github.com/infiniti-money/lg-tv-webos/issues',
-      colsTitle: 'Cỡ biểu tượng (số lớn = nhỏ hơn)', arrange: 'Sắp xếp ứng dụng', done: 'Xong',
+      colsTitle: 'Bố cục: 4 ứng dụng trên màn hình', arrange: 'Sắp xếp ứng dụng', done: 'Xong',
       arrangeHint: 'Bấm vào app để nhấc lên, trỏ tới chỗ mới rồi bấm lần nữa để đặt.',
       wallTitle: 'Đổi hình nền',
       wallScan: 'Quét mã này bằng camera điện thoại rồi chọn ảnh.',
@@ -74,7 +65,7 @@
   // Set sizing directly on elements rather than relying on var(--tile-...).
   glass.style.borderRadius = Math.round(TILE_W * 74 / 360) + 'px';
   var ambients = [$('ambientA'), $('ambientB')], ambientFront = 0, ambientColor = null;
-  var pills = [$('btnInputs'), $('btnWifi'), $('btnSettings'), $('btnAI'), $('btnCustomize')];
+  var pills = [$('btnInputs'), $('btnWifi'), $('btnSettings'), $('btnCustomize')];
   var panel = $('inputsPanel'), pen = $('penBtn'), colsPanel = $('colsPanel');
 
   var items = [];               // {app, el, color}
@@ -143,6 +134,7 @@
 
   function orderedApps() {
     var all = (window.TV_APPS && TV_APPS.apps) || [];
+    if(window.INFINITI_PREFS && INFINITI_PREFS.styledApp) all=all.map(INFINITI_PREFS.styledApp);
     var byId = {};
     all.forEach(function (a) { byId[a.id] = a; });
     var hidden = {};
@@ -197,9 +189,16 @@
 
   // One horizontal app row. COLUMNS sets visible tile size; never creates another row.
   function rowOf(i) { return 0; }
-  function tileLeft(i) { return 112 + i * CELL_W + (CELL_W - TILE_W) / 2; }
+  function tileLeft(i) { return 130 + i * CELL_W; }
+  function dockOffset(index, current, total) {
+    var first = Math.round(current / CELL_W);
+    if (index < first) first = index;
+    else if (index >= first + COLUMNS) first = index - COLUMNS + 1;
+    return Math.max(0, Math.min(first, Math.max(0, total - COLUMNS))) * CELL_W;
+  }
   function tileTop(i) { return DOCK_TOP; }
 
+  var iconCache = {};
   function build() {
     tilesEl.innerHTML = '';
     items = orderedApps().map(function (app) {
@@ -213,7 +212,21 @@
       card.style.borderRadius = Math.round(TILE_W * 68 / 360) + 'px';
       var img = document.createElement('img');
       var item = { app: app, el: el, card: card, color: null };
-      img.onload = function () { paintTile(item, img); };
+      var iconKey = app.id + ':' + app.icon + ':' + (app.iconColor || '');
+      img.onload = function () {
+        var cached = iconCache[iconKey];
+        if (cached) {
+          item.color = cached.color;
+          item.card.style.background = '';
+          if (cached.glyph) item.card.classList.add('glyph');
+          if (items[focused] === item) setAmbient(item.color);
+        } else {
+          paintTile(item, img);
+          if (Object.keys(iconCache).length >= 128) iconCache = {};
+          iconCache[iconKey] = {color:item.color,glyph:item.card.classList.contains('glyph')};
+        }
+      };
+      img.onerror = function(){if(app.originalIcon && img.src!==app.originalIcon && !img.infinitiFallback){img.infinitiFallback=true;img.src=app.originalIcon;}};
       img.src = app.icon;
       card.appendChild(img);
       el.appendChild(card);
@@ -263,7 +276,8 @@
 
   /** Places every tile by its position in items; tiles glide when the order changes. */
   function layout() {
-    offset = Math.max(0, offset);
+    offset = dockOffset(Math.max(0, Math.min(focused, items.length - 1)), offset, items.length);
+    stage.style.transform = 'translateX(' + (-offset) + 'px)';
     items.forEach(function (it, i) {
       it.el.style.left = tileLeft(i) + 'px';
       it.el.style.top = tileTop(i) + 'px';
@@ -278,10 +292,9 @@
     band.style.width = ((n - 1) * CELL_W + TILE_W + 56) + 'px';
     band.style.height = (TILE_H + 56) + 'px';
 
-    // The pencil sits just right of the dock band, centred on the dock row.
+    // A fixed edit button never takes one of the four app slots.
     pen.style.display = n ? 'flex' : 'none';
-    // Place the edit control after the final app in the same scrolling row.
-    pen.style.left = (n ? tileLeft(n - 1) + TILE_W + 45 : 1750) + 'px';
+    pen.style.left = '1824px';
     pen.style.top = (DOCK_TOP + TILE_H / 2 - 26) + 'px';
   }
 
@@ -291,12 +304,7 @@
   function animateIn() {
     clearEntranceTimers();
     if (launcherCovered()) return;
-    items.forEach(function (it, i) {
-      it.el.classList.remove('shown');
-      entranceTimers.push(setTimeout(function () {
-        if (!launcherCovered()) it.el.classList.add('shown');
-      }, 60 + Math.min(i, 16) * 40));
-    });
+    items.forEach(function (it) { it.el.classList.add('shown'); });
   }
 
   /**
@@ -418,9 +426,7 @@
     var top = tileTop(i), left = tileLeft(i);
     // Slide the one app row horizontally, keeping the selected tile within the TV safe area.
     // No expensive layout reads on each remote press.
-    if (left - offset < 130) offset = Math.max(0, left - 130);
-    if (left + TILE_W - offset > 1780) offset = left + TILE_W - 1780;
-    offset = Math.max(0, offset);
+    offset = dockOffset(i, offset, items.length);
     stage.style.transform = 'translateX(' + (-offset) + 'px)';
     document.body.classList.remove('scrolled');
 
@@ -492,16 +498,11 @@
     ambientFront = 1 - ambientFront;
   }
 
-  function aiEnabled() {
-    return !window.INFINITI_PREFS || window.INFINITI_PREFS.getAIEnabled();
-  }
   function focusPill(i) {
     setZone('top');
     document.body.classList.remove('scrolled');
     pills[pillFocus].classList.remove('focused');
     var next = Math.max(0, Math.min(i, pills.length - 1));
-    // The hidden AI pill must never trap a D-pad-only TV remote.
-    if (next === 3 && !aiEnabled()) next = i < pillFocus ? 2 : 4;
     pillFocus = next;
     pills[pillFocus].classList.add('focused');
   }
@@ -521,7 +522,6 @@
   function pillAbove(i) {
     var cx = tileLeft(i) - offset + TILE_W / 2, best = 0, bestD = Infinity;
     pills.forEach(function (p, k) {
-      if (k === 3 && !aiEnabled()) return;
       var r = p.getBoundingClientRect();
       var d = Math.abs(r.left + r.width / 2 - cx);
       if (d < bestD) { bestD = d; best = k; }
@@ -545,6 +545,7 @@
       $('ampm').textContent = h < 12 ? L.ampm[0] : L.ampm[1];
     }
     $('date').textContent = L.date(now);
+    if (window.INFINITI_LUNAR && window.INFINITI_LUNAR.render) window.INFINITI_LUNAR.render();
   }
 
   /** Shows the Wi-Fi network name when the TV reports it, otherwise the connection type. */
@@ -563,9 +564,7 @@
     if (i === 0) showInputs();
     else if (i === 1) launch('com.palm.app.settings', 'Settings', { target: 'network' });
     else if (i === 2) launch('com.palm.app.settings', 'Settings');
-    else if (i === 3 && window.INFINITI_AI_OPEN &&
-      (!window.INFINITI_PREFS || window.INFINITI_PREFS.getAIEnabled())) window.INFINITI_AI_OPEN();
-    else if (i === 4 && window.INFINITI_CUSTOMIZE_OPEN) window.INFINITI_CUSTOMIZE_OPEN();
+    else if (i === 3 && window.INFINITI_CUSTOMIZE_OPEN) window.INFINITI_CUSTOMIZE_OPEN();
   }
 
   // Wallpaper is configured inside Customize > Giao diện, not as a top-row pill.
@@ -588,10 +587,7 @@
   function focusPen() {
     setZone('pen');
     hideHero();
-    // Keep the edit pencil visible even when the row contains many apps.
-    var penLeft = items.length ? tileLeft(items.length - 1) + TILE_W + 45 : 1750;
-    offset = Math.max(offset, penLeft + 80 - 1780);
-    stage.style.transform = 'translateX(' + (-offset) + 'px)';
+    // The pencil is fixed outside the scrolling viewport.
     pen.classList.add('focused');
   }
 
@@ -622,8 +618,7 @@
     colsPanel.appendChild(arrangeBtn);
 
     // Above the dock, right-aligned with the pencil.
-    var r = pen.getBoundingClientRect();
-    colsPanel.style.right = Math.round(1920 - r.right) + 'px';
+    colsPanel.style.right = '44px';
     colsPanel.style.bottom = Math.round(1080 - (DOCK_TOP - 28 - 24)) + 'px';
     colsPanel.classList.remove('hidden');
     pen.classList.remove('focused');
@@ -670,11 +665,7 @@
     focusPen();
   }
 
-  function applyCols(n) {
-    if (n === COLUMNS) { hideCols(); return; }
-    try { localStorage.setItem(COLS_KEY, String(n)); } catch (e) { /* storage unavailable */ }
-    location.reload();
-  }
+  function applyCols(n) { hideCols(); }
 
   // ---- inputs dropdown -----------------------------------------------------------------------
 
@@ -791,9 +782,8 @@
   // On tiles OK acts on release, so a held OK can start rearranging instead of opening the app.
   document.addEventListener('keyup', function (e) {
     if (launcherCovered()) return;
-    // Leave remote and LG keyboard events to the active settings/AI dialog.
+    // Leave remote and LG keyboard events to the active settings dialog.
     if (window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()) return;
-    if (window.INFINITI_AI_IS_OPEN && window.INFINITI_AI_IS_OPEN()) return;
     if (e.keyCode !== KEY.OK) return;
     okDown = false;
     if (!okTimer) return;
@@ -807,7 +797,6 @@
     if (launcherCovered()) return;
     // Leave remote and LG keyboard events to the active settings/AI dialog.
     if (window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()) return;
-    if (window.INFINITI_AI_IS_OPEN && window.INFINITI_AI_IS_OPEN()) return;
     var k = e.keyCode;
     if (k >= KEY.LEFT && k <= KEY.DOWN) {
       var now = Date.now();
@@ -871,6 +860,17 @@
     e.preventDefault();
   });
 
+  var lastWheelAt = 0;
+  $('viewport').addEventListener('wheel', function(e) {
+    if (launcherCovered() || editing || arranging || (zone !== 'grid' && zone !== 'pen')) return;
+    var delta = Math.abs(e.deltaX || 0) > Math.abs(e.deltaY || 0) ? e.deltaX : e.deltaY;
+    if (!delta) return;
+    e.preventDefault();
+    var now = Date.now();
+    if (now-lastWheelAt < 160) return;
+    lastWheelAt=now;
+    focusTile(focused+(delta>0?1:-1));
+  });
   pen.addEventListener('mouseover', function () { if (zone !== 'inputs' && zone !== 'wall' && zone !== 'cols' && !editing && !arranging) focusPen(); });
   pen.addEventListener('click', function () { if (!editing && !arranging) showCols(); });
   $('arrangeDone').addEventListener('click', stopArrange);
@@ -912,7 +912,7 @@
    */
   function appsFingerprint() {
     var all = (window.TV_APPS && TV_APPS.apps) || [];
-    return all.map(function (a) { return a.id; }).sort().join(',');
+    return JSON.stringify(all.map(function (a) { return [a.id,a.title,a.icon,a.iconColor]; }).sort()) + JSON.stringify((window.TV_APPS && TV_APPS.inputs) || []);
   }
   var appsSeen = appsFingerprint();
 
@@ -952,12 +952,48 @@
     document.body.appendChild(sc);
   }
 
+  // V8.4: only a fresh launch challenge may acknowledge browser-side render.
+  var renderRequest=0;
+  function acknowledgeRender(params) {
+    if (!params || typeof params.infinitiRenderToken!=='string' ||
+        !/^[a-f0-9]{48}$/.test(params.infinitiRenderToken) ||
+        typeof params.infinitiRenderPort!=='number' ||
+        params.infinitiRenderPort%1!==0 || params.infinitiRenderPort<1024 ||
+        params.infinitiRenderPort>65535) return;
+    var id=++renderRequest, until=Date.now()+12000;
+    var frame=window.requestAnimationFrame || function(cb){setTimeout(cb,32);};
+    function check(){
+      if(id!==renderRequest || Date.now()>until)return;
+      var tiles=tilesEl.querySelectorAll('.item.shown');
+      var anchor=tiles.length?tiles[0]:$('noApps');
+      if (items.length && tiles.length!==items.length) {setTimeout(check,100);return;}
+      var rect=anchor && anchor.getBoundingClientRect();
+      if(launcherCovered() || !rect || rect.width<=0 || rect.height<=0 ||
+          !document.body || !document.body.clientWidth || !document.body.clientHeight){
+        setTimeout(check,100);return;
+      }
+      frame(function(){frame(function(){
+        if(id!==renderRequest || launcherCovered()){setTimeout(check,100);return;}
+        var image=new Image();
+        image.src='http://127.0.0.1:'+params.infinitiRenderPort+'/render/'+params.infinitiRenderToken+'/'+tiles.length;
+        // Image beacon needs no CORS privileges. Server checks the random token.
+        window.INFINITI_RENDER_BEACON=image;
+      });});
+    }
+    check();
+  }
+  function readLaunchParams(){
+    try {return window.PalmSystem?JSON.parse(PalmSystem.launchParams||'{}'):{};}
+    catch(e){return {};}
+  }
+
   // The wallpaper page relaunches us with {reload: true} after changing the wallpaper.
   document.addEventListener('webOSRelaunch', function (e) {
     var p = (e && e.detail) || {};
     if (!p.reload && window.PalmSystem) { try { p = JSON.parse(PalmSystem.launchParams || '{}'); } catch (x) { p = {}; } }
     if (p.reload) { location.reload(); return; }
     resume();
+    acknowledgeRender(p.infinitiRenderToken?p:readLaunchParams());
   });
   // Glasshouse owns Home and wake; this app never launches itself on resume.
   var clockTicker = null, appsTicker = null;
@@ -992,7 +1028,6 @@
     lifecycle.onHome(function () {
       if (launcherCovered()) return;
       if (window.INFINITI_CUSTOMIZE_CLOSE) window.INFINITI_CUSTOMIZE_CLOSE();
-      if (window.INFINITI_AI_CLOSE) window.INFINITI_AI_CLOSE();
       onLauncherVisible();
     });
   } else {
@@ -1013,10 +1048,6 @@
     if (items.length) focusTile(focused);
     else focusPill(pills.length - 1);
   };
-  window.INFINITI_AI_VISIBILITY_CHANGED = function () {
-    cachedHeaderBottom = null;
-    if (!aiEnabled() && pillFocus === 3) focusPill(4);
-  };
   window.INFINITI_LAUNCHER_LAYOUT_REFRESH = function () {
     cachedHeaderBottom = null;
   };
@@ -1027,9 +1058,6 @@
   }
   window.INFINITI_CUSTOMIZE_CLOSED = function () {
     resetDialogOk(); focusPill(pills.length - 1);
-  };
-  window.INFINITI_AI_CLOSED = function () {
-    resetDialogOk(); focusPill(3);
   };
   // Wallpaper settings now open within the Customize panel.
   build();
@@ -1045,4 +1073,5 @@
   zone = 'none';
   if (items.length) focusTile(0);
   else focusPill(pills.length - 1);
+  acknowledgeRender(readLaunchParams());
 })();

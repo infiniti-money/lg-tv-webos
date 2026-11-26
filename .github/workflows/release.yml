@@ -32,7 +32,7 @@ jobs:
       - name: Validate app metadata
         shell: bash
         run: |
-          node -e "const a=require('./app/appinfo.json');if(a.id!=='com.infinitimoney.tvhome'||a.title!=='Infiniti TV Home')process.exit(1);console.log(a.id, a.version)"
+          node -e "const a=require('./app/appinfo.json');if(a.id!=='com.infinitimoney.tvhome'||a.title!=='Designed by Tân Dev'||a.vendor!=='Designed by Tân Dev')process.exit(1);console.log(a.id, a.version)"
 
       - name: Check ES5 compatibility, Home rollback, and shell syntax
         shell: bash
@@ -41,6 +41,10 @@ jobs:
           node scripts/check-webos3.js
           node scripts/test-glasshouse-lifecycle.js
           python3 scripts/test-tv-service-wake.py
+          python3 scripts/test-legacy-home-v8.py
+          node scripts/test-legacy-luna.js
+          node scripts/test-legacy-v84.js
+          node scripts/test-legacy-v85.js
           node scripts/check-branding.js
           node scripts/test-homewatch.js
           node scripts/test-homekey-runtime.js
@@ -50,8 +54,8 @@ jobs:
           node scripts/test-homeevent.js
           node scripts/test-app-discovery.js
           node scripts/test-keymap.js
-          node scripts/test-ai-worker.mjs
-          node scripts/test-assistant.js
+
+
           node scripts/test-lunar.js
           node scripts/test-forecast.js
           node scripts/test-customize.js
@@ -59,21 +63,21 @@ jobs:
           node scripts/test-glasshouse.js
           node scripts/test-settings-ui.js
           node scripts/test-privacy-apps.js
-          node scripts/test-devmode-companion.js
+
           node scripts/test-homebrew-failsafe.js
           node scripts/test-autostart-rollback.js
           node scripts/test-upstream-compat.js
           python3 scripts/test-sync-noroot.py
           node scripts/test-weather-ui.js
           node scripts/test-tv-layout.js
-          for file in app/app.js app/glasshouse.js app/lifecycle.js app/extras.js app/config.js app/assistant.js app/customize.js app/lunar.js app/forecast.js app/qrcode.js tv/*.js; do node --check "$file"; done
+          for file in app/app.js app/glasshouse.js app/lifecycle.js app/extras.js app/config.js app/customize.js app/lunar.js app/forecast.js app/qrcode.js tv/*.js; do node --check "$file"; done
           for file in install.sh tv/*.sh; do sh -n "$file"; done
           for file in home-watch-mac.sh install-noroot.sh; do bash -n "$file"; done
           # PowerShell syntax check when pwsh is available on the GitHub runner.
           if command -v pwsh >/dev/null 2>&1; then
             pwsh -NoProfile -Command '$errors = $null; [System.Management.Automation.Language.Parser]::ParseFile("scripts/recover-lg-tv.ps1", [ref]$null, [ref]$errors) | Out-Null; if ($errors.Count) { $errors | Format-List; exit 1 }'
           fi
-          python3 -m py_compile home-watch.py sync-apps.py lgtv.py scripts/tv-service-wake.py
+          python3 -m py_compile home-watch.py sync-apps.py lgtv.py scripts/tv-service-wake.py tv/legacy-home-v8.py
 
       - name: Package without modern-JS minification
         shell: bash
@@ -95,16 +99,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build/infiniti-root-tools/tv build/infiniti-root-tools/scripts
-          cp tv/* build/infiniti-root-tools/tv/
+          git ls-files -z tv/ | xargs -0 -I {} cp -- "{}" build/infiniti-root-tools/tv/
           cp scripts/recover-lg-tv.ps1 scripts/tv-service-wake.py build/infiniti-root-tools/scripts/
           cp lgtv.py build/infiniti-root-tools/
-          cp install.sh README.vi.md RELEASE_NOTES_v1.5.9.md build/infiniti-root-tools/
-          (cd build && zip -qr infiniti-tv-home-root-tools-v1.5.9.zip infiniti-root-tools)
-          (cd build && sha256sum infiniti-tv-home-root-tools-v1.5.9.zip > infiniti-tv-home-root-tools-v1.5.9.zip.sha256)
-          unzip -l build/infiniti-tv-home-root-tools-v1.5.9.zip | grep -q 'tv/safe-recovery.sh'
-          unzip -l build/infiniti-tv-home-root-tools-v1.5.9.zip | grep -q 'scripts/recover-lg-tv.ps1'
-          unzip -l build/infiniti-tv-home-root-tools-v1.5.9.zip | grep -q 'scripts/tv-service-wake.py'
-          unzip -l build/infiniti-tv-home-root-tools-v1.5.9.zip | grep -q 'lgtv.py'
+          cp install.sh README.vi.md RELEASE_NOTES_v1.6.0.md docs/legacy-home-v8.vi.md build/infiniti-root-tools/
+          (cd build && zip -qr infiniti-tv-home-root-tools-v1.6.0.zip infiniti-root-tools)
+          (cd build && sha256sum infiniti-tv-home-root-tools-v1.6.0.zip > infiniti-tv-home-root-tools-v1.6.0.zip.sha256)
+          unzip -l build/infiniti-tv-home-root-tools-v1.6.0.zip | grep -q 'tv/safe-recovery.sh'
+          unzip -l build/infiniti-tv-home-root-tools-v1.6.0.zip | grep -q 'scripts/recover-lg-tv.ps1'
+          unzip -l build/infiniti-tv-home-root-tools-v1.6.0.zip | grep -q 'scripts/tv-service-wake.py'
+          unzip -l build/infiniti-tv-home-root-tools-v1.6.0.zip | grep -q 'lgtv.py'
 
       - name: Upload IPK artifact
         uses: actions/upload-artifact@v4
@@ -114,20 +118,52 @@ jobs:
             build/infiniti-tv-home.ipk
             build/infiniti-tv-home.ipk.sha256
 
-            build/infiniti-tv-home-root-tools-v1.5.9.zip
-            build/infiniti-tv-home-root-tools-v1.5.9.zip.sha256
+            build/infiniti-tv-home-root-tools-v1.6.0.zip
+            build/infiniti-tv-home-root-tools-v1.6.0.zip.sha256
           if-no-files-found: error
           retention-days: 30
 
-      # Release v1.5.9 once from the deliberate main merge commit with the
+      # Release v1.6.0 once from the deliberate main merge commit with the
       # exact prefix below. All checks, packaging and artifact upload run first.
       # Manual workflow_dispatch publishing is retained as the fallback.
       # Future ordinary main pushes cannot trigger the release gate.
+      - name: Create verified RC tag
+        if: >-
+          ${{ github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.7') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG=v1.6.0-rc.7
+          test "$(node -p "require('./app/appinfo.json').version")" = "1.6.0"
+          existing=$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')
+          if [ -n "$existing" ]; then
+            test "$existing" = "$GITHUB_SHA"
+          else
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$TAG"
+          fi
+      - name: Publish release candidate
+        if: >-
+          ${{ (github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.7')) || github.ref == 'refs/tags/v1.6.0-rc.7' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.6.0-rc.7
+          name: Designed by Tân Dev v1.6.0 RC7 — V9.0
+          prerelease: true
+          make_latest: false
+          files: |
+            build/infiniti-tv-home.ipk
+            build/infiniti-tv-home.ipk.sha256
+            build/infiniti-tv-home-root-tools-v1.6.0.zip
+            build/infiniti-tv-home-root-tools-v1.6.0.zip.sha256
+          fail_on_unmatched_files: true
+          body_path: RELEASE_NOTES_v1.6.0.md
+
       - name: Create verified version tag
         if: >-
           ${{ (github.event_name == 'workflow_dispatch' && inputs.publish_release) ||
               (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
-               startsWith(github.event.head_commit.message, 'release: publish verified v1.5.9')) }}
+               startsWith(github.event.head_commit.message, 'release: publish verified v1.6.0')) }}
         shell: bash
         run: |
           set -euo pipefail
@@ -135,7 +171,7 @@ jobs:
           VERSION=$(node -p "require('./app/appinfo.json').version")
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'ERROR: Invalid app version'; exit 1; }
           if [ "${{ github.event_name }}" = "push" ]; then
-            test "$VERSION" = "1.5.9" || { echo 'ERROR: One-shot publish only permits v1.5.9'; exit 1; }
+            test "$VERSION" = "1.6.0" || { echo 'ERROR: One-shot publish only permits v1.6.0'; exit 1; }
           fi
           TAG="v$VERSION"
           echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
@@ -153,19 +189,22 @@ jobs:
 
       - name: Publish tagged release
         if: >-
-          ${{ startsWith(github.ref, 'refs/tags/v') ||
+          ${{ (startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-rc.')) ||
               (github.event_name == 'workflow_dispatch' && inputs.publish_release) ||
               (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
-               startsWith(github.event.head_commit.message, 'release: publish verified v1.5.9')) }}
+               startsWith(github.event.head_commit.message, 'release: publish verified v1.6.0')) }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG || github.ref_name }}
+          name: Designed by Tân Dev ${{ env.RELEASE_TAG || github.ref_name }}
+          prerelease: false
+          make_latest: true
           files: |
             build/infiniti-tv-home.ipk
             build/infiniti-tv-home.ipk.sha256
 
-            build/infiniti-tv-home-root-tools-v1.5.9.zip
-            build/infiniti-tv-home-root-tools-v1.5.9.zip.sha256
+            build/infiniti-tv-home-root-tools-v1.6.0.zip
+            build/infiniti-tv-home-root-tools-v1.6.0.zip.sha256
           fail_on_unmatched_files: true
           generate_release_notes: true
-          body_path: RELEASE_NOTES_v1.5.9.md
+          body_path: RELEASE_NOTES_v1.6.0.md

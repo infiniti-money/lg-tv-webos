@@ -23,7 +23,11 @@ var execFile = require('child_process').execFile;
 
 var PORT = 8090;
 var DATA = '/home/root/lg-tv-vibehack';
-var APP_DIR = '/media/developer/apps/usr/palm/applications/com.infinitimoney.tvhome';
+var APP_DIR = require('./sync.js').findLauncherDir();
+var legacyLuna = require('./legacy-luna.js').luna;
+var managed = process.argv.indexOf('--legacy-managed')!==-1;
+function permitted(){return !fs.existsSync('/var/luna/preferences/webosbrew_failsafe') && (!managed || fs.existsSync(path.join(DATA,'legacy-v8-wallpaper')));}
+if(!permitted())process.exit(1);
 var WALLPAPER = path.join(DATA, 'wallpaper.jpg');
 var SETTINGS = path.join(DATA, 'settings.json');
 var USB_ROOT = '/tmp/usb';
@@ -40,9 +44,9 @@ function loadKey() {
   var f = path.join(DATA, '.wallpaper-key');
   try {
     var k = fs.readFileSync(f, 'utf8').trim();
-    if (/^[0-9a-f]{12}$/.test(k)) return k;
+    if (/^[0-9a-f]{48}$/.test(k)) return k;
   } catch (e) { /* first run */ }
-  k = crypto.randomBytes(6).toString('hex');
+  k = crypto.randomBytes(24).toString('hex');
   fs.writeFileSync(f, k, { mode: 384 });
   return k;
 }
@@ -61,32 +65,30 @@ function tvAddress() {
 
 /** Tells the launcher where this page is (for the QR code). */
 function writeWallJs() {
+  APP_DIR = require('./sync.js').findLauncherDir();
   var ip = tvAddress();
   var url = ip ? 'http://' + ip + ':' + PORT + '/?k=' + KEY : '';
   try {
-    fs.writeFileSync(path.join(APP_DIR, 'wall.js'), '// Written by wallpaper-server.js\nwindow.WALL_URL = ' + JSON.stringify(url) + ';\n');
+    var file=path.join(APP_DIR,'wall.js'), value='// Written by wallpaper-server.js\nwindow.WALL_URL = '+JSON.stringify(url)+';\n';
+    try{if(fs.readFileSync(file,'utf8')===value)return;}catch(e){}
+    fs.writeFileSync(file+'.tmp',value);
+    fs.renameSync(file+'.tmp',file);
   } catch (e) { log('cannot write wall.js: ' + e.message); }
 }
 
 /** Rewrites the launcher's files, then reloads the launcher so the new wallpaper shows. */
 function sync(cb) {
-  execFile('/usr/bin/node', [path.join(DATA, 'sync.js')], { timeout: 60000 }, function (err, out, errOut) {
-    if (err) log('sync failed: ' + (errOut || err.message));
+  execFile('/usr/bin/node', [path.join(DATA,'sync.js'),'--settings-only'],{timeout:10000},function(err){
+    if(err){log('sync failed: '+err.message);return cb(err);}
     writeWallJs();
-    // A wallpaper change from a phone must not wake or take over LG Home.
-    // Reload only when Infiniti is *already* the verified foreground app.
-    execFile('luna-send', ['-n', '1',
-      'luna://com.webos.applicationManager/getForegroundAppInfo', '{}'],
-      { timeout: 5000 }, function (fgErr, out) {
-        var foreground = '';
-        try { foreground = JSON.parse(String(out || '').trim()).appId || ''; } catch (e) {}
-        if (!fgErr && foreground === 'com.infinitimoney.tvhome') {
-          execFile('luna-send', ['-n', '1', 'luna://com.webos.applicationManager/launch',
-            JSON.stringify({ id: foreground, params: { reload: true } })],
-            { timeout: 5000 }, function () {});
-        }
-      });
-    cb(err);
+    if(!permitted())return cb(new Error('service disabled'));
+    legacyLuna('luna://com.webos.applicationManager/getForegroundAppInfo',{},function(e,r){
+      var foreground=!e && r.appId;
+      if(foreground === 'com.infinitimoney.tvhome' && permitted()){
+        legacyLuna('luna://com.webos.applicationManager/launch',{id:foreground,params:{reload:true}},function(){},null,3000);
+      }
+      cb(null);
+    },null,1500);
   });
 }
 
@@ -148,6 +150,7 @@ function insideUsb(p) {
 }
 
 function handle(req, res) {
+  if(!permitted())return json(res,503,{error:'service disabled'});
   var u = parseUrl(req.url, true), q = u.query, route = req.method + ' ' + u.pathname;
   if (q.k !== KEY) {
     return send(res, 403, 'text/html; charset=utf-8', page403());
@@ -213,9 +216,9 @@ function handle(req, res) {
       if (tooBig) return;
       var buf = Buffer.concat(chunks);
       if (buf.length < 4 || buf[0] !== 0xff || buf[1] !== 0xd8) return json(res, 400, { error: 'not a JPEG' });
-      var tmp = WALLPAPER + '.part';
-      fs.writeFileSync(tmp, buf);
-      fs.renameSync(tmp, WALLPAPER);
+      var tmp = WALLPAPER + '.part-' + process.pid;
+      if(!permitted())return json(res,503,{error:'service disabled'});
+      try {fs.writeFileSync(tmp,buf);fs.renameSync(tmp,WALLPAPER);} catch(e){return json(res,500,{error:'cannot save photo'});}
       log('new wallpaper, ' + Math.round(buf.length / 1024) + ' KB');
       sync(function (err) { json(res, err ? 500 : 200, { ok: !err }); });
     });
@@ -267,9 +270,8 @@ http.createServer(function (req, res) {
   // An app-only auto-update may replace wall.js. Restore the QR URL without
   // reopening the launcher or interacting with LG's Home on wake.
   setInterval(function () {
-    try {
-      if (!fs.existsSync(path.join(APP_DIR, 'wall.js'))) writeWallJs();
-    } catch (e) { log('wall.js refresh failed: ' + e.message); }
-  }, 60000);
+    if(!permitted())process.exit(0);
+    try {writeWallJs();} catch(e){log('wall.js refresh failed: '+e.message);}
+  }, 5000);
   log('listening on port ' + PORT);
 });

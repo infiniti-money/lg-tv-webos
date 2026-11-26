@@ -103,7 +103,7 @@
     target.textContent = 'Âm lịch: ' + date.day + '/' + date.month + '/' + date.year +
       (date.leap ? ' (tháng nhuận)' : '') + ' · ' + yearName(date.year);
   }
-  root.INFINITI_LUNAR = {convert: convert, yearName: yearName};
+  root.INFINITI_LUNAR = {convert: convert, yearName: yearName, render: render};
   if (typeof module !== 'undefined' && module.exports) module.exports = root.INFINITI_LUNAR;
   if (typeof document !== 'undefined') {
     var lifecycle = root.INFINITI_LIFECYCLE || null, lunarTimer = null;
@@ -127,6 +127,9 @@
         else startLunar();
       });
     }
+    // Populate the date even when the initial visibility report is stale.
+    // Only the periodic timer is gated by foreground visibility.
+    render();
     if (!covered()) startLunar();
   }
 })(typeof window !== 'undefined' ? window : this);

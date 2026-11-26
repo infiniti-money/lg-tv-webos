@@ -1,0 +1,42 @@
+# Infiniti LG Home Legacy — LG 49UH850T-TA
+
+Mục tiêu: webOS 3.4.3, firmware 05.70.45, ARMv7, Python 2.7.3, root UID 0. Home key 773 đã được đo trên LGE M-RCU Builtin [0] event4. V8 tương tác đã xác nhận close/launch/getForegroundAppInfo với Homebrew Channel; chưa thử với IPK Infiniti hoặc daemon mới.
+
+## Cài và thử nghiệm (SSH root, trên TV)
+Cài IPK và root tools theo README; không chọn --enable-home (LG Input Hook) đồng thời với V8. Nếu đã có hook cũ, dùng recovery hiện có, kiểm tra lại và xác nhận Home gốc trước khi tiếp tục. Không sửa firmware.
+
+```sh
+cd /home/root/lg-tv-vibehack
+sh legacy-home.sh status
+sh legacy-home.sh watch
+```
+
+Nếu chỉ cài IPK thủ công thì apps.js ban đầu rỗng: cài root tools, chạy `node /home/root/lg-tv-vibehack/sync.js` rồi đóng/mở Launcher. Legacy sync ưu tiên listApps qua Node.js với stdin mở; loại bỏ app ẩn và dịch vụ nền. Không arm boot nếu danh sách còn rỗng.
+
+Nhấn Home, kiểm tra log foreground phải là com.infinitimoney.tvhome và quan sát màn hình. Ctrl+C để dừng. Đây là quan sát phím không độc quyền, có thể lóe LG Home gốc; không phải thay thế compositor.
+
+Nếu thử thành công và đã kiểm tra ít nhất hai chu kỳ bật/tắt bình thường, chạy `sh legacy-home.sh arm`, reboot thủ công để thử một lần. Sau khi nhìn thấy Launcher và kiểm tra hoạt động bình thường, chạy `sh legacy-home.sh confirm`. Lần cold boot kế tiếp mới chạy watcher lâu dài. Tùy chọn `sh legacy-home.sh wake-on` (thử nghiệm): chỉ kích hoạt sau trạng thái standby quan sát được chuyển sang Active; Quick Start có thể không phát sinh trạng thái này. Không bật mặc định.
+
+## V8.3 — Khởi động thích ứng
+Bỏ thời gian chờ cố định 45 giây. Từ khi Homebrew chạy hook, kiểm tra guard (không tự xóa failsafe), TV power Active và getForegroundAppInfo có appId hai lần liên tiếp cách nhau 1 giây. Giới hạn chờ 90 giây, chỉ thử launch một lần, không close khi boot; nếu Infiniti đã foreground thì chỉ xác minh lại. Sau launch kiểm tra foreground sau 2 giây. Timeout hoặc xung đột thì dừng, không mở lại liên tục. Không đảm bảo compositor đã render; phải quan sát màn hình thật. Thời gian tính từ hook, không phải nút nguồn. Standby giữ cơ chế riêng. Thử lại bằng disable, arm, reboot, quan sát log và xác nhận thủ công.
+ 
+## Khôi phục
+```sh
+sh /home/root/lg-tv-vibehack/legacy-home.sh disable
+sh /home/root/lg-tv-vibehack/safe-recovery.sh
+```
+Lệnh đầu gỡ cờ và hook V8 do dự án tạo. Lệnh thứ hai xử lý các hook và mapping cũ. Không khởi động lại trước khi đọc kết quả recovery. Không ghi rootfs, kernel, EIM hoặc grab thiết bị điều khiển.
+
+## Quảng cáo và quyền riêng tư
+Launcher không có quảng cáo. Customize > Privacy đã hỗ trợ ẩn biểu tượng và hướng dẫn DNS AdGuard thủ công, khôi phục DNS tự động. Homebrew startup có hạn chế telemetry riêng. Tắt Live Plus/ACR trong cài đặt TV nếu có. Không vô hiệu hóa/mount chồng gói hệ thống ACR khi chưa xác minh tác động HDMI và Live TV. Không cam kết chặn mọi quảng cáo trong app.
+
+## Kiểm thử
+V8.2: Python chỉ đọc phím và điều phối; Node.js xử lý JSON/Luna vì Python trên TV thiếu fcntl và json. Chạy `node /home/root/lg-tv-vibehack/legacy-luna.js probe` trước khi watch.
+
+CI kiểm tra ES5, IPK, checksum và mô phỏng Luna stdin: giữ đầu ghi pipe mở tránh EOF khi daemon không có TTY. Đây không thay thế thử nghiệm vật lý. Không phát hành bản ổn định hoặc tự bật hook khi chưa nghiệm thu TV.
+
+## V8.4
+Home giảm thời gian chờ trước close/launch; wake kiểm tra 2 giây, giữ trạng thái standby qua lỗi truy vấn tạm thời, không suy đoán wake khi chưa thấy standby. IPK mới xác nhận DOM/layout và hai frame bằng challenge ngẫu nhiên qua HTTP loopback tạm thời; không phải bằng chứng màn hình vật lý. Nếu không nhận render trong 18 giây thì dừng, không retry boot. Khi enabled, đồng bộ catalog nền sau 10 giây rồi mỗi 120 giây, bảo toàn danh sách nếu Luna trống; giao diện đã có refresh mỗi 30 giây. Recovery lưu log V8 và vô hiệu hóa proof. Cần cài IPK và sidecar cùng phiên bản, không dùng V8.4 với IPK cũ. Wake và render chưa nghiệm thu vật lý.
+
+## V8.5 RC2 — Designed by Tân Dev
+Cold Boot đã được xác nhận qua Boot ID thay đổi và thông báo halt. Giữ failsafe, hai mẫu readiness, giảm polling xuống 500ms; không suy đoán Wake chỉ từ gián đoạn. Bỏ AI, trang Dev Mode và preset thời tiết; giữ tìm kiếm. Render đợi toàn bộ tile được tạo và class shown, không chứng minh tất cả ảnh decode hoặc màn hình vật lý. QR: `sh /home/root/lg-tv-vibehack/legacy-home.sh wallpaper-on` bật dịch vụ LAN có khóa, điện thoại cùng mạng, cổng 8090; `wallpaper-off` tắt dịch vụ managed. Khi enabled, dịch vụ tự chạy lại nếu đã bật cờ. Kiểm tra `/tmp/infiniti-wallpaper.log`. Không mở port ra Internet. Giữ nguyên app ID và thư mục dữ liệu để cập nhật tại chỗ. RC2 cần thử trên TV.

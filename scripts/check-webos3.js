@@ -5,9 +5,9 @@
 'use strict';
 var fs = require('fs');
 var paths = [
-  'app/app.js', 'app/glasshouse.js', 'app/lifecycle.js', 'app/extras.js', 'app/config.js', 'app/assistant.js', 'app/customize.js', 'app/lunar.js', 'app/forecast.js', 'app/qrcode.js',
+  'app/app.js', 'app/glasshouse.js', 'app/lifecycle.js', 'app/extras.js', 'app/config.js', 'app/customize.js', 'app/lunar.js', 'app/forecast.js', 'app/qrcode.js',
   'tv/sync.js', 'tv/homewatch.js', 'tv/wallpaper-server.js',
-  'tv/diag.js'
+  'tv/diag.js', 'tv/legacy-luna.js'
 ];
 var issues = [];
 paths.forEach(function (p) {

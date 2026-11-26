@@ -108,7 +108,8 @@
 </main>
 <script>
 (function () {
-  var K = new URLSearchParams(location.search).get('k');
+  var match = /[?&]k=([a-f0-9]{12,48})(?:&|$)/.exec(location.search);
+  var K = match ? match[1] : '';
   var T = {
     en: { title: 'TV wallpaper', dim: 'Darken', pick: 'Choose a photo', clear: 'Remove wallpaper', usb: 'From a USB stick in the TV',
       usbNone: 'No photos found. Plug a USB stick with photos into the TV, then reload this page.', empty: 'No wallpaper',
@@ -131,7 +132,7 @@
       find: 'Tìm', weatherOff: 'Tắt thời tiết', noCity: 'Không tìm thấy, thử gõ cách khác.',
       cityDone: 'Xong! TV hiện thời tiết ', weatherOffDone: 'Đã tắt thời tiết.', searching: 'Đang tìm…' }
   };
-  var L = T.en;
+  var L = T.vi;
   var $ = function (id) { return document.getElementById(id); };
 
   function api(method, p, body) {
@@ -188,12 +189,14 @@
       st.x = (fw() - img.naturalWidth * st.s) / 2;
       st.y = (fh() - img.naturalHeight * st.s) / 2;
       draw();
-      frame.scrollIntoView({ block: 'center' });
+      try{frame.scrollIntoView({block:'center'});}catch(e){frame.scrollIntoView();}
     };
-    img.onerror = function () { status(L.fail, 1); };
+    img.onerror = function () { status('Không đọc được ảnh. Hãy chọn ảnh JPG/PNG hoặc chuyển HEIC sang JPG.', 1); if(/^blob:/.test(src))URL.revokeObjectURL(src); };
     img.src = src;
   }
   function closeCrop() {
+    if(/^blob:/.test(st.src))URL.revokeObjectURL(st.src);
+    st.src='';img.removeAttribute('src');
     $('cropMode').hidden = true;
     $('viewMode').hidden = false;
     $('usbSection').hidden = false;
@@ -209,7 +212,7 @@
   }
   function local(e) { var r = frame.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
   frame.addEventListener('pointerdown', function (e) {
-    frame.setPointerCapture(e.pointerId);
+    if(frame.setPointerCapture)frame.setPointerCapture(e.pointerId);
     pts[e.pointerId] = local(e);
     last = pinchInfo();
   });
@@ -241,7 +244,8 @@
       c.width = 1920; c.height = 1080;
       var sx = -st.x / st.s, sy = -st.y / st.s, sw = fw() / st.s, sh = fh() / st.s;
       c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, 1920, 1080);
-      c.toBlob(function (b) { if (b) ok(b); else no(); }, 'image/jpeg', 0.88);
+      if(c.toBlob) c.toBlob(function(b){if(b)ok(b);else no();},'image/jpeg',0.85);
+      else {try{var raw=atob(c.toDataURL('image/jpeg',0.85).split(',')[1]);var bytes=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);ok(new Blob([bytes],{type:'image/jpeg'}));}catch(e){no(e);}}
     });
   }
 

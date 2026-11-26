@@ -4,13 +4,13 @@ var fs = require('fs'), path = require('path'), assert = require('assert');
 var html = fs.readFileSync('app/index.html', 'utf8');
 var appInfo = JSON.parse(fs.readFileSync('app/appinfo.json','utf8'));
 assert.strictEqual(appInfo.id, 'com.infinitimoney.tvhome');
-assert.strictEqual(appInfo.title, 'Infiniti TV Home');
-assert.strictEqual(appInfo.vendor, 'Infiniti Money');
+assert.strictEqual(appInfo.title, 'Designed by Tân Dev');
+assert.strictEqual(appInfo.vendor, 'Designed by Tân Dev');
 var noRootWatcher = fs.readFileSync('home-watch.py','utf8');
 assert.ok(/LAUNCHER = "com\.infinitimoney\.tvhome"/.test(noRootWatcher), 'no-root Home watcher must open the correct application');
 assert.ok(!/com\.gathin\.tvhome/.test(noRootWatcher), 'old app ID in no-root Home watcher');
 assert.strictEqual(appInfo.main, 'index.html');
-assert.ok(/^1\.5\./.test(appInfo.version), 'new feature version must be 1.5.x');
+assert.ok(/^1\.[0-9]+\./.test(appInfo.version), 'new feature version must be 1.x');
 var ids = {}, matches = html.match(/id="[^"]+"/g) || [];
 matches.forEach(function (entry) {
   var id = entry.slice(4, -1);
@@ -18,15 +18,15 @@ matches.forEach(function (entry) {
   ids[id] = true;
 });
 ['customizePanel','customizeAppList','customizeThemes','customizeFonts',
- 'customizeWeatherTab','customizeCalendarTab','customizeWeatherPresets','customizeWeatherSearch',
+ 'customizeWeatherTab','customizeCalendarTab','customizeWeatherSearch',
  'customizeWeatherSearchBtn','customizeWeatherResults','customizeWeatherEnable',
- 'customizeWeatherUnit','customizeAITab','customizeAIView','customizeAIToggle','customizeAIState','customizeMotion','customizeSolar','customizeLunar',
- 'customizeWallpaper','forecastArea','weekWeather','date','lunarDate','btnCustomize','aiPanel'].forEach(function (id) {
+ 'customizeWeatherUnit','customizeMotion','customizeSolar','customizeLunar',
+ 'customizeWallpaper','forecastArea','weekWeather','date','lunarDate','btnCustomize'].forEach(function (id) {
   assert.ok(ids[id], 'missing widget: ' + id);
 });
 var scripts = [], re = /<script src="([^"]+)"/g, m;
 while ((m = re.exec(html))) scripts.push(m[1]);
-['config.js','customize.js','app.js','forecast.js','extras.js','lunar.js','assistant.js'].forEach(function (file) {
+['config.js','customize.js','app.js','forecast.js','extras.js','lunar.js'].forEach(function (file) {
   assert.ok(scripts.indexOf(file) !== -1, 'missing script include: ' + file);
 });
 scripts.forEach(function (file) {

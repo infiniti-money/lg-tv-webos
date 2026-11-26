@@ -6,25 +6,15 @@
   var VISIBILITY_KEY = 'tvhome.visibility.v1';
   var APPEARANCE_KEY = 'tvhome.appearance.v1';
   var WEATHER_KEY = 'tvhome.weather.v1';
-  var AI_KEY = 'tvhome.ai.v1';
   var cache = {};
+  var APP_STYLE_KEY = 'tvhome.appstyle.v1';
+  var MAX_ICON = 48000, MAX_STYLE = 900000;
   var defaults = {
     theme:'midnight', font:'lexend', largeText:false, showWeek:true,
     reduceMotion:false, showSolar:true, showLunar:true
   };
   var THEMES = ['midnight','ocean','amber'];
   var FONTS = ['lexend','sans','serif'];
-  // Offline quick picks; more provinces/districts can be found using Open-Meteo geocoding.
-  var PRESETS = [
-    {place:'Hà Nội',latitude:21.0285,longitude:105.8542},
-    {place:'Hải Phòng',latitude:20.8449,longitude:106.6881},
-    {place:'Hưng Yên',latitude:20.6464,longitude:106.0511},
-    {place:'Đà Nẵng',latitude:16.0678,longitude:108.2208},
-    {place:'Huế',latitude:16.4637,longitude:107.5909},
-    {place:'TP. Hồ Chí Minh',latitude:10.8231,longitude:106.6297},
-    {place:'Cần Thơ',latitude:10.0452,longitude:105.7469},
-    {place:'Đà Lạt',latitude:11.9404,longitude:108.4583}
-  ];
   function safeRead(key) {
     var obj = null;
     try {
@@ -111,16 +101,6 @@
     safeWrite(APPEARANCE_KEY, current);
     return current;
   }
-  // Default ON preserves existing installations; OFF is persisted locally.
-  // API secrets and access tokens are never saved by this setting.
-  function getAIEnabled() {
-    return safeRead(AI_KEY).enabled !== false;
-  }
-  function setAIEnabled(enabled) {
-    var value = enabled === true;
-    safeWrite(AI_KEY, {enabled:value});
-    return value;
-  }
   function getWeather() {
     var saved = safeRead(WEATHER_KEY);
     var original = (root.CONFIG || {}).weather || {};
@@ -149,11 +129,107 @@
     safeWrite(WEATHER_KEY, current);
     return current;
   }
+  function validAppId(id) {
+    return typeof id === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}$/.test(id) &&
+      id !== 'constructor' && id !== 'prototype' && !isProtected(id);
+  }
+  var PACKS=['minimal','neon','glass','pastel','gold'];
+  var GLYPHS=['video','music','web','tv','game','settings','home','photo','apps'];
+  function iconCategory(app) {
+    var s=String(app.id||'')+' '+String(app.title||'');
+    if(/youtube|netflix|prime|video|jellyfin|kodi|plex|disney|hbo|tiktok/i.test(s))return 'video';
+    if(/spotify|music|soundcloud|nhạc|radio/i.test(s))return 'music';
+    if(/browser|chromium|trình duyệt|web browser/i.test(s))return 'web';
+    if(/game|gaming|trò chơi/i.test(s))return 'game';
+    if(/setting|cài đặt/i.test(s))return 'settings';
+    if(/photo|gallery|hình ảnh|album/i.test(s))return 'photo';
+    if(/homebrew|launcher|home channel/i.test(s))return 'home';
+    if(/livetv|channels|truyền hình|television/i.test(s))return 'tv';
+    return 'apps';
+  }
+  function packIcon(pack,glyph) {
+    return PACKS.indexOf(pack)>=0 && GLYPHS.indexOf(glyph)>=0 ? 'pack:'+pack+':'+glyph : '';
+  }
+  function iconSource(icon,original) {
+    if(icon==='original')return original||'';
+    var p=typeof icon==='string'?icon.split(':'):[];
+    if(p.length===3 && p[0]==='pack' && packIcon(p[1],p[2]))return 'icons/packs/'+p[1]+'-'+p[2]+'.svg';
+    return validIcon(icon)?icon:original||'';
+  }
+  function getIconPack(){
+    var p=safeRead('tvhome.iconpack.v1').pack;
+    return PACKS.indexOf(p)>=0?p:'original';
+  }
+  function setIconPack(p){
+    if(p!=='original' && PACKS.indexOf(p)<0)return false;
+    return safeWrite('tvhome.iconpack.v1',{pack:p});
+  }
+  function validIcon(icon) {
+    if(icon==='original')return true;
+    if(typeof icon==='string' && /^pack:/.test(icon)){var p=icon.split(':');return p.length===3 && !!packIcon(p[1],p[2]);}
+    return typeof icon === 'string' && icon.length <= MAX_ICON &&
+      /^data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(icon);
+  }
+  function getAppStyle(id) {
+    var map = safeRead(APP_STYLE_KEY), v = validAppId(id) && Object.prototype.hasOwnProperty.call(map,id) ? map[id] : null;
+    return {title:v && typeof v.title==='string' ? v.title.slice(0,48) : '',
+      icon:v && validIcon(v.icon) ? v.icon : ''};
+  }
+  function saveAppStyle(id, title, icon) {
+    if (!validAppId(id) || typeof title !== 'string' || typeof icon !== 'string' ||
+        (icon && !validIcon(icon))) return false;
+    title = title.replace(/[\x00-\x1f\x7f]/g,' ').replace(/^\s+|\s+$/g,'').slice(0,48);
+    var old = safeRead(APP_STYLE_KEY), map = {}, count = 0;
+    Object.keys(old).forEach(function(k) {
+      if (k !== id && validAppId(k) && count < 250) {
+        var v = getAppStyle(k);
+        if (v.title || v.icon) { map[k]=v; count++; }
+      }
+    });
+    if (title || icon) {
+      if (count >= 250) return false;
+      map[id] = {title:title,icon:icon};
+    }
+    var serialized = JSON.stringify(map);
+    if (serialized.length > MAX_STYLE) return false;
+    try {
+      if (typeof localStorage !== 'undefined') localStorage.setItem(APP_STYLE_KEY,serialized);
+    } catch(e) { return false; }
+    cache[APP_STYLE_KEY]=map;
+    return true;
+  }
+  function styledApp(app) {
+    var style = getAppStyle(app.id), out = {};
+    Object.keys(app).forEach(function(k){out[k]=app[k];});
+    out.title = style.title || app.title || app.id;
+    out.originalIcon = app.icon || '';
+    var pack=getIconPack();
+    out.icon=iconSource(style.icon || (pack==='original'?'':packIcon(pack,iconCategory(app))),app.icon);
+    return out;
+  }
+  function directionalIndex(rects,index,code) {
+    if(index<0 || !rects[index])return 0;
+    var r=rects[index],x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;
+    var best=-1,score=Infinity,vertical=code===38||code===40;
+    for(var j=0;j<rects.length;j++){
+      if(j===index || !rects[j])continue;
+      var b=rects[j],dx=(b.left+b.right)/2-x,dy=(b.top+b.bottom)/2-y;
+      var primary=vertical?dy:dx,side=vertical?Math.abs(dx):Math.abs(dy);
+      if(code===37||code===38)primary=-primary;
+      if(primary<=3)continue;
+      var overlap=vertical?Math.min(r.right,b.right)-Math.max(r.left,b.left):Math.min(r.bottom,b.bottom)-Math.max(r.top,b.top);
+      var cost=primary+side*(overlap>0?0.25:3)+(overlap>0?0:120);
+      if(cost<score){score=cost;best=j;}
+    }
+    return best;
+  }
   var api = {
+    directionalIndex:directionalIndex,
+    getAppStyle:getAppStyle, saveAppStyle:saveAppStyle, styledApp:styledApp,
+    iconCategory:iconCategory,packIcon:packIcon,iconSource:iconSource,getIconPack:getIconPack,setIconPack:setIconPack,
     isVisible:isVisible, setVisible:setVisible, resetVisible:resetVisible,
     getAppearance:getAppearance, saveAppearance:saveAppearance,
     getWeather:getWeather, saveWeather:saveWeather,
-    getAIEnabled:getAIEnabled, setAIEnabled:setAIEnabled,
     validCoords:validCoords, isProtected:isProtected,
     isLGDefaultApp:isLGDefaultApp, hideLGDefaultApps:hideLGDefaultApps
   };
@@ -167,19 +243,16 @@
   var tabs = {
     apps:$('customizeAppsTab'), style:$('customizeStyleTab'),
     weather:$('customizeWeatherTab'), calendar:$('customizeCalendarTab'),
-    ai:$('customizeAITab'), devmode:$('customizeDevModeTab'),
     privacy:$('customizePrivacyTab')
   };
   var views = {
     apps:$('customizeAppsView'), style:$('customizeStyleView'),
     weather:$('customizeWeatherView'), calendar:$('customizeCalendarView'),
-    ai:$('customizeAIView'), devmode:$('customizeDevModeView'),
     privacy:$('customizePrivacyView')
   };
   var appsList = $('customizeAppList'), themeBox = $('customizeThemes');
   var fontBox = $('customizeFonts'), status = $('customizeStatus');
   var opened = false, activeTab = 'style', searchRequest = null;
-  var DEVMODE_APP = 'com.lennylxx.devmodeforever';
 
   function applyAppearance() {
     var a = getAppearance(), body = document.body;
@@ -194,17 +267,9 @@
     if (a.reduceMotion) body.classList.add('motion-reduced');
     if (!a.showSolar) body.classList.add('solar-hidden');
     if (!a.showLunar) body.classList.add('lunar-hidden');
-    applyAI();
+    else if (root.INFINITI_LUNAR && root.INFINITI_LUNAR.render) root.INFINITI_LUNAR.render();
     if (typeof root.INFINITI_LAUNCHER_LAYOUT_REFRESH === 'function')
       root.INFINITI_LAUNCHER_LAYOUT_REFRESH();
-  }
-  function applyAI() {
-    if (getAIEnabled()) document.body.classList.remove('ai-disabled');
-    else document.body.classList.add('ai-disabled');
-    if (!getAIEnabled() && typeof root.INFINITI_AI_SET_ENABLED === 'function')
-      root.INFINITI_AI_SET_ENABLED(false);
-    if (typeof root.INFINITI_AI_VISIBILITY_CHANGED === 'function')
-      root.INFINITI_AI_VISIBILITY_CHANGED();
   }
   function message(v) { status.textContent = v || ''; }
   function refreshLauncher() {
@@ -218,6 +283,123 @@
     button.addEventListener('click', onClick);
     parent.appendChild(button);
     return button;
+  }
+  var editingApp = null, pendingIcon = '', uploadSequence = 0, iconBusy = false;
+  function closeAppEditor() {
+    uploadSequence++; iconBusy=false; editingApp=null; pendingIcon='';
+    $('customizeAppEditor').classList.add('hidden');
+    $('customizeAppList').classList.remove('hidden');
+    $('customizeAppFile').value='';
+  }
+  function previewAppIcon() {
+    if (!editingApp) return;
+    var pack=getIconPack();
+    $('customizeAppPreview').src = iconSource(pendingIcon || (pack==='original'?'':packIcon(pack,iconCategory(editingApp))),editingApp.icon);
+  }
+  function openAppEditor(app) {
+    var style=getAppStyle(app.id);
+    uploadSequence++; iconBusy=false; editingApp=app; pendingIcon=style.icon;
+    $('customizeAppEditorTitle').textContent='Tùy chỉnh: '+(app.title || app.id);
+    $('customizeAppName').value=style.title || app.title || app.id;
+    $('customizeAppFile').value='';
+    $('customizeAppList').classList.add('hidden');
+    $('customizeAppEditor').classList.remove('hidden');
+    previewAppIcon();
+    renderIconChoices();
+    $('customizeAppName').focus();
+  }
+  function applyAppEditor(reset) {
+    if (!editingApp) return;
+    if (iconBusy && !reset) { message('Đang xử lý ảnh, chưa thể lưu.'); return; }
+    var id=editingApp.id;
+    var title=reset?'':String($('customizeAppName').value || '').replace(/^\s+|\s+$/g,'').slice(0,48);
+    if (!reset && title===editingApp.title) title='';
+    if (!saveAppStyle(id,title,reset?'':pendingIcon)) {
+      message('Không lưu được. Bộ nhớ có thể đã đầy; hãy thử ảnh nhỏ hơn.'); return;
+    }
+    closeAppEditor(); refreshLauncher(); renderApps();
+    tabs.apps.focus();
+    message(reset?'Đã khôi phục tên và icon gốc.':'Đã lưu tên và icon trong Launcher.');
+  }
+  function renderIconChoices(){
+    var box=$('customizeAppPackChoices');box.innerHTML='';
+    PACKS.forEach(function(pack){
+      var btn=addButton(box,pack.charAt(0).toUpperCase()+pack.slice(1),function(){
+        uploadSequence++;iconBusy=false;pendingIcon=packIcon(pack,iconCategory(editingApp));
+        previewAppIcon();renderGlyphChoices(pack);
+        message('Đã chọn bộ icon '+pack+'. Có thể chọn biểu tượng khác bên dưới.');
+      },false);
+    });
+    renderGlyphChoices(getIconPack()==='original'?'minimal':getIconPack());
+  }
+  function renderGlyphChoices(pack){
+    var box=$('customizeAppGlyphChoices');box.innerHTML='';
+    var names=['Video','Nhạc','Web','TV','Game','Cài đặt','Home','Ảnh','Ứng dụng'];
+    GLYPHS.forEach(function(g,i){
+      var btn=addButton(box,names[i],function(){
+        uploadSequence++;iconBusy=false;pendingIcon=packIcon(pack,g);previewAppIcon();
+      },false);
+      var img=document.createElement('img');img.src=iconSource(packIcon(pack,g),'');img.alt='';btn.appendChild(img);
+    });
+  }
+  function renderGlobalPacks(){
+    var box=$('customizeGlobalPacks');box.innerHTML='';
+    ['original'].concat(PACKS).forEach(function(p){
+      var btn=addButton(box,p==='original'?'Gốc':p.charAt(0).toUpperCase()+p.slice(1),function(){
+        if(!setIconPack(p)){message('Không lưu được bộ icon.');return;}
+        refreshLauncher();renderApps();renderGlobalPacks();
+        var buttons=box.querySelectorAll('button');var index=['original'].concat(PACKS).indexOf(p);
+        if(buttons[index])buttons[index].focus();
+        message('Đã áp dụng bộ icon. Icon riêng từng app vẫn được giữ.');
+      },getIconPack()===p);
+    });
+  }
+  function makeColorIcon(color) {
+    if (!editingApp) return;
+    uploadSequence++;iconBusy=false;
+    try {
+      var canvas=document.createElement('canvas');canvas.width=256;canvas.height=144;
+      var ctx=canvas.getContext('2d');
+      ctx.fillStyle=color;ctx.fillRect(0,0,256,144);
+      ctx.fillStyle='#fff';ctx.font='bold 78px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      var name=String($('customizeAppName').value || editingApp.title || editingApp.id).replace(/^\s+/,'');
+      ctx.fillText(name.slice(0,1).toUpperCase() || '?',128,76);
+      var result=canvas.toDataURL('image/png');
+      if(!validIcon(result)) throw new Error('invalid icon');
+      pendingIcon=result;previewAppIcon();message('Đã chọn icon màu; nhấn Lưu để áp dụng.');
+    }catch(e){message('TV không tạo được icon màu.');}
+  }
+  function importAppIcon(file) {
+    if (!editingApp || !file) return;
+    if (file.size>8*1024*1024 || !/^image\/(?:png|jpeg|webp)$/i.test(file.type || '')) {
+      message('Chọn ảnh JPG, PNG hoặc WebP dưới 8 MB.');return;
+    }
+    if (!root.FileReader || !root.Image) {message('TV không hỗ trợ chọn ảnh; dùng icon màu.');return;}
+    var seq=++uploadSequence, reader=new root.FileReader();
+    iconBusy=true;message('Đang xử lý icon…');
+    function fail(){if(seq===uploadSequence){iconBusy=false;message('Không đọc được ảnh. Thử JPG/PNG hoặc icon màu.');}}
+    reader.onerror=reader.onabort=fail;
+    reader.onload=function(){
+      if(seq!==uploadSequence || !editingApp)return;
+      var img=new root.Image();
+      img.onerror=fail;
+      img.onload=function(){
+        if(seq!==uploadSequence || !editingApp)return;
+        try{
+          if(!img.width || !img.height || img.width*img.height>24000000)throw new Error('image too large');
+          var canvas=document.createElement('canvas');canvas.width=256;canvas.height=144;
+          var ctx=canvas.getContext('2d'), scale=Math.min(256/img.width,144/img.height);
+          ctx.fillStyle='#202b3b';ctx.fillRect(0,0,256,144);
+          var w=img.width*scale,h=img.height*scale;
+          ctx.drawImage(img,(256-w)/2,(144-h)/2,w,h);
+          var data=canvas.toDataURL('image/jpeg',0.82);
+          if(!validIcon(data))throw new Error('icon too large');
+          pendingIcon=data;iconBusy=false;previewAppIcon();message('Ảnh sẵn sàng. Nhấn Lưu để áp dụng.');
+        }catch(e){fail();}
+      };
+      img.src=reader.result;
+    };
+    try{reader.readAsDataURL(file);}catch(e){fail();}
   }
   function renderApps() {
     appsList.innerHTML = '';
@@ -240,7 +422,9 @@
       var row = document.createElement('div');
       row.className = 'customizeApp';
       var name = document.createElement('span');
-      name.textContent = String(app.title || app.id);
+      var styled=styledApp(app);
+      var thumb=document.createElement('img');thumb.className='customizeAppThumb';thumb.src=styled.icon || '';row.appendChild(thumb);
+      name.textContent = String(styled.title || app.id);
       name.title = app.id;
       row.appendChild(name);
       var visible = isVisible(app.id, (root.CONFIG || {}).hiddenApps);
@@ -253,6 +437,7 @@
         message((visible ? 'Đã thêm: ' : 'Đã ẩn: ') + (app.title || app.id));
       }, visible);
       toggle.setAttribute('aria-label', (visible ? 'Ẩn ' : 'Thêm ') + (app.title || app.id));
+      addButton(row,'Sửa tên / icon',function(){openAppEditor(app);},false);
       appsList.appendChild(row);
     });
   }
@@ -270,16 +455,16 @@
     root.INFINITI_WALLPAPER_GET_URL(function (url) {
       // The QR links to a TV-local, secret-authenticated phone service.
       // Only display a valid local IP:8090 URL written by the root helper.
-      if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:8090\/\?k=[a-f0-9]{12}$/.test(url || '')) {
-        state.textContent = 'Chưa bật dịch vụ hình nền. Trên TV đã root, cài gói root và bật --auto-update để kích hoạt dịch vụ nền; LG Home vẫn được giữ nguyên.';
+      if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:8090\/\?k=[a-f0-9]{12,48}$/.test(url || '')) {
+        state.textContent = 'Chưa có địa chỉ dịch vụ hình nền. Qua SSH chạy legacy-home.sh wallpaper-on, sau đó bấm Lấy mã QR lại.';
         return;
       }
       try {
         var qr = qrcode(0, 'M');
         qr.addData(url);
         qr.make();
-        code.innerHTML = '<img alt="Quét để đổi hình nền" src="' + qr.createDataURL(6, 0) + '">';
-        state.textContent = 'Mở camera điện thoại để chọn ảnh, ảnh USB hoặc xóa hình nền.';
+        code.innerHTML = '<img alt="Quét để đổi hình nền" src="' + qr.createDataURL(6, 24) + '">';
+        state.textContent = 'Mở camera điện thoại cùng mạng LAN/Wi-Fi để chọn ảnh, ảnh USB hoặc xóa hình nền.';
         host.textContent = url.split('?')[0];
       } catch (err) {
         state.textContent = 'Không tạo được mã QR. Hãy kiểm tra bộ cài và thử lại.';
@@ -354,16 +539,11 @@
     if (typeof root.INFINITI_WEATHER_RELOAD === 'function') root.INFINITI_WEATHER_RELOAD();
   }
   function renderWeather() {
-    var w = getWeather(), presetBox = $('customizeWeatherPresets');
+    var w = getWeather();
     $('customizeWeatherChoice').textContent = w.place ?
       'Khu vực đang chọn: ' + w.place : 'Chưa chọn khu vực';
     $('customizeWeatherEnable').textContent = w.enabled ? 'Đang bật thời tiết · Tắt' : 'Đang tắt thời tiết · Bật';
     $('customizeWeatherUnit').textContent = w.unit === 'fahrenheit' ? 'Đơn vị: °F' : 'Đơn vị: °C';
-    presetBox.innerHTML = '';
-    PRESETS.forEach(function (city) {
-      addButton(presetBox, city.place, function () { selectRegion(city); },
-        w.place === city.place);
-    });
   }
   function selectRegion(city) {
     var lat = Number(city.latitude), lon = Number(city.longitude);
@@ -418,39 +598,13 @@
     };
     x.send();
   }
-  function renderAI() {
-    $('customizeAIToggle').textContent = 'Trợ lý AI tiếng Việt: ' + (getAIEnabled() ? 'Bật' : 'Tắt');
-    $('customizeAIState').textContent = getAIEnabled() ?
-      'AI được hiển thị trên Home. Tài khoản API và máy chủ AI phải được cấu hình riêng.' :
-      'AI đã tắt: ẩn nút trên Home, không gửi yêu cầu AI hoặc dùng micro.';
-  }
   function renderCalendar() {
     refreshToggles();
     var d = new Date();
     $('customizeCalendarNote').textContent = 'Dương lịch dùng ngày giờ TV; âm lịch tính theo múi giờ Việt Nam (UTC+7).';
   }
-  // On a previously-rooted TV, even simply opening a separately installed
-  // Developer Mode watchdog can reboot the panel. This page is information
-  // only. There is no launcher call, service call, or root-state guess.
-  function devModeInstalled() {
-    var list = (root.TV_APPS && root.TV_APPS.apps) || [];
-    for (var i = 0; i < list.length; i++) {
-      if (list[i] && list[i].id === DEVMODE_APP) return true;
-    }
-    return false;
-  }
-  function renderDevMode() {
-    $('customizeRootModeState').textContent =
-      'Chưa xác minh quyền root trong phiên hiện tại. TV đã root không nên bật ' +
-      'Developer Mode chính thức; hãy kiểm tra Homebrew Channel → Settings → Root status.';
-    $('customizeDevModeState').textContent = devModeInstalled() ?
-      'Đã tìm thấy Dev Mode Forever (chỉ thông tin; Infiniti không khởi chạy).' :
-      'Không thấy Dev Mode Forever trong danh sách đã đồng bộ. Không cần cài trên TV đã root.';
-    $('customizeDevModeWarning').textContent =
-      'Không gửi lệnh mở ứng dụng, gia hạn phiên, thay đổi root hoặc REBOOT. ' +
-      'Nếu TV vào Failsafe, chỉ thực hiện kiểm tra đọc qua SSH/Homebrew.';
-  }
   function activateTab(name) {
+    closeAppEditor();
     activeTab = name;
     var key;
     for (key in tabs) {
@@ -459,24 +613,25 @@
       if (key === name) views[key].classList.remove('hidden');
       else views[key].classList.add('hidden');
     }
-    if (name === 'apps') renderApps();
+    if (name === 'apps') {renderGlobalPacks();renderApps();}
     else if (name === 'style') renderStyle();
     else if (name === 'weather') renderWeather();
-    else if (name === 'ai') renderAI();
-    else if (name === 'devmode') renderDevMode();
     else renderCalendar();
     message('');
   }
   function show() {
     opened = true;
     panel.classList.remove('hidden');
+    document.body.classList.add('customize-open');
     activateTab('style');
     tabs.style.focus();
   }
   function hide() {
+    closeAppEditor();
     if (searchRequest) { searchRequest.abort(); searchRequest = null; }
     opened = false;
     panel.classList.add('hidden');
+    document.body.classList.remove('customize-open');
     if (typeof root.INFINITI_CUSTOMIZE_CLOSED === 'function') root.INFINITI_CUSTOMIZE_CLOSED();
   }
   function visibleControls() {
@@ -486,6 +641,20 @@
       if (all[i].offsetWidth > 0 && all[i].offsetHeight > 0) result.push(all[i]);
     }
     return result;
+  }
+  // Directional focus based on actual visible button geometry; no CSS spatial-navigation dependency.
+  function moveFocus(buttons,i,code){
+    var rects=buttons.map(function(el){return el.getBoundingClientRect?el.getBoundingClientRect():null;});
+    var next=rects[i]?directionalIndex(rects,i,code):-1;
+    if(next<0 && (!rects[i] || code===37 || code===39)){
+      var step=code===37||code===38?-1:1;
+      next=Math.max(0,Math.min(buttons.length-1,i+step));
+    }
+    if(i<0)next=0;
+    if(buttons[next]){
+      buttons[next].focus();
+      if(buttons[next].scrollIntoView)buttons[next].scrollIntoView(false);
+    }
   }
   function stopKey(e) {
     e.preventDefault();
@@ -499,16 +668,22 @@
       return;
     }
     var active = document.activeElement, search = $('customizeWeatherSearch');
+    if (editingApp && (code === 461 || code === 27)) {
+      stopKey(e);if(e.type==='keydown'){closeAppEditor();renderApps();tabs.apps.focus();}return;
+    }
+    if (active === $('customizeAppName')) {
+      if (code===13 && e.type==='keydown') {stopKey(e);$('customizeAppSave').focus();return;}
+      if(code!==38 && code!==40)return;
+    }
     // Let the LG on-screen keyboard enter characters and use Backspace naturally.
     if (active === search) {
       if (code === 461 || code === 27) { stopKey(e); if (e.type === 'keydown') hide(); return; }
       if (code === 13) { stopKey(e); if (e.type === 'keydown') searchRegion(); return; }
       if ((code === 40 || code === 38) && e.type === 'keydown') {
         stopKey(e);
-        var target = code === 40 ?
-          ($('customizeWeatherResults').querySelector('button') || $('customizeWeatherSearchBtn')) :
-          $('customizeWeatherSearchBtn');
-        if (target) target.focus();
+        var controls=visibleControls();
+        if(search.getBoundingClientRect)moveFocus(controls,controls.indexOf(search),code);
+        else {var target=$('customizeWeatherSearchBtn');if(target)target.focus();}
         return;
       }
       // Normal characters, Backspace and left/right caret movement must reach
@@ -525,12 +700,7 @@
       return;
     }
     if (code === 37 || code === 38 || code === 39 || code === 40) {
-      var step = code === 37 || code === 38 ? -1 : 1;
-      var next = Math.max(0, Math.min(buttons.length - 1, i + step));
-      if (buttons[next]) {
-        buttons[next].focus();
-        if (buttons[next].scrollIntoView) buttons[next].scrollIntoView(false);
-      }
+      moveFocus(buttons,i,code);
     }
   }
   document.addEventListener('keydown', keyHandler, true);
@@ -539,6 +709,15 @@
     tabs[name].addEventListener('click', function () { activateTab(name); tabs[name].focus(); });
   });
   $('customizeClose').addEventListener('click', hide);
+  $('customizeAppSave').addEventListener('click',function(){applyAppEditor(false);});
+  $('customizeAppRestore').addEventListener('click',function(){applyAppEditor(true);});
+  $('customizeAppCancel').addEventListener('click',function(){closeAppEditor();renderApps();tabs.apps.focus();});
+  $('customizeAppOriginalIcon').addEventListener('click',function(){uploadSequence++;iconBusy=false;pendingIcon='original';previewAppIcon();});
+  $('customizeAppPickFile').addEventListener('click',function(){$('customizeAppFile').click();});
+  $('customizeAppFile').addEventListener('change',function(){importAppIcon(this.files && this.files[0]);});
+  [['customizeAppBlue','#234d89'],['customizeAppGreen','#245b42'],['customizeAppRed','#813448'],['customizeAppDark','#262c3a']].forEach(function(choice){
+    $(choice[0]).addEventListener('click',function(){makeColorIcon(choice[1]);});
+  });
   $('customizeHideLGApps').addEventListener('click', function () {
     var count = hideLGDefaultApps();
     refreshLauncher();
@@ -568,11 +747,6 @@
   $('customizeResetStyle').addEventListener('click', function () {
     saveAppearance(defaults); applyAppearance(); renderStyle();
     message('Đã khôi phục giao diện mặc định.');
-  });
-  $('customizeAIToggle').addEventListener('click', function () {
-    var enabled = setAIEnabled(!getAIEnabled());
-    applyAI(); renderAI();
-    message(enabled ? 'Đã bật trợ lý AI.' : 'Đã tắt trợ lý AI và ẩn nút trên Home.');
   });
   $('customizeWeatherSearchBtn').addEventListener('click', searchRegion);
   $('customizeWeatherEnable').addEventListener('click', function () {

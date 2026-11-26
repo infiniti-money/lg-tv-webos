@@ -18,18 +18,14 @@ window.CONFIG = {
   // The Live TV app, offered at the end of the Inputs menu. Leave empty to omit.
   liveTvApp: 'com.webos.app.livetv',
 
-  // Icon-size setting (3–10): higher number means smaller dock icons.
-  // The dock is always a single horizontal row at the bottom of the TV.
-  columns: 6,
+  // Four landscape cards per screen in a single scrolling row.
+  columns: 4,
 
   // 'en' or 'vi'
   language: 'vi',
 
   // true = 14:45, false = 2:45 pm
   clock24: true,
-
-  // Configure your own trusted HTTPS Cloudflare Worker proxy. NEVER embed OpenAI API keys.
-  aiEndpoint: '',
 
   // Background image file inside the app folder (e.g. 'bg.jpg'). Empty = plain black.
   wallpaper: '',

@@ -58,8 +58,7 @@ assert.equal(prefs.setVisible('org.webosbrew.hbchannel',true),true);
 assert.ok(html.indexOf('id="customizeHideLGApps"')>=0);
 assert.ok(html.indexOf('id="customizePrivacyTab"')>=0 &&
   html.indexOf('id="customizePrivacyView"')>=0);
-assert.ok(css.indexOf('#customizePrivacyView.hidden')>=0 &&
-  css.indexOf('#customizeDevModeView.hidden')>=0,
+assert.ok(css.indexOf('#customizePrivacyView.hidden')>=0,
   'Inactive pages should not leak controls into remote navigation');
 assert.ok(html.indexOf('94.140.14.14')>=0 && html.indexOf('94.140.15.15')>=0,
   'Use AdGuard published DNS IPv4 pair');

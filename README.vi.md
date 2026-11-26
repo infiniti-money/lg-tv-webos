@@ -1,6 +1,10 @@
+> **Legacy Home V8 (v1.6.0 thử nghiệm):** Xem [hướng dẫn dành cho 49UH850T-TA](docs/legacy-home-v8.vi.md). Tích hợp phím Home và khởi động mặc định tắt; kiểm thử thủ công trước.
+
 <div align="center">
 
-# Infiniti TV Home
+# Designed by Tân Dev
+
+> Tên hiển thị mới từ V8.5 RC2. App ID, tên file IPK, repository và dữ liệu cũ được giữ nguyên. AI, tab Dev Mode và khu vực nhanh thời tiết đã bỏ khỏi Launcher; những hướng dẫn tính năng cũ bên dưới chỉ có giá trị lịch sử. Dùng `sh /home/root/lg-tv-vibehack/legacy-home.sh wallpaper-on` để bật QR hình nền riêng trên V8.5, không cần bật tự cập nhật.
 
 **Màn hình chính kiểu Apple TV cho TV LG webOS, có nút Home thật, thời tiết và hình nền riêng.**
 

@@ -473,22 +473,6 @@ body.arranging .item:nth-child(even):not(.moving):not(.focused) .card { animatio
 }
 
 /* Vietnamese voice and AI - no CSS variables or advanced selectors (Chromium 38). */
-#aiPanel { position:fixed; top:0; left:0; right:0; bottom:0; z-index:100; background:rgba(0,0,0,.84); padding:100px 100px 50px; box-sizing:border-box; }
-#aiPanel.hidden { display:none; }
-.aiDialog { max-width:1660px; margin:0 auto; background:#22232a; border:2px solid #5b5e68; border-radius:28px; padding:38px; color:#fff; font-size:29px; }
-.aiHead { display:flex; justify-content:space-between; align-items:center; font-size:42px; }
-.aiDialog p { font-size:25px; color:#dadbe0; margin:22px 0; }
-.aiDialog button { background:#eceefa; color:#171923; font-size:27px; border:2px solid transparent; border-radius:16px; padding:16px 22px; cursor:pointer; }
-.aiDialog button:focus, .aiDialog input:focus { outline:5px solid #7fb2ff; }
-.aiDialog button:disabled { opacity:.45; }
-.aiRow { display:flex; align-items:center; margin:20px 0; }
-.aiRow > * { margin-right:16px; }
-.aiRow input { background:#15161b; border:2px solid #777; color:white; padding:18px; border-radius:12px; font-size:30px; }
-#aiPrompt { flex:1; min-width:0; }
-.aiAuth { font-size:24px; }
-#aiToken { width:440px; font-size:25px; }
-#aiStatus { font-size:23px; color:#b1d3ff; min-height:40px; margin-top:18px; }
-#aiAnswer { font-size:31px; line-height:1.5; background:#16171d; border-radius:18px; padding:26px; overflow-y:auto; max-height:420px; min-height:145px; white-space:pre-wrap; }
 
 
 /* TV-first 1080p layout, legacy flexbox; no CSS Grid or CSS custom properties. */
@@ -533,27 +517,25 @@ body.solar-hidden #date, body.lunar-hidden #lunarDate { display:none; }
 
 /* Dedicated settings pages: footer remains visible while content scrolls. */
 #customizePanel { position:fixed; top:0; bottom:0; left:0; right:0; z-index:110;
-  background:rgba(3,7,15,.92); padding:42px 70px; }
+  background:rgba(3,7,15,.12); padding:42px 70px; }
 #customizePanel.hidden,
 #customizeStyleView.hidden,
 #customizeWeatherView.hidden,
-#customizeAIView.hidden,
 #customizeCalendarView.hidden,
 #customizeAppsView.hidden,
-#customizeDevModeView.hidden,
 #customizePrivacyView.hidden { display:none; }
 .customizeDialog { margin:0 auto; width:100%; max-width:1640px; height:100%; overflow:hidden;
-  padding:26px 37px; border-radius:28px; border:2px solid #49536b;
-  background:#151e30; font-size:25px; color:white; display:flex; flex-direction:column; }
+  padding:26px 37px; border-radius:28px; border:2px solid rgba(205,225,244,.35);
+  background:rgba(12,21,33,.62); font-size:25px; color:white; display:flex; flex-direction:column; }
 .customizeHead { display:flex; flex-shrink:0; align-items:center; justify-content:space-between;
   font-size:37px; padding-bottom:12px; }
 .customizeEyebrow { font-size:18px; letter-spacing:.20em; font-weight:600; color:#8ebbd8; }
 .customizeTabs { display:flex; flex-wrap:wrap; flex-shrink:0; margin:10px 0 14px; }
 .customizeTabs button { padding:9px 14px; margin-right:7px; font-size:20px; }
-.customizeDialog button { background:#25354b; color:#fff; border:2px solid #53657c;
+.customizeDialog button { background:rgba(30,48,69,.54); color:#fff; border:2px solid rgba(180,205,230,.38);
   border-radius:14px; padding:12px 21px; font-size:22px; line-height:1.15;
   margin:5px 12px 5px 0; cursor:pointer; }
-.customizeDialog button.selected { background:#d9eeff; color:#132236; border-color:#d9eeff; }
+.customizeDialog button.selected { background:rgba(209,234,255,.82); color:#132236; border-color:#d9eeff; text-shadow:none; }
 .customizeDialog button:focus { outline:4px solid #ffd388; outline-offset:1px; }
 .customizeDialog p { margin:7px 0 19px; font-size:22px; color:#cbd4e2; line-height:1.4; }
 .customizeContent { flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; padding:0 12px 12px 0; }
@@ -567,11 +549,11 @@ body.solar-hidden #date, body.lunar-hidden #lunarDate { display:none; }
 .customizeApp span { flex:1; font-size:22px; overflow:hidden; text-overflow:ellipsis;
   white-space:nowrap; padding-right:12px; }
 .customizeApp button { font-size:19px; padding:10px 12px; width:190px; margin:0; }
-.customizeSelectedCity { padding:12px 19px; background:#223953; border-radius:15px;
+.customizeSelectedCity { padding:12px 19px; background:rgba(34,57,83,.54); border-radius:15px;
   border:1px solid #668db4; font-size:25px; margin-bottom:10px; }
 .customizeSearchRow { display:flex; align-items:center; }
 .customizeSearchRow input { flex:1; min-width:0; border:2px solid #53657c;
-  border-radius:12px; background:#0c192a; color:white; font-size:26px; padding:12px 18px;
+  border-radius:12px; background:rgba(12,25,42,.65); color:white; font-size:26px; padding:12px 18px;
   margin-right:18px; }
 .customizeSearchRow input:focus { outline:4px solid #ffd388; }
 .customizeSearchResults button { font-size:20px; }
@@ -619,8 +601,6 @@ body.motion-reduced .item:not(.moving) .card { animation:none!important; }
   transform:scale(.6666); } }
 
 /* On-TV AI preference only affects the launcher, never system apps. */
-body.ai-disabled #btnAI {display:none!important;}
-#customizeAIState {margin-top:16px!important; color:#c5e6fa!important;}
 .customizeTabs button {padding-left:17px; padding-right:17px; font-size:20px;}
 
 /* Transparent weather glass: retain text contrast without a dark opaque tile.
@@ -669,7 +649,7 @@ body.font-large .item.dock .name { font-size:21px; }
 .customizeWallpaperBox {
   display:flex; align-items:center; min-height:230px; padding:18px 24px;
   border-radius:24px; border:1px solid rgba(165,200,233,.48);
-  background:rgba(26,47,75,.55); margin:12px 0 18px;
+  background:rgba(26,47,75,.32); margin:12px 0 18px;
 }
 #customizeWallQr {
   width:205px; height:205px; flex-shrink:0; padding:9px; margin-right:26px;
@@ -690,4 +670,70 @@ body.launcher-covered #hero {
   animation-play-state: paused !important;
   -webkit-transition: none !important;
   transition: none !important;
+}
+
+/* V8.6: four horizontal 16:9 cards, one row, no expensive blur or continuous animation. */
+#viewport { clip:rect(0,1800px,1080px,100px); }
+#stage { transition:transform 230ms ease-out; }
+.item .card { background:rgba(22,29,43,.78); border:1px solid rgba(255,255,255,.16);
+  border-radius:24px!important; box-shadow:none; transition:transform 180ms ease-out; }
+.item .card img { height:88%; max-width:88%; top:50%; left:50%; transform:translate(-50%,-50%); }
+.item .card.glyph img { height:68%; border-radius:0; }
+.item.dock .name { font-size:25px; height:34px; line-height:32px; margin-top:10px; }
+.item.focused { z-index:1; }
+.item.focused .card { transform:scale(1.07); border-color:rgba(255,255,255,.65); }
+#glass { border:3px solid rgba(255,255,255,.95); background:transparent;
+  box-shadow:0 0 12px rgba(255,255,255,.28); transition:opacity 150ms ease,transform 200ms ease-out; z-index:2; }
+#penBtn { z-index:3; }
+body.font-large .item.dock .name { font-size:28px; }
+body.motion-reduced .item.focused .card { transform:none; }
+body.motion-reduced #glass { box-shadow:none; }
+
+/* V8.7: fit all five forecast lines inside the 159px card on legacy fonts.
+   Fixed line heights leave room for Vietnamese accents and fallback glyphs. */
+#weekWeather .weekDay { height:159px; padding:10px 16px; overflow:hidden; }
+#weekWeather .weekDay > div { display:block; max-width:100%; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; margin:0; }
+#weekWeather .weekDay .weekLabel { font-size:20px; line-height:25px; }
+#weekWeather .weekDay .weekDate { font-size:20px; line-height:24px; }
+#weekWeather .weekDay .weekCondition { font-size:20px; line-height:25px; margin-top:1px; }
+#weekWeather .weekDay .weekTemperature { font-size:22px; line-height:27px; margin-top:1px; }
+#weekWeather .weekDay .weekRain { font-size:20px; line-height:25px; margin-top:1px; }
+body.font-large #weekWeather .weekDay .weekLabel { font-size:21px; }
+body.font-large #weekWeather .weekDay .weekTemperature { font-size:23px; }
+
+/* Lunar calendar stays a distinct, legible line below the solar date. */
+#lunarDate { display:block; min-height:30px; max-width:100%; font-size:24px; line-height:30px; color:#ffe3ad; text-shadow:0 1px 4px rgba(0,0,0,.9); overflow:hidden; text-overflow:ellipsis; }
+body.font-large #lunarDate { font-size:26px; line-height:32px; }
+body.lunar-hidden #lunarDate { display:none; }
+
+/* V8.9 per-app editor, legacy flexbox and remote focus. */
+#customizeAppList.hidden,#customizeAppEditor.hidden { display:none; }
+.customizeApp { width:100%; }
+.customizeAppThumb { width:66px; height:42px; object-fit:contain; margin-right:14px; border-radius:8px; }
+.customizeApp button { margin-left:10px; width:205px; flex-shrink:0; }
+.customizeAppEditorHead { display:flex; align-items:center; margin:12px 0 16px; }
+#customizeAppPreview { width:256px; height:144px; object-fit:contain; background:rgba(32,43,59,.46); border-radius:16px; margin-right:25px; }
+.customizeAppEditorName { flex:1; min-width:0; }
+#customizeAppName { display:block; width:100%; margin-top:10px; padding:14px; font:inherit; color:#fff; background:rgba(38,55,78,.62); border:2px solid #60758d; border-radius:12px; }
+#customizeAppName:focus { outline:4px solid #ffd388; }
+
+.iconPackGrid button { min-width:136px; display:flex; flex-direction:column; align-items:center; }
+.iconPackGrid button img { width:112px; height:63px; margin:5px 0 0; }
+#customizeAppEditor .customizeChoice { flex-wrap:wrap; }
+
+/* V9.0 translucent settings: wallpaper remains visible, no GPU backdrop blur.
+   Hide underlying launcher widgets while settings is open so text never overlaps.
+   QR white quiet zone is deliberately untouched for scanner reliability. */
+body.customize-open header,body.customize-open #forecastArea,
+body.customize-open #hero,body.customize-open #viewport,
+body.customize-open #penBtn,body.customize-open #arrangeBar { visibility:hidden; }
+.customizeDialog { text-shadow:0 1px 3px rgba(0,0,0,.92); box-shadow:0 10px 36px rgba(0,0,0,.22); }
+.customizeDialog button { text-shadow:0 1px 2px rgba(0,0,0,.75); }
+.customizeDialog button.selected { text-shadow:none; }
+.customizeDialog p { color:#e6eef7; }
+.customizeHint { color:#d0dce9!important; }
+.customizeApp { border-bottom-color:rgba(205,225,244,.19); }
+.customizeDialog button:focus,#customizeAppName:focus,.customizeSearchRow input:focus {
+  outline:4px solid #ffd388; outline-offset:1px;
 }

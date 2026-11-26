@@ -60,6 +60,7 @@ fi
   log 'Skipped update: Homebrew FAILSAFE state'; exit 0;
 }
 [ -f "$FLAG" ] && [ -f "$ENABLED" ] || { log 'Skipped: disabled'; exit 0; }
+[ ! -f "$DATA/legacy-v8-session" ] && [ ! -f "$DATA/legacy-v8-armed" ] && [ ! -f "$DATA/legacy-v8-trial" ] && [ ! -f "$DATA/legacy-v8-enabled" ] || { log 'Deferred: Legacy V8 active'; status 'postponed: Legacy V8 active'; exit 0; }
 [ ! -f "$DATA/home-enabled" ] || { log 'Deferred: custom Home binding active'; status 'postponed: Home binding active'; exit 0; }
 LOCK=/tmp/infiniti-update-lock
 mkdir "$LOCK" 2>/dev/null || { log 'Another update is running'; exit 0; }
@@ -136,6 +137,7 @@ grep -Eq '^[0-9a-f]{64}  infiniti-tv-home\.ipk$' "$TMP/infiniti-tv-home.ipk.sha2
 [ -f "$FLAG" ] && [ -f "$ENABLED" ] && [ ! -f "$DATA/home-enabled" ] || {
   log 'Update disabled during download'; exit 0;
 }
+[ ! -f "$DATA/legacy-v8-session" ] && [ ! -f "$DATA/legacy-v8-armed" ] && [ ! -f "$DATA/legacy-v8-trial" ] && [ ! -f "$DATA/legacy-v8-enabled" ] || { log 'Deferred: Legacy V8 enabled during download'; exit 0; }
 ACTIVE=$(foreground)
 [ -n "$ACTIVE" ] && [ "$ACTIVE" != "$APP" ] || {
   log 'Deferred: launcher became active'; exit 0;

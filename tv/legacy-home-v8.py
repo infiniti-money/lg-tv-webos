@@ -31,6 +31,14 @@ def flag(name):
 def exists(name):
     return os.path.isfile(flag(name))
 
+def disarm_enabled():
+    for name in ('enabled', 'wake'):
+        try:
+            os.unlink(flag(name))
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
+
 def allowed(mode):
     if os.path.exists(FAILSAFE) or os.path.exists(LEGACY_HOOK):
         return False
@@ -188,6 +196,8 @@ def watch(mode):
                     failures += 1
                     if failures >= 3:
                         log('three failed foreground checks; observer stopped')
+                        if mode == 'enabled':
+                            disarm_enabled()
                         return 1
                 last = time.time()
     finally:
@@ -214,6 +224,8 @@ def main():
     if mode != 'watch':
         if not redirect(mode):
             log('boot launch not confirmed; no retry')
+            if mode == 'enabled':
+                disarm_enabled()
             return 1
         if mode == 'trial':
             with open(PROOF, 'w') as fp:

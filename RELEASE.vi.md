@@ -1,3 +1,7 @@
+## v1.6.0 — Legacy Home V8 (bản thử nghiệm)
+
+Xem [ghi chú v1.6.0](RELEASE_NOTES_v1.6.0.md) và [hướng dẫn TV webOS 3.4.3](docs/legacy-home-v8.vi.md). Chưa phát hành ổn định.
+
 # Infiniti TV Home v1.5.9 — Quay về Home LG an toàn, bỏ Autostart EIM không hiệu quả
 
 - **Thu hồi thử nghiệm phụ Autostart 0.1.5:** phiên bản đã không khắc phục được tình trạng chuyển Live TV và màn hình bi lăn trên TV webOS 3.4.x. Không còn đóng gói IPK Autostart cùng Release mới.

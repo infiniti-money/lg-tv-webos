@@ -168,6 +168,7 @@
     if (a.reduceMotion) body.classList.add('motion-reduced');
     if (!a.showSolar) body.classList.add('solar-hidden');
     if (!a.showLunar) body.classList.add('lunar-hidden');
+    else if (root.INFINITI_LUNAR && root.INFINITI_LUNAR.render) root.INFINITI_LUNAR.render();
     if (typeof root.INFINITI_LAUNCHER_LAYOUT_REFRESH === 'function')
       root.INFINITI_LAUNCHER_LAYOUT_REFRESH();
   }

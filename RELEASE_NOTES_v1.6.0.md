@@ -1,4 +1,4 @@
-# Designed by Tân Dev — v1.6.0 RC4 (Legacy Home V8.7)
+# Designed by Tân Dev — v1.6.0 RC5 (Legacy Home V8.8)
 
 - V8.4 trên LG 49UH850T-TA đã xác nhận Home 1,4 giây, readiness 11,2 giây và render boot 1,5 giây qua log; catalog 18 app, 5 input; tắt/bật Magic Remote tạo Boot ID mới. Standby thực sự chưa xác nhận.
 - V8.5: tên app và vendor Designed by Tân Dev; giữ app ID com.infinitimoney.tvhome và đường dẫn dữ liệu. Giữ bản quyền MIT gốc.
@@ -10,3 +10,5 @@
 - RC3: 4 thẻ ứng dụng ngang 380×214, một hàng phía dưới, cuộn theo từng ô, viền và zoom 7% khi chọn, chỉnh sửa cố định ngoài hàng. Giữ cài đặt giảm chuyển động. Chưa nghiệm thu hiển thị trên TV.
 
 - RC4: thu nhỏ chữ dự báo 3 ngày, cố định chiều cao dòng và giới hạn nội dung trong ô 159px, kể cả chế độ chữ lớn. Không thay đổi dữ liệu dự báo.
+
+- RC5: giữ đủ năm dòng dự báo, chữ 20px thống nhất, nhiệt độ 22px; lịch âm tính offline hiện ngay khi mở app và cập nhật cùng đồng hồ, vẫn tôn trọng tùy chọn bật/tắt.

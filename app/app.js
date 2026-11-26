@@ -543,6 +543,7 @@
       $('ampm').textContent = h < 12 ? L.ampm[0] : L.ampm[1];
     }
     $('date').textContent = L.date(now);
+    if (window.INFINITI_LUNAR && window.INFINITI_LUNAR.render) window.INFINITI_LUNAR.render();
   }
 
   /** Shows the Wi-Fi network name when the TV reports it, otherwise the connection type. */

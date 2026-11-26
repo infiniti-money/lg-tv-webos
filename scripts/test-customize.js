@@ -65,3 +65,8 @@ assert.equal(p.saveAppStyle('netflix','','original'),true);
 assert.equal(p.styledApp({id:'netflix',title:'Netflix',icon:'native.png'}).icon,'native.png');
 assert.equal(p.saveAppStyle('netflix','',''),true);
 assert.equal(p.styledApp({id:'netflix',title:'Netflix',icon:'native.png'}).icon,'icons/packs/neon-video.svg');
+
+assert.equal(p.getAppearance().idleSeconds,60);assert.equal(p.getAppearance().idleRain,true);
+assert.equal(p.saveAppearance({idleSeconds:120,idleRain:false}).idleSeconds,120);
+assert.equal(p.getAppearance().idleRain,false);assert.equal(p.saveAppearance({idleSeconds:-1}).idleSeconds,60);
+assert.equal(p.saveAppearance({idleSeconds:0}).idleSeconds,0);

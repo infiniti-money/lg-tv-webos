@@ -58,7 +58,7 @@ var panel=node('customizePanel'); panel.className='hidden';
 });
 var groups = {
   customizeStyleView:['customizeThemes','customizeFonts','customizeLargeText',
-    'customizeShowWeek','customizeMotion','customizeResetStyle'],
+    'customizeShowWeek','customizeMotion','customizeIdleTime','customizeIdleRain','customizeResetStyle'],
   customizeWallpaperView:['customizeWallpaper','customizeWallQr','customizeWallState','customizeWallHost'],
   customizeUpdateView:['customizeUpdateState','customizeVersion','customizeReleaseResult','customizeCheckUpdate','customizeUpdateHelp','customizeUpdateHelpText'],
   customizeWeatherView:['customizeWeatherChoice',
@@ -72,7 +72,7 @@ Object.keys(groups).forEach(function (name) {
   var view=node(name); view.className='hidden'; panel.appendChild(view);
   groups[name].forEach(function (id) {
     view.appendChild(node(id,id==='customizeWeatherSearch'?'input':
-      /Btn$|customizeCheckUpdate|customizeUpdateHelp$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
+      /Btn$|customizeIdleTime|customizeIdleRain|customizeCheckUpdate|customizeUpdateHelp$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
   });
 });
 var browse=node('customizeAppBrowse');node('customizeAppsView').appendChild(browse);browse.appendChild(node('customizeAppList'));node('customizeAppsView').appendChild(node('customizeAppOptions'));
@@ -200,6 +200,8 @@ assert.equal(document.body.hasClass('solar-hidden'),true);
 node('customizeLunar').click();
 assert.equal(window.INFINITI_PREFS.getAppearance().showLunar,false);
 node('customizeStyleTab').click();
+node('customizeIdleTime').click();assert.equal(window.INFINITI_PREFS.getAppearance().idleSeconds,120);
+node('customizeIdleRain').click();assert.equal(window.INFINITI_PREFS.getAppearance().idleRain,false);
 node('customizeMotion').click();
 assert.equal(window.INFINITI_PREFS.getAppearance().reduceMotion,true);
 assert.equal(document.body.hasClass('motion-reduced'),true);

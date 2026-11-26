@@ -11,7 +11,7 @@
   var MAX_ICON = 48000, MAX_STYLE = 900000;
   var defaults = {
     theme:'midnight', font:'lexend', largeText:false, showWeek:true,
-    reduceMotion:false, showSolar:true, showLunar:true
+    reduceMotion:false, showSolar:true, showLunar:true, idleSeconds:60, idleRain:true
   };
   var THEMES = ['midnight','ocean','amber'];
   var FONTS = ['lexend','sans','serif'];
@@ -74,6 +74,8 @@
     return true;
   }
   function resetVisible() { safeWrite(VISIBILITY_KEY, {}); }
+  var IDLE_CHOICES=[0,30,60,120,300];
+  function idleValue(v){return IDLE_CHOICES.indexOf(v)>=0?v:defaults.idleSeconds;}
   function getAppearance() {
     var data = safeRead(APPEARANCE_KEY);
     return {
@@ -83,7 +85,8 @@
       showWeek: data.showWeek !== false,
       reduceMotion: data.reduceMotion === true,
       showSolar: data.showSolar !== false,
-      showLunar: data.showLunar !== false
+      showLunar: data.showLunar !== false,
+      idleSeconds:idleValue(data.idleSeconds), idleRain:data.idleRain!==false
     };
   }
   function saveAppearance(newData) {
@@ -98,6 +101,7 @@
     current.reduceMotion = current.reduceMotion === true;
     current.showSolar = current.showSolar !== false;
     current.showLunar = current.showLunar !== false;
+    current.idleSeconds=idleValue(current.idleSeconds);current.idleRain=current.idleRain!==false;
     safeWrite(APPEARANCE_KEY, current);
     return current;
   }
@@ -272,6 +276,7 @@
     if (!a.showSolar) body.classList.add('solar-hidden');
     if (!a.showLunar) body.classList.add('lunar-hidden');
     else if (root.INFINITI_LUNAR && root.INFINITI_LUNAR.render) root.INFINITI_LUNAR.render();
+    if(typeof root.INFINITI_IDLE_REFRESH==='function')root.INFINITI_IDLE_REFRESH();
     if (typeof root.INFINITI_LAUNCHER_LAYOUT_REFRESH === 'function')
       root.INFINITI_LAUNCHER_LAYOUT_REFRESH();
   }
@@ -571,6 +576,8 @@
   }
   function refreshToggles() {
     var a = getAppearance();
+    $('customizeIdleTime').textContent='Tự ẩn: '+(a.idleSeconds?a.idleSeconds+' giây':'Tắt');
+    $('customizeIdleRain').textContent='Mưa khi chờ: '+(a.idleRain?'Bật':'Tắt');
     $('customizeLargeText').textContent = 'Cỡ chữ lớn: ' + (a.largeText ? 'Bật' : 'Tắt');
     $('customizeShowWeek').textContent = 'Thời tiết 3 ngày: ' + (a.showWeek ? 'Hiện' : 'Ẩn');
     $('customizeMotion').textContent = 'Hiệu ứng chuyển động: ' + (a.reduceMotion ? 'Giảm' : 'Mượt');
@@ -667,6 +674,7 @@
   }
   function show() {
     opened = true;
+    if(typeof root.INFINITI_IDLE_REFRESH==='function')root.INFINITI_IDLE_REFRESH();
     panel.classList.remove('hidden');
     document.body.classList.add('customize-open');
     activateTab('style');
@@ -806,6 +814,8 @@
   appearanceToggle('customizeLargeText','largeText');
   appearanceToggle('customizeShowWeek','showWeek');
   appearanceToggle('customizeMotion','reduceMotion');
+  appearanceToggle('customizeIdleRain','idleRain');
+  $('customizeIdleTime').addEventListener('click',function(){var a=getAppearance();saveAppearance({idleSeconds:IDLE_CHOICES[(IDLE_CHOICES.indexOf(a.idleSeconds)+1)%IDLE_CHOICES.length]});applyAppearance();refreshToggles();});
   appearanceToggle('customizeSolar','showSolar');
   appearanceToggle('customizeLunar','showLunar');
   $('customizeWallpaper').addEventListener('click', function () {

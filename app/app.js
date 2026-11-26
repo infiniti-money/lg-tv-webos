@@ -81,6 +81,35 @@
   function launcherCovered() {
     return lifecycle ? lifecycle.isCovered() : !!document.hidden;
   }
+  var idleTimer=null, idleActive=false, idleWakeKey=0, idleClickUntil=0, idleMouseX=null,idleMouseY=null;
+  function idlePrefs(){return window.INFINITI_PREFS?window.INFINITI_PREFS.getAppearance():{idleSeconds:60,idleRain:true};}
+  function idleEligible(){return !launcherCovered()&&!editing&&!arranging&&!okDown&&!pressTimer&&(zone==='grid'||zone==='top'||zone==='pen')&&!(window.INFINITI_CUSTOMIZE_IS_OPEN&&window.INFINITI_CUSTOMIZE_IS_OPEN());}
+  function idleClear(){if(idleTimer!==null){clearTimeout(idleTimer);idleTimer=null;}}
+  function idleShow(){idleActive=false;document.body.classList.remove('idle-home');document.body.classList.remove('idle-rain');}
+  function idleSchedule(){
+    idleClear();var p=idlePrefs();if(!p.idleSeconds||launcherCovered()||idleActive)return;
+    idleTimer=setTimeout(function(){idleTimer=null;if(!idleEligible()){idleSchedule();return;}idleActive=true;document.body.classList.add('idle-home');if(p.idleRain&&!p.reduceMotion)document.body.classList.add('idle-rain');},p.idleSeconds*1000);
+  }
+  function idleReset(){idleShow();idleSchedule();}
+  function idleStopEvent(e){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();}
+  function idleInput(e){
+    if(launcherCovered())return;
+    if(e.type==='keyup'&&idleWakeKey&&e.keyCode===idleWakeKey){idleWakeKey=0;idleStopEvent(e);return;}
+    if(e.type==='keydown'&&idleWakeKey&&e.keyCode===idleWakeKey){idleStopEvent(e);return;}
+    if(e.type==='mousemove'){
+      var moved=idleMouseX===null||Math.abs(e.clientX-idleMouseX)+Math.abs(e.clientY-idleMouseY)>=4;
+      if(!moved)return;idleMouseX=e.clientX;idleMouseY=e.clientY;
+    }
+    if(e.type==='click'&&Date.now()<idleClickUntil){idleStopEvent(e);return;}
+    if(idleActive){
+      idleReset();
+      if(e.type==='keydown'){idleWakeKey=e.keyCode;idleStopEvent(e);}
+      else if(e.type==='mousedown'||e.type==='touchstart'||e.type==='wheel'){idleClickUntil=Date.now()+700;idleStopEvent(e);}
+      else if(e.type==='click')idleStopEvent(e);
+    }else if(e.type!=='keyup')idleSchedule();
+  }
+  ['keydown','keyup','mousemove','mousedown','click','touchstart','wheel'].forEach(function(type){document.addEventListener(type,idleInput,true);});
+  window.INFINITI_IDLE_REFRESH=idleReset;
   var entranceTimers = [];
   function clearEntranceTimers() {
     while (entranceTimers.length) clearTimeout(entranceTimers.pop());
@@ -1005,12 +1034,13 @@
     var p = (e && e.detail) || {};
     if (!p.reload && window.PalmSystem) { try { p = JSON.parse(PalmSystem.launchParams || '{}'); } catch (x) { p = {}; } }
     if (p.reload) { location.reload(); return; }
-    resume();
+    idleReset();resume();
     acknowledgeRender(p.infinitiRenderToken?p:readLaunchParams());
   });
   // Glasshouse owns Home and wake; this app never launches itself on resume.
   var clockTicker = null, appsTicker = null;
   function pauseForeground() {
+    idleClear();idleShow();idleWakeKey=0;idleClickUntil=0;
     if (clockTicker !== null) { clearInterval(clockTicker); clockTicker = null; }
     if (appsTicker !== null) { clearInterval(appsTicker); appsTicker = null; }
     clearEntranceTimers();
@@ -1021,6 +1051,7 @@
   }
   function startForeground() {
     if (launcherCovered()) return;
+    idleReset();
     document.body.classList.remove('launcher-covered');
     if (clockTicker === null) clockTicker = setInterval(updateClock, 10000);
     if (appsTicker === null) appsTicker = setInterval(function () {
@@ -1070,7 +1101,7 @@
     if (okTimer) { clearTimeout(okTimer); okTimer = null; }
   }
   window.INFINITI_CUSTOMIZE_CLOSED = function () {
-    resetDialogOk(); focusPill(pills.length - 1);
+    resetDialogOk(); focusPill(pills.length - 1);idleReset();
   };
   // Wallpaper settings now open within the Customize panel.
   build();

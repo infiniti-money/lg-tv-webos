@@ -768,3 +768,14 @@ body.customize-open #penBtn,body.customize-open #arrangeBar { visibility:hidden;
 .customizeContent #customizeWeatherResults button { width:48%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .customizeContent #customizeAppName { padding:10px; font-size:23px; }
 .customizeDialog #customizeStatus { height:38px; min-height:38px; max-height:38px; white-space:nowrap; text-overflow:ellipsis; }
+
+/* Idle Home: hide only this launcher's UI. One tiled rain layer, no per-drop JS or blur. */
+#idleRain { display:none; position:absolute; top:0; left:0; right:0; bottom:0; overflow:hidden; pointer-events:none; z-index:2; }
+#idleRain .rainSheet { position:absolute; left:0; right:0; top:-270px; bottom:0; background:url('icons/rain-tile.svg') repeat; opacity:.55; }
+body.idle-home header, body.idle-home #forecastArea, body.idle-home #hero,
+body.idle-home #viewport, body.idle-home #penBtn, body.idle-home #arrangeBar,
+body.idle-home #toast, body.idle-home #noApps, body.idle-home .ambient { visibility:hidden; }
+body.idle-home.idle-rain:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-rain:not(.launcher-covered):not(.motion-reduced) .rainSheet { -webkit-animation:idleRainFall 1.35s linear infinite; animation:idleRainFall 1.35s linear infinite; }
+@-webkit-keyframes idleRainFall { from { -webkit-transform:translateY(0); } to { -webkit-transform:translateY(270px); } }
+@keyframes idleRainFall { from { transform:translateY(0); } to { transform:translateY(270px); } }

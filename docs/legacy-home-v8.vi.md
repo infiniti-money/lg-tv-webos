@@ -45,3 +45,5 @@ Cold Boot đã được xác nhận qua Boot ID thay đổi và thông báo halt
 Log TV ngày 26/11/2026 xác nhận readiness 10,2s, render 1,5s/17 tile, watcher enabled. Giữ nguyên đường khởi động. Bản bảo trì giảm canvas icon xuống 1x1, sửa khôi phục icon gốc dưới bộ icon toàn cục, QR chỉ hiện khi heartbeat còn hạn (90s; ghi lại mỗi 30s), báo rõ ảnh đã lưu nhưng cần mở lại Launcher khi không xác nhận yêu cầu reload. Cần cài IPK và Root Tools đồng bộ; chưa nghiệm thu QR thực tế. Không nhúng ảnh thác nước do chưa chuyển được ảnh nhị phân vào repo.
 
 - Icon gốc vuông/dọc: giữ tỷ lệ, căn giữa khung ngang 380×214; dùng màu nền đồng nhất nếu bốn mẫu mép ảnh tương đồng, nếu không giữ nền trung tính. Icon ngang 16:9 dùng toàn bộ vùng thẻ với contain; không crop hoặc kéo giãn. Giữ cache và hiệu ứng focus, kiểm thử vật lý còn cần thực hiện.
+
+- Chế độ chờ Home: 60 giây mặc định, chọn Tắt/30/60/120/300 giây; tùy chọn mưa hoạt động khi Home rảnh, không chạy khi app khác che phủ hoặc giảm chuyển động. Phím đầu tiên thoát chế độ chờ, không mở app. Không điều khiển nguồn TV, không thay thế bảo vệ màn hình LG.

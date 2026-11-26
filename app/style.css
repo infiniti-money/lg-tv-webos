@@ -840,3 +840,51 @@ body.motion-reduced #idleSignature { transition:none; }
 
 /* Keep idle effects visibly above the album and below the header/signature. */
 #idleRain { z-index:2; } #idleRain .rainSheet { opacity:.75; }
+
+/* Album compositor: two wrappers with independent image movement; no filters or canvas. */
+.idlePhoto { overflow:hidden; -webkit-transition:none; transition:none; }
+.idlePhotoImage { position:absolute; top:0; right:0; bottom:0; left:0; background-position:center; background-size:cover; background-repeat:no-repeat; }
+body.idle-home .idlePhoto.shown { opacity:1; }
+body.idle-home:not(.motion-reduced) .album-enter-fade { -webkit-animation:album-fade 1100ms ease both; animation:album-fade 1100ms ease both; }
+@-webkit-keyframes album-fade {0%{opacity:0;}100%{opacity:1;}}
+@keyframes album-fade {0%{opacity:0;}100%{opacity:1;}}
+body.idle-home:not(.motion-reduced) .album-enter-slide-left { -webkit-animation:album-slide-left 1100ms ease both; animation:album-slide-left 1100ms ease both; }
+@-webkit-keyframes album-slide-left {0%{opacity:0;-webkit-transform:translateX(12%);}100%{opacity:1;-webkit-transform:translateX(0);}}
+@keyframes album-slide-left {0%{opacity:0;transform:translateX(12%);}100%{opacity:1;transform:translateX(0);}}
+body.idle-home:not(.motion-reduced) .album-enter-slide-right { -webkit-animation:album-slide-right 1100ms ease both; animation:album-slide-right 1100ms ease both; }
+@-webkit-keyframes album-slide-right {0%{opacity:0;-webkit-transform:translateX(-12%);}100%{opacity:1;-webkit-transform:translateX(0);}}
+@keyframes album-slide-right {0%{opacity:0;transform:translateX(-12%);}100%{opacity:1;transform:translateX(0);}}
+body.idle-home:not(.motion-reduced) .album-enter-slide-up { -webkit-animation:album-slide-up 1100ms ease both; animation:album-slide-up 1100ms ease both; }
+@-webkit-keyframes album-slide-up {0%{opacity:0;-webkit-transform:translateY(12%);}100%{opacity:1;-webkit-transform:translateY(0);}}
+@keyframes album-slide-up {0%{opacity:0;transform:translateY(12%);}100%{opacity:1;transform:translateY(0);}}
+body.idle-home:not(.motion-reduced) .album-enter-zoom-in { -webkit-animation:album-zoom-in 1100ms ease both; animation:album-zoom-in 1100ms ease both; }
+@-webkit-keyframes album-zoom-in {0%{opacity:0;-webkit-transform:scale(.92);}100%{opacity:1;-webkit-transform:scale(1);}}
+@keyframes album-zoom-in {0%{opacity:0;transform:scale(.92);}100%{opacity:1;transform:scale(1);}}
+body.idle-home:not(.motion-reduced) .album-enter-zoom-out { -webkit-animation:album-zoom-out 1100ms ease both; animation:album-zoom-out 1100ms ease both; }
+@-webkit-keyframes album-zoom-out {0%{opacity:0;-webkit-transform:scale(1.14);}100%{opacity:1;-webkit-transform:scale(1);}}
+@keyframes album-zoom-out {0%{opacity:0;transform:scale(1.14);}100%{opacity:1;transform:scale(1);}}
+body.idle-home:not(.motion-reduced) .album-enter-dissolve { -webkit-animation:album-dissolve 1100ms ease both; animation:album-dissolve 1100ms ease both; }
+@-webkit-keyframes album-dissolve {0%{opacity:0;}35%{opacity:.16;}70%{opacity:.68;}100%{opacity:1;}}
+@keyframes album-dissolve {0%{opacity:0;}35%{opacity:.16;}70%{opacity:.68;}100%{opacity:1;}}
+body.idle-home:not(.motion-reduced) .album-enter-cinema { -webkit-animation:album-cinema 1100ms ease both; animation:album-cinema 1100ms ease both; }
+@-webkit-keyframes album-cinema {0%{opacity:0;-webkit-transform:translateX(5%) scale(1.08);}100%{opacity:1;-webkit-transform:translateX(0) scale(1);}}
+@keyframes album-cinema {0%{opacity:0;transform:translateX(5%) scale(1.08);}100%{opacity:1;transform:translateX(0) scale(1);}}
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-zoom-in { -webkit-animation:album-motion-zoom-in 32s ease-in-out infinite alternate; animation:album-motion-zoom-in 32s ease-in-out infinite alternate; }
+@-webkit-keyframes album-motion-zoom-in {from{-webkit-transform:scale(1.03);}to{-webkit-transform:scale(1.12);}}
+@keyframes album-motion-zoom-in {from{transform:scale(1.03);}to{transform:scale(1.12);}}
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-zoom-out { -webkit-animation:album-motion-zoom-out 32s ease-in-out infinite alternate; animation:album-motion-zoom-out 32s ease-in-out infinite alternate; }
+@-webkit-keyframes album-motion-zoom-out {from{-webkit-transform:scale(1.12);}to{-webkit-transform:scale(1.03);}}
+@keyframes album-motion-zoom-out {from{transform:scale(1.12);}to{transform:scale(1.03);}}
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-left { -webkit-animation:album-motion-pan-left 32s ease-in-out infinite alternate; animation:album-motion-pan-left 32s ease-in-out infinite alternate; }
+@-webkit-keyframes album-motion-pan-left {from{-webkit-transform:scale(1.11) translateX(2.5%);}to{-webkit-transform:scale(1.11) translateX(-2.5%);}}
+@keyframes album-motion-pan-left {from{transform:scale(1.11) translateX(2.5%);}to{transform:scale(1.11) translateX(-2.5%);}}
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-right { -webkit-animation:album-motion-pan-right 32s ease-in-out infinite alternate; animation:album-motion-pan-right 32s ease-in-out infinite alternate; }
+@-webkit-keyframes album-motion-pan-right {from{-webkit-transform:scale(1.11) translateX(-2.5%);}to{-webkit-transform:scale(1.11) translateX(2.5%);}}
+@keyframes album-motion-pan-right {from{transform:scale(1.11) translateX(-2.5%);}to{transform:scale(1.11) translateX(2.5%);}}
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-up { -webkit-animation:album-motion-pan-up 32s ease-in-out infinite alternate; animation:album-motion-pan-up 32s ease-in-out infinite alternate; }
+@-webkit-keyframes album-motion-pan-up {from{-webkit-transform:scale(1.11) translateY(2.5%);}to{-webkit-transform:scale(1.11) translateY(-2.5%);}}
+@keyframes album-motion-pan-up {from{transform:scale(1.11) translateY(2.5%);}to{transform:scale(1.11) translateY(-2.5%);}}
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-down { -webkit-animation:album-motion-pan-down 32s ease-in-out infinite alternate; animation:album-motion-pan-down 32s ease-in-out infinite alternate; }
+@-webkit-keyframes album-motion-pan-down {from{-webkit-transform:scale(1.11) translateY(-2.5%);}to{-webkit-transform:scale(1.11) translateY(2.5%);}}
+@keyframes album-motion-pan-down {from{transform:scale(1.11) translateY(-2.5%);}to{transform:scale(1.11) translateY(2.5%);}}
+body.motion-reduced .idlePhoto,body.motion-reduced .idlePhotoImage,body.launcher-covered .idlePhoto,body.launcher-covered .idlePhotoImage { -webkit-animation:none!important; animation:none!important; -webkit-transform:none!important; transform:none!important; }

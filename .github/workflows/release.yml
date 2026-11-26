@@ -62,6 +62,7 @@ jobs:
           node scripts/test-remote-settings.js
           node scripts/test-idle-album.js
           node scripts/test-idle-effect.js
+          node scripts/test-wallpaper-key.js
           node scripts/test-app-structure.js
           node scripts/test-glasshouse.js
           node scripts/test-settings-ui.js

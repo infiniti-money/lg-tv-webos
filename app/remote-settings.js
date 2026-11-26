@@ -29,7 +29,9 @@ function apply(inbox){
 }
 function ack(inbox){
  if(covered())return;
- var payload=JSON.stringify({revision:applied,values:snapshot()});if(payload===lastPayload&&Date.now()-lastAck<15000)return;
+ var idle=root.INFINITI_IDLE_STATUS?root.INFINITI_IDLE_STATUS():null;
+ if(idle)delete idle.lastInputMs;
+ var payload=JSON.stringify({revision:applied,values:snapshot(),idle:idle});if(payload===lastPayload&&Date.now()-lastAck<15000)return;
  var x=new XMLHttpRequest();try{x.open('POST','http://127.0.0.1:8090/api/remote-ack',true);x.timeout=4000;x.setRequestHeader('X-Infiniti-Remote',inbox.token);x.setRequestHeader('Content-Type','application/json');x.onload=function(){if(x.status===200){lastAck=Date.now();lastPayload=payload;}};x.send(payload);}catch(e){}
 }
 function poll(){

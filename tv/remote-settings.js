@@ -30,12 +30,13 @@ function create(dir,appDir,allowed,log){
     body(req,res,150000,function(c,v){json(res,c,v,headers);},function(v){
       if(!obj(v)||typeof v.revision!=='number'||v.revision<0||v.revision>data.revision||!obj(v.values))throw Error('bad ack');
       var clean={};Object.keys(v.values).slice(0,800).forEach(function(k){if(validate(k,v.values[k]))clean[k]=v.values[k];});
-      snap={revision:v.revision,values:clean};seen=Date.now();json(res,200,{ok:true},headers);
+      var idle=null;if(obj(v.idle)){var d=v.idle;idle={active:d.active===true,covered:d.covered===true,eligible:d.eligible===true,enabled:d.enabled===true,reduceMotion:d.reduceMotion===true,engine:['css','fallback','off'].indexOf(d.engine)>=0?d.engine:'off',effect:fields.idleEffect.indexOf(d.effect)>=0?d.effect:'rain',actualEffect:fields.idleEffect.indexOf(d.actualEffect)>=0?d.actualEffect:'',seconds:fields.idleSeconds.indexOf(d.seconds)>=0?d.seconds:60};}
+      snap={revision:v.revision,values:clean,idle:idle};seen=Date.now();json(res,200,{ok:true},headers);
     });return true;
   }
   if(p!=='/api/remote-state'&&p!=='/api/remote-set')return false;
   if(!authenticated){send(403,{error:'key'});return true;}
-  if(m==='GET'&&p==='/api/remote-state'){send(200,{revision:data.revision,applied:snap?snap.revision:null,online:Date.now()-seen<25000,values:snap?snap.values:{},apps:catalog(),pending:Object.keys(data.changes).filter(function(k){return !snap||data.changes[k].rev>snap.revision;})});return true;}
+  if(m==='GET'&&p==='/api/remote-state'){send(200,{revision:data.revision,applied:snap?snap.revision:null,online:Date.now()-seen<25000,idle:snap?snap.idle:null,values:snap?snap.values:{},apps:catalog(),pending:Object.keys(data.changes).filter(function(k){return !snap||data.changes[k].rev>snap.revision;})});return true;}
   if(m==='POST'&&p==='/api/remote-set'){body(req,res,24000,send,function(v){send(202,{revision:commit(v),queued:true});});return true;}
   send(405,{error:'method'});return true;
  }

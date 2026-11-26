@@ -93,7 +93,7 @@
     resetDialogOk();
     if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
     var p=idlePrefs(),effect=window.INFINITI_PREFS&&window.INFINITI_PREFS.resolveIdleEffect?window.INFINITI_PREFS.resolveIdleEffect(p,Math.random()):(p.idleRain&&!p.reduceMotion?'rain':'');
-    idleActive=true;idleWakeUntil=Date.now()+(preview?700:200);
+    idleActive=true;idleWakeUntil=Date.now()+(preview?1800:700);
     document.body.classList.add('idle-home');
     if(window.INFINITI_IDLE_ALBUM_START)window.INFINITI_IDLE_ALBUM_START();
     if(effect){idleEffectClass='idle-'+effect;document.body.classList.add(idleEffectClass);if(window.INFINITI_IDLE_EFFECT_START)window.INFINITI_IDLE_EFFECT_START(effect);}
@@ -109,15 +109,16 @@
     if(launcherCovered())return false;
     idleClear();idlePreviewTimer=setTimeout(function(){idlePreviewTimer=null;if(!idleEnter(true))idleReset();},450);return true;
   };
-  window.INFINITI_IDLE_STATUS=function(){var p=idlePrefs();return {active:idleActive,covered:launcherCovered(),eligible:idleEligible(),seconds:p.idleSeconds,enabled:p.idleRain,effect:p.idleEffect,reduceMotion:p.reduceMotion,lastInputMs:Date.now()-idleLastInput};};
+  window.INFINITI_IDLE_STATUS=function(){var p=idlePrefs();return {active:idleActive,covered:launcherCovered(),eligible:idleEligible(),seconds:p.idleSeconds,enabled:p.idleRain,effect:p.idleEffect,actualEffect:idleEffectClass.replace('idle-',''),engine:window.INFINITI_IDLE_EFFECT_MODE?window.INFINITI_IDLE_EFFECT_MODE():'off',reduceMotion:p.reduceMotion,lastInputMs:Date.now()-idleLastInput};};
   function idleStopEvent(e){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();}
   function idleInput(e){
-    if(launcherCovered())return;
+    if(launcherCovered()||e.isTrusted===false)return;
+    if(idlePreviewTimer!==null&&e.type==='mousemove')return;
     if(e.type==='keydown'&&idleWakeKey&&Date.now()>idleWakeUntil+10000)idleWakeKey=0;
     if(e.type==='keyup'&&idleWakeKey&&e.keyCode===idleWakeKey){idleWakeKey=0;idleStopEvent(e);return;}
     if(e.type==='keydown'&&idleWakeKey&&e.keyCode===idleWakeKey){idleStopEvent(e);return;}
     if(e.type==='mousemove'){
-      var moved=idleMouseX===null||Math.abs(e.clientX-idleMouseX)+Math.abs(e.clientY-idleMouseY)>=4;
+      var moved=idleMouseX===null||Math.abs(e.clientX-idleMouseX)+Math.abs(e.clientY-idleMouseY)>=12;
       if(!moved)return;idleMouseX=e.clientX;idleMouseY=e.clientY;
       if(idleActive&&Date.now()<idleWakeUntil)return;
     }

@@ -6,7 +6,6 @@ var fs=require('fs'), assert=require('assert');
 var css=fs.readFileSync('app/style.css','utf8');
 var html=fs.readFileSync('app/index.html','utf8');
 var app=fs.readFileSync('app/app.js','utf8');
-var assistant=fs.readFileSync('app/assistant.js','utf8');
 function block(selector) {
   var start=css.indexOf(selector+' {');
   assert.ok(start>=0,'Missing CSS block: '+selector);
@@ -39,13 +38,11 @@ assert.ok(/cachedHeaderBottom/.test(app),'Remote navigation still forces layout 
 assert.ok(/lastArrowAt/.test(app),'Remote key repeat throttle missing');
 assert.ok(/getFullYear\(\)/.test(app),'Solar date must contain the year');
 assert.ok(/function resetDialogOk\(\)/.test(app),'Settings close must reset held OK state');
-assert.ok(/INFINITI_AI_CLOSED/.test(assistant),'AI close must restore launcher focus');
 assert.ok(/function rowOf\(i\) \{ return 0; \}/.test(app),
   'All Home apps must remain on exactly one horizontal row');
 assert.ok(/translateX\(/.test(app),'Single app row must scroll horizontally');
 assert.ok(/background:rgba\(12,22,33,\.13\)/.test(css),
   'Weather cards must remain translucent, not opaque');
-assert.ok(/body\.ai-disabled #btnAI/.test(css),'AI must disappear from Home when disabled');
 assert.ok(/var TILE_W = Math.max\(96, Math.min\(158,/.test(app),
   'App icons should be slightly larger (96–158px) without extra rows');
 assert.ok(/border-radius:24px!important/.test(css) &&

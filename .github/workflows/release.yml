@@ -44,6 +44,7 @@ jobs:
           python3 scripts/test-legacy-home-v8.py
           node scripts/test-legacy-luna.js
           node scripts/test-legacy-v84.js
+          node scripts/test-legacy-v85.js
           node scripts/check-branding.js
           node scripts/test-homewatch.js
           node scripts/test-homekey-runtime.js
@@ -53,8 +54,8 @@ jobs:
           node scripts/test-homeevent.js
           node scripts/test-app-discovery.js
           node scripts/test-keymap.js
-          node scripts/test-ai-worker.mjs
-          node scripts/test-assistant.js
+
+
           node scripts/test-lunar.js
           node scripts/test-forecast.js
           node scripts/test-customize.js
@@ -62,14 +63,14 @@ jobs:
           node scripts/test-glasshouse.js
           node scripts/test-settings-ui.js
           node scripts/test-privacy-apps.js
-          node scripts/test-devmode-companion.js
+
           node scripts/test-homebrew-failsafe.js
           node scripts/test-autostart-rollback.js
           node scripts/test-upstream-compat.js
           python3 scripts/test-sync-noroot.py
           node scripts/test-weather-ui.js
           node scripts/test-tv-layout.js
-          for file in app/app.js app/glasshouse.js app/lifecycle.js app/extras.js app/config.js app/assistant.js app/customize.js app/lunar.js app/forecast.js app/qrcode.js tv/*.js; do node --check "$file"; done
+          for file in app/app.js app/glasshouse.js app/lifecycle.js app/extras.js app/config.js app/customize.js app/lunar.js app/forecast.js app/qrcode.js tv/*.js; do node --check "$file"; done
           for file in install.sh tv/*.sh; do sh -n "$file"; done
           for file in home-watch-mac.sh install-noroot.sh; do bash -n "$file"; done
           # PowerShell syntax check when pwsh is available on the GitHub runner.
@@ -128,11 +129,11 @@ jobs:
       # Future ordinary main pushes cannot trigger the release gate.
       - name: Create verified RC tag
         if: >-
-          ${{ github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.1') }}
+          ${{ github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.2') }}
         shell: bash
         run: |
           set -euo pipefail
-          TAG=v1.6.0-rc.1
+          TAG=v1.6.0-rc.2
           test "$(node -p "require('./app/appinfo.json').version")" = "1.6.0"
           existing=$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')
           if [ -n "$existing" ]; then
@@ -143,11 +144,11 @@ jobs:
           fi
       - name: Publish release candidate
         if: >-
-          ${{ (github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.1')) || github.ref == 'refs/tags/v1.6.0-rc.1' }}
+          ${{ (github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.2')) || github.ref == 'refs/tags/v1.6.0-rc.2' }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.6.0-rc.1
-          name: Infiniti TV Home v1.6.0 RC1 — V8.4
+          tag_name: v1.6.0-rc.2
+          name: Infiniti TV Home v1.6.0 RC2 — V8.5
           prerelease: true
           make_latest: false
           files: |

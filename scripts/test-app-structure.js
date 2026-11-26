@@ -18,15 +18,15 @@ matches.forEach(function (entry) {
   ids[id] = true;
 });
 ['customizePanel','customizeAppList','customizeThemes','customizeFonts',
- 'customizeWeatherTab','customizeCalendarTab','customizeWeatherPresets','customizeWeatherSearch',
+ 'customizeWeatherTab','customizeCalendarTab','customizeWeatherSearch',
  'customizeWeatherSearchBtn','customizeWeatherResults','customizeWeatherEnable',
- 'customizeWeatherUnit','customizeAITab','customizeAIView','customizeAIToggle','customizeAIState','customizeMotion','customizeSolar','customizeLunar',
- 'customizeWallpaper','forecastArea','weekWeather','date','lunarDate','btnCustomize','aiPanel'].forEach(function (id) {
+ 'customizeWeatherUnit','customizeMotion','customizeSolar','customizeLunar',
+ 'customizeWallpaper','forecastArea','weekWeather','date','lunarDate','btnCustomize'].forEach(function (id) {
   assert.ok(ids[id], 'missing widget: ' + id);
 });
 var scripts = [], re = /<script src="([^"]+)"/g, m;
 while ((m = re.exec(html))) scripts.push(m[1]);
-['config.js','customize.js','app.js','forecast.js','extras.js','lunar.js','assistant.js'].forEach(function (file) {
+['config.js','customize.js','app.js','forecast.js','extras.js','lunar.js'].forEach(function (file) {
   assert.ok(scripts.indexOf(file) !== -1, 'missing script include: ' + file);
 });
 scripts.forEach(function (file) {

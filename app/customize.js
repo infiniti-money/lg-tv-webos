@@ -133,7 +133,40 @@
     return typeof id === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}$/.test(id) &&
       id !== 'constructor' && id !== 'prototype' && !isProtected(id);
   }
+  var PACKS=['minimal','neon','glass','pastel','gold'];
+  var GLYPHS=['video','music','web','tv','game','settings','home','photo','apps'];
+  function iconCategory(app) {
+    var s=String(app.id||'')+' '+String(app.title||'');
+    if(/youtube|netflix|prime|video|jellyfin|kodi|plex|disney|hbo|tiktok/i.test(s))return 'video';
+    if(/spotify|music|soundcloud|nhạc|radio/i.test(s))return 'music';
+    if(/browser|chromium|trình duyệt|web browser/i.test(s))return 'web';
+    if(/game|gaming|trò chơi/i.test(s))return 'game';
+    if(/setting|cài đặt/i.test(s))return 'settings';
+    if(/photo|gallery|hình ảnh|album/i.test(s))return 'photo';
+    if(/homebrew|launcher|home channel/i.test(s))return 'home';
+    if(/livetv|channels|truyền hình|television/i.test(s))return 'tv';
+    return 'apps';
+  }
+  function packIcon(pack,glyph) {
+    return PACKS.indexOf(pack)>=0 && GLYPHS.indexOf(glyph)>=0 ? 'pack:'+pack+':'+glyph : '';
+  }
+  function iconSource(icon,original) {
+    if(icon==='original')return original||'';
+    var p=typeof icon==='string'?icon.split(':'):[];
+    if(p.length===3 && p[0]==='pack' && packIcon(p[1],p[2]))return 'icons/packs/'+p[1]+'-'+p[2]+'.svg';
+    return validIcon(icon)?icon:original||'';
+  }
+  function getIconPack(){
+    var p=safeRead('tvhome.iconpack.v1').pack;
+    return PACKS.indexOf(p)>=0?p:'original';
+  }
+  function setIconPack(p){
+    if(p!=='original' && PACKS.indexOf(p)<0)return false;
+    return safeWrite('tvhome.iconpack.v1',{pack:p});
+  }
   function validIcon(icon) {
+    if(icon==='original')return true;
+    if(typeof icon==='string' && /^pack:/.test(icon)){var p=icon.split(':');return p.length===3 && !!packIcon(p[1],p[2]);}
     return typeof icon === 'string' && icon.length <= MAX_ICON &&
       /^data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(icon);
   }
@@ -170,11 +203,30 @@
     Object.keys(app).forEach(function(k){out[k]=app[k];});
     out.title = style.title || app.title || app.id;
     out.originalIcon = app.icon || '';
-    if (style.icon) out.icon = style.icon;
+    var pack=getIconPack();
+    out.icon=iconSource(style.icon || (pack==='original'?'':packIcon(pack,iconCategory(app))),app.icon);
     return out;
   }
+  function directionalIndex(rects,index,code) {
+    if(index<0 || !rects[index])return 0;
+    var r=rects[index],x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;
+    var best=-1,score=Infinity,vertical=code===38||code===40;
+    for(var j=0;j<rects.length;j++){
+      if(j===index || !rects[j])continue;
+      var b=rects[j],dx=(b.left+b.right)/2-x,dy=(b.top+b.bottom)/2-y;
+      var primary=vertical?dy:dx,side=vertical?Math.abs(dx):Math.abs(dy);
+      if(code===37||code===38)primary=-primary;
+      if(primary<=3)continue;
+      var overlap=vertical?Math.min(r.right,b.right)-Math.max(r.left,b.left):Math.min(r.bottom,b.bottom)-Math.max(r.top,b.top);
+      var cost=primary+side*(overlap>0?0.25:3)+(overlap>0?0:120);
+      if(cost<score){score=cost;best=j;}
+    }
+    return best;
+  }
   var api = {
+    directionalIndex:directionalIndex,
     getAppStyle:getAppStyle, saveAppStyle:saveAppStyle, styledApp:styledApp,
+    iconCategory:iconCategory,packIcon:packIcon,iconSource:iconSource,getIconPack:getIconPack,setIconPack:setIconPack,
     isVisible:isVisible, setVisible:setVisible, resetVisible:resetVisible,
     getAppearance:getAppearance, saveAppearance:saveAppearance,
     getWeather:getWeather, saveWeather:saveWeather,
@@ -241,7 +293,8 @@
   }
   function previewAppIcon() {
     if (!editingApp) return;
-    $('customizeAppPreview').src = pendingIcon || editingApp.icon || '';
+    var pack=getIconPack();
+    $('customizeAppPreview').src = iconSource(pendingIcon || (pack==='original'?'':packIcon(pack,iconCategory(editingApp))),editingApp.icon);
   }
   function openAppEditor(app) {
     var style=getAppStyle(app.id);
@@ -252,6 +305,7 @@
     $('customizeAppList').classList.add('hidden');
     $('customizeAppEditor').classList.remove('hidden');
     previewAppIcon();
+    renderIconChoices();
     $('customizeAppName').focus();
   }
   function applyAppEditor(reset) {
@@ -266,6 +320,39 @@
     closeAppEditor(); refreshLauncher(); renderApps();
     tabs.apps.focus();
     message(reset?'Đã khôi phục tên và icon gốc.':'Đã lưu tên và icon trong Launcher.');
+  }
+  function renderIconChoices(){
+    var box=$('customizeAppPackChoices');box.innerHTML='';
+    PACKS.forEach(function(pack){
+      var btn=addButton(box,pack.charAt(0).toUpperCase()+pack.slice(1),function(){
+        uploadSequence++;iconBusy=false;pendingIcon=packIcon(pack,iconCategory(editingApp));
+        previewAppIcon();renderGlyphChoices(pack);
+        message('Đã chọn bộ icon '+pack+'. Có thể chọn biểu tượng khác bên dưới.');
+      },false);
+    });
+    renderGlyphChoices(getIconPack()==='original'?'minimal':getIconPack());
+  }
+  function renderGlyphChoices(pack){
+    var box=$('customizeAppGlyphChoices');box.innerHTML='';
+    var names=['Video','Nhạc','Web','TV','Game','Cài đặt','Home','Ảnh','Ứng dụng'];
+    GLYPHS.forEach(function(g,i){
+      var btn=addButton(box,names[i],function(){
+        uploadSequence++;iconBusy=false;pendingIcon=packIcon(pack,g);previewAppIcon();
+      },false);
+      var img=document.createElement('img');img.src=iconSource(packIcon(pack,g),'');img.alt='';btn.appendChild(img);
+    });
+  }
+  function renderGlobalPacks(){
+    var box=$('customizeGlobalPacks');box.innerHTML='';
+    ['original'].concat(PACKS).forEach(function(p){
+      var btn=addButton(box,p==='original'?'Gốc':p.charAt(0).toUpperCase()+p.slice(1),function(){
+        if(!setIconPack(p)){message('Không lưu được bộ icon.');return;}
+        refreshLauncher();renderApps();renderGlobalPacks();
+        var buttons=box.querySelectorAll('button');var index=['original'].concat(PACKS).indexOf(p);
+        if(buttons[index])buttons[index].focus();
+        message('Đã áp dụng bộ icon. Icon riêng từng app vẫn được giữ.');
+      },getIconPack()===p);
+    });
   }
   function makeColorIcon(color) {
     if (!editingApp) return;
@@ -526,7 +613,7 @@
       if (key === name) views[key].classList.remove('hidden');
       else views[key].classList.add('hidden');
     }
-    if (name === 'apps') renderApps();
+    if (name === 'apps') {renderGlobalPacks();renderApps();}
     else if (name === 'style') renderStyle();
     else if (name === 'weather') renderWeather();
     else renderCalendar();
@@ -553,6 +640,20 @@
     }
     return result;
   }
+  // Directional focus based on actual visible button geometry; no CSS spatial-navigation dependency.
+  function moveFocus(buttons,i,code){
+    var rects=buttons.map(function(el){return el.getBoundingClientRect?el.getBoundingClientRect():null;});
+    var next=rects[i]?directionalIndex(rects,i,code):-1;
+    if(next<0 && (!rects[i] || code===37 || code===39)){
+      var step=code===37||code===38?-1:1;
+      next=Math.max(0,Math.min(buttons.length-1,i+step));
+    }
+    if(i<0)next=0;
+    if(buttons[next]){
+      buttons[next].focus();
+      if(buttons[next].scrollIntoView)buttons[next].scrollIntoView(false);
+    }
+  }
   function stopKey(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -569,10 +670,8 @@
       stopKey(e);if(e.type==='keydown'){closeAppEditor();renderApps();tabs.apps.focus();}return;
     }
     if (active === $('customizeAppName')) {
-      if ((code===38 || code===40 || code===13) && e.type==='keydown') {
-        stopKey(e);$('customizeAppSave').focus();return;
-      }
-      return;
+      if (code===13 && e.type==='keydown') {stopKey(e);$('customizeAppSave').focus();return;}
+      if(code!==38 && code!==40)return;
     }
     // Let the LG on-screen keyboard enter characters and use Backspace naturally.
     if (active === search) {
@@ -580,10 +679,9 @@
       if (code === 13) { stopKey(e); if (e.type === 'keydown') searchRegion(); return; }
       if ((code === 40 || code === 38) && e.type === 'keydown') {
         stopKey(e);
-        var target = code === 40 ?
-          ($('customizeWeatherResults').querySelector('button') || $('customizeWeatherSearchBtn')) :
-          $('customizeWeatherSearchBtn');
-        if (target) target.focus();
+        var controls=visibleControls();
+        if(search.getBoundingClientRect)moveFocus(controls,controls.indexOf(search),code);
+        else {var target=$('customizeWeatherSearchBtn');if(target)target.focus();}
         return;
       }
       // Normal characters, Backspace and left/right caret movement must reach
@@ -600,12 +698,7 @@
       return;
     }
     if (code === 37 || code === 38 || code === 39 || code === 40) {
-      var step = code === 37 || code === 38 ? -1 : 1;
-      var next = Math.max(0, Math.min(buttons.length - 1, i + step));
-      if (buttons[next]) {
-        buttons[next].focus();
-        if (buttons[next].scrollIntoView) buttons[next].scrollIntoView(false);
-      }
+      moveFocus(buttons,i,code);
     }
   }
   document.addEventListener('keydown', keyHandler, true);
@@ -617,7 +710,7 @@
   $('customizeAppSave').addEventListener('click',function(){applyAppEditor(false);});
   $('customizeAppRestore').addEventListener('click',function(){applyAppEditor(true);});
   $('customizeAppCancel').addEventListener('click',function(){closeAppEditor();renderApps();tabs.apps.focus();});
-  $('customizeAppOriginalIcon').addEventListener('click',function(){uploadSequence++;iconBusy=false;pendingIcon='';previewAppIcon();});
+  $('customizeAppOriginalIcon').addEventListener('click',function(){uploadSequence++;iconBusy=false;pendingIcon='original';previewAppIcon();});
   $('customizeAppPickFile').addEventListener('click',function(){$('customizeAppFile').click();});
   $('customizeAppFile').addEventListener('change',function(){importAppIcon(this.files && this.files[0]);});
   [['customizeAppBlue','#234d89'],['customizeAppGreen','#245b42'],['customizeAppRed','#813448'],['customizeAppDark','#262c3a']].forEach(function(choice){

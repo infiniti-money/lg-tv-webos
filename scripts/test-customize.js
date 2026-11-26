@@ -33,3 +33,29 @@ assert.strictEqual(p.saveWeather({latitude:900}),false);
 assert.strictEqual(p.getWeather().latitude,21.0285);
 assert.strictEqual(p.saveWeather({enabled:false}).enabled,false);
 console.log('Customization, calendar, region selection and app visibility tests passed.');
+
+var fs=require('fs');
+['minimal','neon','glass','pastel','gold'].forEach(function(pack){
+ ['video','music','web','tv','game','settings','home','photo','apps'].forEach(function(g){
+  var token=p.packIcon(pack,g);assert.ok(fs.existsSync('app/'+p.iconSource(token,'')));
+ });
+});
+assert.equal(p.saveAppStyle('netflix','  Phim  ','pack:neon:video'),true);
+assert.equal(p.styledApp({id:'netflix',title:'Netflix',icon:'old.png'}).title,'Phim');
+assert.equal(p.styledApp({id:'netflix',title:'Netflix',icon:'old.png'}).icon,'icons/packs/neon-video.svg');
+assert.equal(p.saveAppStyle('netflix','x','https://example.com/icon.svg'),false);
+assert.equal(p.saveAppStyle('netflix','x','pack:../../:video'),false);
+assert.equal(p.saveAppStyle('com.infinitimoney.tvhome','x',''),false);
+assert.equal(p.setIconPack('gold'),true);
+assert.equal(p.styledApp({id:'spotify',title:'Spotify',icon:'old.png'}).icon,'icons/packs/gold-music.svg');
+assert.equal(p.saveAppStyle('spotify','','original'),true);
+assert.equal(p.styledApp({id:'spotify',title:'Spotify',icon:'old.png'}).icon,'old.png');
+assert.equal(p.saveAppStyle('netflix','',''),true);
+assert.equal(p.getAppStyle('netflix').title,'');
+var rects=[{left:0,right:100,top:0,bottom:50},{left:120,right:220,top:0,bottom:50},{left:0,right:100,top:80,bottom:130},{left:120,right:220,top:80,bottom:130}];
+assert.equal(p.directionalIndex(rects,0,40),2);
+assert.equal(p.directionalIndex(rects,1,40),3);
+assert.equal(p.directionalIndex(rects,3,38),1);
+assert.equal(p.directionalIndex(rects,2,39),3);
+assert.equal(p.directionalIndex(rects,0,38),-1);
+console.log('Icon pack and spatial remote navigation tests passed.');

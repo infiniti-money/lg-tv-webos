@@ -40,3 +40,15 @@ assert.strictEqual(sync.mergePoints([{id:'same',title:'a'},{id:'same',title:'b'}
   'duplicate IDs must be deduplicated');
 assert.strictEqual(sync.mergePoints([{title:'no ID'},null,{id:''}],[]).length,0,'reject invalid IDs');
 console.log('LG app discovery: only installed user-facing apps, no internal services or hidden apps.');
+
+var legacy=sync.normalizeLegacyApps([
+  {id:'com.webos.app.browser',title:'Trình duyệt',visible:true,folderPath:'/mnt/otncabi/usr/palm/applications/com.webos.app.browser',icon:'assets/icon.png'},
+  {id:'com.prohibited.app',visible:false},
+  {id:'com.hidden.internal',visible:true,noWindow:true},
+  {id:'com.manual.service',visible:true,type:'service'},
+  {id:'com.unknown.app',title:'Unknown'},null
+]);
+assert.strictEqual(legacy[0].icon,'/mnt/otncabi/usr/palm/applications/com.webos.app.browser/assets/icon.png');
+assert.deepStrictEqual(sync.mergePoints(legacy,[]).map(function(a){return a.id;}),['com.webos.app.browser']);
+assert.strictEqual(sync.mergePoints(legacy,disk).some(function(a){return a.id==='com.prohibited.app';}),false);
+console.log('Legacy listApps visibility and relative icon path tests passed.');

@@ -11,6 +11,8 @@ sh legacy-home.sh status
 sh legacy-home.sh watch
 ```
 
+Nếu chỉ cài IPK thủ công thì apps.js ban đầu rỗng: cài root tools, chạy `node /home/root/lg-tv-vibehack/sync.js` rồi đóng/mở Launcher. Legacy sync ưu tiên listApps qua Python với stdin mở; loại bỏ app ẩn và dịch vụ nền. Không arm boot nếu danh sách còn rỗng.
+
 Nhấn Home, kiểm tra log foreground phải là com.infinitimoney.tvhome và quan sát màn hình. Ctrl+C để dừng. Đây là quan sát phím không độc quyền, có thể lóe LG Home gốc; không phải thay thế compositor.
 
 Nếu thử thành công và đã kiểm tra ít nhất hai chu kỳ bật/tắt bình thường, chạy `sh legacy-home.sh arm`, reboot thủ công để thử một lần. Sau khi nhìn thấy Launcher và kiểm tra hoạt động bình thường, chạy `sh legacy-home.sh confirm`. Lần cold boot kế tiếp mới chạy watcher lâu dài. Tùy chọn `sh legacy-home.sh wake-on` (thử nghiệm): chỉ kích hoạt sau trạng thái standby quan sát được chuyển sang Active; Quick Start có thể không phát sinh trạng thái này. Không bật mặc định.

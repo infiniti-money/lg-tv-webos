@@ -55,7 +55,35 @@ function sleep(sec) { try { execFileSync('sleep', [String(sec)]); } catch (e) { 
 
 // For a minute or two after boot, webOS answers with an empty app list (seen on webOS 4.4), so ask
 // again until it has one. Without this, every boot overwrote apps.js with nothing.
+function normalizeLegacyApps(apps) {
+  if (!Array.isArray(apps)) return [];
+  return apps.filter(function (a) {
+    return a && typeof a.id === 'string' && a.id;
+  }).map(function (a) {
+    var base = typeof a.folderPath === 'string' ? a.folderPath : '';
+    function iconPath(v) {
+      if (typeof v !== 'string' || !v) return '';
+      return v.charAt(0) === '/' ? v : (base && !/^[a-z]+:/i.test(v) ? path.join(base, v) : '');
+    }
+    return {id:a.id,title:a.title || a.id,icon:iconPath(a.icon),
+      largeIcon:iconPath(a.largeIcon),iconColor:a.iconColor || a.bgColor || '',
+      visible:a.visible === true && a.noWindow !== true && a.noDisplay !== true &&
+        a.hidden !== true && a.type !== 'service' && a.type !== 'jsservice'};
+  });
+}
 function fromLuna(diskAvailable) {
+  var legacy = path.join(DATA, 'legacy-home-v8.py');
+  if (isFile(legacy) && isFile('/usr/bin/python')) {
+    try {
+      var catalog = JSON.parse(execFileSync('/usr/bin/python', [legacy, 'catalog'],
+        {encoding:'utf8', timeout:25000, maxBuffer:10*1024*1024}));
+      var normalized = normalizeLegacyApps(catalog.apps);
+      if (catalog.returnValue === true && normalized.some(function(a){return a.visible;})) {
+        console.error('Legacy listApps catalog ready (stdin held open).');
+        return normalized;
+      }
+    } catch (e) { console.error('Legacy listApps failed: ' + e.message); }
+  }
   var tries = parseInt(process.env.SYNC_TRIES || '', 10) || (diskAvailable ? 3 : 12);
   for (var i = 0; i < tries; i++) {
     var res = null;
@@ -245,4 +273,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = {mergePoints:mergePoints, listPoints:listPoints, findLauncherDir:findLauncherDir};
+module.exports = {normalizeLegacyApps:normalizeLegacyApps,mergePoints:mergePoints, listPoints:listPoints, findLauncherDir:findLauncherDir};

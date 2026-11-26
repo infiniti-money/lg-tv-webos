@@ -55,7 +55,7 @@ def allowed(mode):
         return exists('trial') and not exists('enabled')
     return exists('enabled')
 
-def luna(uri, payload, timeout=8):
+def luna(uri, payload, timeout=8, max_bytes=65536):
     """Keep stdin PIPE open until the reply; EOF broke V6/V7 on legacy TV.
     Unlike /dev/tty this also works in a detached service. Never use communicate()
     here: it closes stdin before waiting for the response.
@@ -73,7 +73,7 @@ def luna(uri, payload, timeout=8):
                 if not data:
                     break
                 chunks.append(data)
-                if sum(len(x) for x in chunks) > 65536:
+                if sum(len(x) for x in chunks) > max_bytes:
                     raise RuntimeError('oversized Luna response')
                 try:
                     reply = json.loads(b''.join(chunks).decode('utf-8'))
@@ -88,7 +88,11 @@ def luna(uri, payload, timeout=8):
         raise RuntimeError('missing/invalid Luna JSON: %r' % b''.join(chunks)[:240])
     finally:
         if p.poll() is None:
-            p.kill()
+            try:
+                p.kill()
+            except OSError as e:
+                if e.errno != errno.ESRCH:
+                    raise
         p.wait()
         p.stdin.close()
         p.stdout.close()
@@ -207,6 +211,19 @@ def watch(mode):
 
 def main():
     mode = sys.argv[1] if len(sys.argv) == 2 else ''
+    if mode == 'catalog':
+        if os.getuid() != 0:
+            return 2
+        try:
+            reply = luna('luna://com.webos.applicationManager/listApps', {},
+                         timeout=20, max_bytes=4 * 1024 * 1024)
+            if not isinstance(reply.get('apps'), list):
+                raise RuntimeError('listApps missing apps array')
+            print(json.dumps(reply))
+            return 0
+        except Exception as e:
+            sys.stderr.write('Legacy catalog: %s\n' % e)
+            return 1
     if mode not in ('watch','trial','enabled') or os.getuid() != 0:
         return 2
     # Separate persistent lock; kernel releases it on exit or reboot.

@@ -74,7 +74,7 @@ function writeWallJs() {
     var file=path.join(APP_DIR,'wall.js');
     if(url===wallLastUrl && now-wallHeartbeat<30000 && fs.existsSync(file))return;
     var value='// Written by wallpaper-server.js\nwindow.WALL_URL = '+JSON.stringify(url)+';\nwindow.WALL_EXPIRES = '+(url?now+90000:0)+';\n';
-    fs.writeFileSync(file+'.tmp',value,{mode:384});
+    fs.writeFileSync(file+'.tmp',value,{mode:420});
     fs.renameSync(file+'.tmp',file);
     wallHeartbeat=now;wallLastUrl=url;
   } catch (e) { log('cannot write wall.js: ' + e.message); }

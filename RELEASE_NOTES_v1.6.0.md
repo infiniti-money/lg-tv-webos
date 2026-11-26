@@ -1,4 +1,7 @@
-# Designed by Tân Dev — v1.6.0 RC7 (Legacy Home V9.0)
+# Designed by Tân Dev — v1.6.0 (V9.0)
+
+## Phát hành tổng hợp
+Gộp RC1–RC7 vào main theo yêu cầu chủ dự án. CI kiểm tra tương thích ES5, layout, icon pack, lịch âm, remote, đóng gói IPK và root tools. V8.4 đã được kiểm tra trên LG 49UH850T-TA; các thay đổi giao diện V9.0, QR hình nền và Standby thực sự chưa được xác nhận trên TV. Ảnh thác nước chọn trước đó chưa được nhúng vào IPK. Cài IPK và root tools cùng phiên bản; thử Home/boot trước khi confirm. Không tự bật root hook; giữ Failsafe và bản RC để quay lại. Người dùng đã cài RC có cùng version 1.6.0 cần cập nhật thủ công.
 
 - V8.4 trên LG 49UH850T-TA đã xác nhận Home 1,4 giây, readiness 11,2 giây và render boot 1,5 giây qua log; catalog 18 app, 5 input; tắt/bật Magic Remote tạo Boot ID mới. Standby thực sự chưa xác nhận.
 - V8.5: tên app và vendor Designed by Tân Dev; giữ app ID com.infinitimoney.tvhome và đường dẫn dữ liệu. Giữ bản quyền MIT gốc.

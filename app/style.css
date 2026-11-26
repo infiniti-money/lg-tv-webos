@@ -798,3 +798,30 @@ body.idle-home.idle-mist:not(.launcher-covered):not(.motion-reduced) .rainSheet 
 @keyframes idleRise { from { transform:translateY(270px); } to { transform:translateY(0); } }
 @-webkit-keyframes idleMistDrift { from { -webkit-transform:translateX(0); } to { -webkit-transform:translateX(480px); } }
 @keyframes idleMistDrift { from { transform:translateX(0); } to { transform:translateX(480px); } }
+
+/* Idle transition: animate outer wrappers, not the existing dock's focus transform.
+   Hide at the end of exit and restore visibility immediately on wake. */
+body:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #viewport,
+body:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #forecastArea,
+body:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #topButtons {
+  -webkit-transition: -webkit-transform 420ms ease, opacity 350ms ease, visibility 0s;
+  transition: transform 420ms ease, opacity 350ms ease, visibility 0s;
+}
+body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #viewport,
+body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #forecastArea,
+body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #topButtons {
+  opacity:0; pointer-events:none;
+  -webkit-transition: -webkit-transform 420ms ease, opacity 350ms ease, visibility 0s 420ms;
+  transition: transform 420ms ease, opacity 350ms ease, visibility 0s 420ms;
+}
+body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #viewport {
+  -webkit-transform-origin:50% 90%; transform-origin:50% 90%;
+  -webkit-transform:translateY(120px) scale(.92); transform:translateY(120px) scale(.92);
+}
+body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #forecastArea {
+  -webkit-transform-origin:50% 0; transform-origin:50% 0;
+  -webkit-transform:translateY(-20px) scale(.94); transform:translateY(-20px) scale(.94);
+}
+body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #topButtons {
+  -webkit-transform:translateY(-18px); transform:translateY(-18px);
+}

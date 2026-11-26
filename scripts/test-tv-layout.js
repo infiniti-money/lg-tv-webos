@@ -127,3 +127,8 @@ console.log('Idle Home retains clock/calendar/current weather, hides forecast an
 assert.ok(app.indexOf('document.body.classList.remove(idleEffectClass)')>=0);
 assert.ok(html.indexOf('id="customizeIdleEffect"')>=0);
 console.log('Idle effect assets, lifecycle CSS guards and controls checked.');
+
+assert.ok(css.indexOf('visibility 0s 420ms')>=0,'Idle exit delays visibility');
+assert.ok(css.indexOf('translateY(120px) scale(.92)')>=0,'Dock retracts');
+assert.ok(css.indexOf('translateY(-20px) scale(.94)')>=0,'Forecast retracts');
+assert.ok(css.indexOf('body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #viewport')>=0,'Transition respects lifecycle and reduced motion');

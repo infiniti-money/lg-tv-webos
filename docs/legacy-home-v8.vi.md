@@ -53,3 +53,5 @@ Log TV ngày 26/11/2026 xác nhận readiness 10,2s, render 1,5s/17 tile, watche
 - Chế độ chờ giữ đồng hồ, ngày âm/dương và thời tiết hiện tại theo tùy chọn hiển thị đã lưu. Chỉ ẩn hàng ứng dụng, nút chức năng, dự báo 3 ngày và các lớp trang trí Home. Không thay đổi lựa chọn hiển thị dự báo 3 ngày khi thoát chế độ chờ.
 
 - Ứng viên v1.6.2: 7 hiệu ứng màn hình chờ (mưa, tuyết, cánh hoa, sao, đom đóm, bong bóng, sương) và ngẫu nhiên mỗi lần vào chờ. Bật/tắt riêng, giữ thời gian cũ và lựa chọn giảm chuyển động. Chỉ một lớp SVG lặp với CSS transform; không dùng âm thanh, canvas hay mạng. Giữ đồng hồ/lịch/thời tiết hiện tại; ẩn dock/dự báo 3 ngày; cần nghiệm thu trên TV thật.
+
+- Khi vào màn hình chờ: dock thu 92% và trượt xuống, dự báo 3 ngày thu 94% và trượt lên, các nút chức năng mờ dần; 420ms. Thoát chờ khôi phục hiển thị. Không thay đổi đồng hồ/lịch/thời tiết hiện tại; giảm chuyển động thì ẩn ngay. Cần thử trên TV thật.

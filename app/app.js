@@ -81,14 +81,14 @@
   function launcherCovered() {
     return lifecycle ? lifecycle.isCovered() : !!document.hidden;
   }
-  var idleTimer=null, idleActive=false, idleWakeKey=0, idleClickUntil=0, idleMouseX=null,idleMouseY=null;
+  var idleTimer=null, idleActive=false, idleWakeKey=0, idleClickUntil=0, idleMouseX=null,idleMouseY=null,idleEffectClass='',idleMouseAt=0;
   function idlePrefs(){return window.INFINITI_PREFS?window.INFINITI_PREFS.getAppearance():{idleSeconds:60,idleRain:true};}
   function idleEligible(){return !launcherCovered()&&!editing&&!arranging&&!okDown&&!pressTimer&&(zone==='grid'||zone==='top'||zone==='pen')&&!(window.INFINITI_CUSTOMIZE_IS_OPEN&&window.INFINITI_CUSTOMIZE_IS_OPEN());}
   function idleClear(){if(idleTimer!==null){clearTimeout(idleTimer);idleTimer=null;}}
-  function idleShow(){idleActive=false;document.body.classList.remove('idle-home');document.body.classList.remove('idle-rain');}
+  function idleShow(){if(idleActive&&window.INFINITI_IDLE_ALBUM_STOP)window.INFINITI_IDLE_ALBUM_STOP();idleActive=false;document.body.classList.remove('idle-home');if(idleEffectClass)document.body.classList.remove(idleEffectClass);idleEffectClass='';}
   function idleSchedule(){
     idleClear();var p=idlePrefs();if(!p.idleSeconds||launcherCovered()||idleActive)return;
-    idleTimer=setTimeout(function(){idleTimer=null;if(!idleEligible()){idleSchedule();return;}idleActive=true;document.body.classList.add('idle-home');if(p.idleRain&&!p.reduceMotion)document.body.classList.add('idle-rain');},p.idleSeconds*1000);
+    idleTimer=setTimeout(function(){idleTimer=null;if(!idleEligible()){idleSchedule();return;}idleActive=true;document.body.classList.add('idle-home');if(window.INFINITI_IDLE_ALBUM_START)window.INFINITI_IDLE_ALBUM_START();var effect=window.INFINITI_PREFS&&window.INFINITI_PREFS.resolveIdleEffect?window.INFINITI_PREFS.resolveIdleEffect(p,Math.random()):(p.idleRain&&!p.reduceMotion?'rain':'');if(effect){idleEffectClass='idle-'+effect;document.body.classList.add(idleEffectClass);}},p.idleSeconds*1000);
   }
   function idleReset(){idleShow();idleSchedule();}
   function idleStopEvent(e){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();}
@@ -106,10 +106,14 @@
       if(e.type==='keydown'){idleWakeKey=e.keyCode;idleStopEvent(e);}
       else if(e.type==='mousedown'||e.type==='touchstart'||e.type==='wheel'){idleClickUntil=Date.now()+700;idleStopEvent(e);}
       else if(e.type==='click')idleStopEvent(e);
-    }else if(e.type!=='keyup')idleSchedule();
+    }else if(e.type!=='keyup'){
+      if(e.type==='mousemove'){var now=Date.now();if(now-idleMouseAt<500)return;idleMouseAt=now;}
+      idleSchedule();
+    }
   }
   ['keydown','keyup','mousemove','mousedown','click','touchstart','wheel'].forEach(function(type){document.addEventListener(type,idleInput,true);});
   window.INFINITI_IDLE_REFRESH=idleReset;
+  window.INFINITI_REMOTE_CAN_APPLY=function(){return !launcherCovered()&&!editing&&!arranging&&!okDown&&!pressTimer&&(zone==='grid'||zone==='top'||zone==='pen');};
   var entranceTimers = [];
   function clearEntranceTimers() {
     while (entranceTimers.length) clearTimeout(entranceTimers.pop());
@@ -161,6 +165,7 @@
 
   // ---- apps ----------------------------------------------------------------------------------
 
+  window.INFINITI_OPEN_APP=function(id,title){if(!launcherCovered())launch(id,title);};
   function orderedApps() {
     var all = (window.TV_APPS && TV_APPS.apps) || [];
     if(window.INFINITI_PREFS && INFINITI_PREFS.styledApp) all=all.map(INFINITI_PREFS.styledApp);
@@ -177,6 +182,7 @@
     }
     var byTitle = function (a, b) { return a.title.toLowerCase() < b.title.toLowerCase() ? -1 : 1; };
 
+    var pinned=[];if(window.INFINITI_PREFS&&INFINITI_PREFS.getPinned)INFINITI_PREFS.getPinned().forEach(function(id){if(byId[id]&&!hidden[id]){pinned.push(byId[id]);hidden[id]=true;}});
     // An order arranged on the TV wins, until dockApps in config.js changes.
     var saved = loadOrder();
     if (saved) {
@@ -184,16 +190,16 @@
       saved.forEach(function (id) {
         if (byId[id] && !hidden[id]) { placed.push(byId[id]); hidden[id] = true; }
       });
-      return placed.concat(all.filter(function (a) { return !hidden[a.id]; }).sort(byTitle));
+      return pinned.concat(placed,all.filter(function (a) { return !hidden[a.id]; }).sort(byTitle));
     }
 
     var dock = [];
     (CONFIG.dockApps || []).forEach(function (id) {
-      if (byId[id] && !hidden[id] && dock.length < COLUMNS) { dock.push(byId[id]); hidden[id] = true; }
+      if (byId[id] && !hidden[id] && dock.length + pinned.length < COLUMNS) { dock.push(byId[id]); hidden[id] = true; }
     });
     var rest = all.filter(function (a) { return !hidden[a.id]; });
     rest.sort(byTitle);
-    return dock.concat(rest);
+    return pinned.concat(dock,rest);
   }
 
   var ORDER_KEY = 'tvhome.order';

@@ -9,6 +9,8 @@
   <!-- Ambient glow in the colour of the focused dock app; two layers so colours crossfade. -->
   <div id="ambientA" class="ambient"></div>
   <div id="ambientB" class="ambient"></div>
+  <div id="idlePhotoA" class="idlePhoto"></div><div id="idlePhotoB" class="idlePhoto"></div>
+  <div id="idleSignature">Designed by Tân Dev</div>
   <div id="idleRain" aria-hidden="true"><div class="rainSheet"></div></div>
 
   <!-- Top shelf: the focused dock app's name, above the dock. -->
@@ -82,7 +84,6 @@
         <button type="button" id="customizeCalendarTab">Âm · dương lịch</button>
         <button type="button" id="customizeAppsTab">Ứng dụng</button>
         <button type="button" id="customizePrivacyTab">Chặn quảng cáo</button>
-        <button type="button" id="customizeUpdateTab">Cập nhật</button>
       </div>
       <div class="customizeContent">
         <div id="customizeStyleView">
@@ -97,28 +98,20 @@
             <button type="button" id="customizeResetStyle">Khôi phục giao diện</button>
           </div>
           <h3>Chế độ chờ · hình nền</h3>
-          <div class="customizeChoice"><button id="customizeIdleTime" type="button">Tự ẩn: 60 giây</button><button id="customizeIdleRain" type="button">Mưa khi chờ: Bật</button></div>
-          <p class="customizeHint">Khi chờ: giữ đồng hồ, lịch và thời tiết hiện tại; ẩn ứng dụng, nút chức năng và dự báo 3 ngày. Bấm phím hoặc di chuyển remote để trở về.</p>
+          <div class="customizeChoice"><button id="customizeIdleTime" type="button">Tự ẩn: 60 giây</button><button id="customizeIdleRain" type="button">Hiệu ứng: Bật</button><button id="customizeIdleEffect" type="button">Kiểu: Mưa rơi</button></div>
+          <p class="customizeHint">Khi chờ: giữ đồng hồ, lịch và thời tiết hiện tại; ẩn ứng dụng, nút chức năng và dự báo 3 ngày. Bấm OK trên nút Kiểu để đổi hiệu ứng. Bấm phím hoặc di chuyển remote để trở về.</p>
         </div>
         <div id="customizeWallpaperView" class="hidden">
-          <h3>Hình nền</h3>
-          <p>Đổi ảnh từ điện thoại hoặc USB, căn chỉnh và xóa hình nền. Quét mã QR bên dưới bằng điện thoại cùng mạng Wi-Fi với TV.</p>
+          <h3>Hình nền · Tùy chỉnh qua web</h3>
+          <p>Đổi ảnh, giao diện, màn hình chờ và icon từ điện thoại hoặc trình duyệt máy tính. Quét mã QR bên dưới bằng điện thoại cùng mạng Wi-Fi với TV.</p>
           <div id="customizeWallpaperBox" class="customizeWallpaperBox">
             <div id="customizeWallQr" aria-label="Mã QR đổi hình nền"></div>
             <div class="customizeWallpaperText">
               <p id="customizeWallState">Đang kiểm tra dịch vụ hình nền…</p>
               <p id="customizeWallHost"></p>
-              <button type="button" id="customizeWallpaper">Lấy mã QR hình nền</button>
+              <button type="button" id="customizeWallpaper">Lấy mã QR tùy chỉnh</button>
             </div>
           </div>
-        </div>
-        <div id="customizeUpdateView" class="hidden">
-          <h3>Cập nhật ứng dụng</h3>
-          <p id="customizeVersion">Phiên bản hiện tại: 1.6.1</p>
-          <p id="customizeReleaseResult">Kiểm tra bản chính thức mới nhất.</p>
-          <div class="customizeChoice"><button id="customizeCheckUpdate" type="button">Kiểm tra cập nhật</button><button id="customizeUpdateHelp" type="button">Hướng dẫn cài đặt</button></div>
-          <p id="customizeUpdateHelpText" class="hidden">Cài IPK và Root Tools cùng phiên bản qua SSH. Tải tại github.com/infiniti-money/lg-tv-webos/releases/latest. Kiểm tra SHA-256, tắt watcher trước khi thay tệp. Không gỡ app cũ.</p>
-          <p id="customizeUpdateState">Tự cập nhật: chưa cấu hình. Chạy trình cài đặt root với --auto-update để kích hoạt.</p>
         </div>
         <div id="customizeWeatherView" class="hidden">
           <p>Chọn khu vực trên TV, không cần chỉnh sửa mã nguồn hoặc SSH. Lựa chọn sẽ được lưu trên TV.</p>
@@ -147,9 +140,9 @@
         <div id="customizeAppsView" class="hidden">
           <div id="customizeAppOptions"><p>Thêm hoặc ẩn biểu tượng trên Designed by Tân Dev. Không gỡ ứng dụng khỏi TV.</p>
           <div class="customizeChoice">
-            <button id="customizeHideLGApps" type="button">Ẩn nhanh ứng dụng LG mặc định</button>
+            <button id="customizeHideLGApps" type="button">Ẩn app LG</button><button id="customizeShowAllApps" type="button">Hiện tất cả</button><button id="customizeAppFilter" type="button">Lọc: Tất cả</button><button id="customizeAppSort" type="button">Sắp xếp: A–Z</button>
           </div>
-          <p class="customizeHint">Chỉ ẩn biểu tượng trong Infiniti. Không xóa hoặc vô hiệu hóa các ứng dụng LG, Input Hook, Homebrew, HDMI và Live TV.</p>
+          <p id="customizeAppSummary" class="customizeHint">Chỉ thay đổi biểu tượng trên Home, không gỡ ứng dụng.</p>
           <h3>Bộ icon toàn bộ ứng dụng</h3><div id="customizeGlobalPacks" class="customizeChoice"></div>
           </div><div id="customizeAppBrowse"><div id="customizeAppList"></div><div class="customizePager"><button id="customizeAppPrev" type="button">‹ Trước</button><span id="customizeAppPage"></span><button id="customizeAppNext" type="button">Sau ›</button></div></div>
           <div id="customizeAppEditor" class="hidden">
@@ -178,7 +171,7 @@
             <div class="customizeChoice">
               <button id="customizeAppSave" type="button">Lưu</button>
               <button id="customizeAppRestore" type="button">Khôi phục tên và icon gốc</button>
-              <button id="customizeAppCancel" type="button">Hủy</button>
+              <button id="customizeAppCancel" type="button">Hủy</button><button id="customizeAppPin" type="button">Ghim đầu Home</button><button id="customizeAppLaunch" type="button">Mở ứng dụng</button>
             </div>
           </div>
           <button id="customizeResetApps" type="button">Khôi phục ứng dụng mặc định</button>
@@ -214,5 +207,7 @@
   <script src="app.js"></script>
   <script src="forecast.js"></script>
   <script src="extras.js"></script>
+  <script src="remote-settings.js"></script>
+  <script src="idle-album-player.js"></script>
 </body>
 </html>

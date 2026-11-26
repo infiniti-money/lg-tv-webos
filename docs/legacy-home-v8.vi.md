@@ -51,3 +51,13 @@ Log TV ngày 26/11/2026 xác nhận readiness 10,2s, render 1,5s/17 tile, watche
 - Bộ icon: 21 hình khác nhau mỗi chủ đề, 5 chủ đề (105 tệp); tự phân biệt Netflix, YouTube, Spotify, Prime, Disney+, TikTok, Jellyfin và loại chức năng; giữ 45 tệp cũ để không mất tùy chỉnh. Icon dạng minh họa, không phải bộ logo chính thức. Các app không nhận diện được có thể vẫn dùng chung icon chức năng, hoặc chọn icon gốc.
 
 - Chế độ chờ giữ đồng hồ, ngày âm/dương và thời tiết hiện tại theo tùy chọn hiển thị đã lưu. Chỉ ẩn hàng ứng dụng, nút chức năng, dự báo 3 ngày và các lớp trang trí Home. Không thay đổi lựa chọn hiển thị dự báo 3 ngày khi thoát chế độ chờ.
+
+- Ứng viên v1.6.2: 7 hiệu ứng màn hình chờ (mưa, tuyết, cánh hoa, sao, đom đóm, bong bóng, sương) và ngẫu nhiên mỗi lần vào chờ. Bật/tắt riêng, giữ thời gian cũ và lựa chọn giảm chuyển động. Chỉ một lớp SVG lặp với CSS transform; không dùng âm thanh, canvas hay mạng. Giữ đồng hồ/lịch/thời tiết hiện tại; ẩn dock/dự báo 3 ngày; cần nghiệm thu trên TV thật.
+
+- Khi vào màn hình chờ: dock thu 92% và trượt xuống, dự báo 3 ngày thu 94% và trượt lên, các nút chức năng mờ dần; 420ms. Thoát chờ khôi phục hiển thị. Không thay đổi đồng hồ/lịch/thời tiết hiện tại; giảm chuyển động thì ẩn ngay. Cần thử trên TV thật.
+
+- Tùy chỉnh web: cùng Wi-Fi, bật wallpaper-on, vào Tùy chỉnh > Hình nền và quét QR hoặc dùng URL đầy đủ trên máy tính. Hỗ trợ chủ đề, chữ, hiển thị lịch/forecast, màn hình chờ, bộ icon, tên/icon có sẵn/ẩn-hiện từng app. Mailbox chỉ nhận trường hợp lệ, lưu thay đổi có revision và nhận phản hồi từ TV qua loopback có token. Chỉ áp dụng khi Home rảnh, không chiếm foreground. Cần nghiệm thu khả năng loopback/CORS trên webOS 3.4; nếu không có phản hồi, web báo chưa xác nhận. Không điều khiển shell, root, cài IPK hay nguồn TV. Không mở 8090 ra Internet. Cần cài IPK và Root Tools cùng bản.
+
+- Album màn hình chờ: tối đa 20 JPEG (1,5 MB/ảnh), chọn nhiều ảnh trên web, thu 1920×1080, chuyển 15/30/60/120/300/600 giây hoặc ngẫu nhiên không lặp ngay. Album chỉ chạy khi idle, ảnh chính giữ nguyên. Chữ Designed by Tân Dev ở góc dưới phải. Root Tools lưu album trong DATA/idle-album; phục hồi tệp sau cập nhật qua dịch vụ wallpaper-on. Cần thử webOS thực tế; không công bố đã nghiệm thu.
+
+- Album lưu ảnh gần nhất và mốc thời gian qua các lần vào/thoát chờ. Chu kỳ 15 giây đến 7 ngày (ngày = 24 giờ), hoặc mỗi lần bật TV (boot ID thay đổi; resume chỉ khi watcher nhận được Standby→Active, cần wake-on). Không chạy lúc TV tắt; ảnh được chọn khi Home vào chờ. Bỏ mục Cập nhật; quản lý app bổ sung lọc, sắp xếp, hiện tất cả, ghim, mở app. Không gỡ app hệ thống.

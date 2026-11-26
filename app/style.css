@@ -780,3 +780,60 @@ body.idle-home.idle-rain:not(.launcher-covered):not(.motion-reduced) #idleRain {
 body.idle-home.idle-rain:not(.launcher-covered):not(.motion-reduced) .rainSheet { -webkit-animation:idleRainFall 1.35s linear infinite; animation:idleRainFall 1.35s linear infinite; }
 @-webkit-keyframes idleRainFall { from { -webkit-transform:translateY(0); } to { -webkit-transform:translateY(270px); } }
 @keyframes idleRainFall { from { transform:translateY(0); } to { transform:translateY(270px); } }
+
+/* v1.6.2: one tiled effect layer; no canvas, per-particle DOM, audio or network. */
+body.idle-home.idle-snow:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-snow:not(.launcher-covered):not(.motion-reduced) .rainSheet { background-image:url('icons/idle-snow.svg'); opacity:.72; -webkit-animation:idleRainFall 12s linear infinite; animation:idleRainFall 12s linear infinite; }
+body.idle-home.idle-petals:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-petals:not(.launcher-covered):not(.motion-reduced) .rainSheet { background-image:url('icons/idle-petals.svg'); opacity:.7; -webkit-animation:idleRainFall 17s linear infinite; animation:idleRainFall 17s linear infinite; }
+body.idle-home.idle-stars:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-stars:not(.launcher-covered):not(.motion-reduced) .rainSheet { background-image:url('icons/idle-stars.svg'); opacity:.6; -webkit-animation:idleRainFall 45s linear infinite; animation:idleRainFall 45s linear infinite; }
+body.idle-home.idle-fireflies:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-fireflies:not(.launcher-covered):not(.motion-reduced) .rainSheet { background-image:url('icons/idle-fireflies.svg'); opacity:.7; -webkit-animation:idleRise 24s linear infinite; animation:idleRise 24s linear infinite; }
+body.idle-home.idle-bubbles:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-bubbles:not(.launcher-covered):not(.motion-reduced) .rainSheet { background-image:url('icons/idle-bubbles.svg'); opacity:.68; -webkit-animation:idleRise 19s linear infinite; animation:idleRise 19s linear infinite; }
+body.idle-home.idle-mist:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-mist:not(.launcher-covered):not(.motion-reduced) .rainSheet { background-image:url('icons/idle-mist.svg'); opacity:.7; -webkit-animation:idleMistDrift 36s linear infinite; animation:idleMistDrift 36s linear infinite; left:-480px; top:0; }
+@-webkit-keyframes idleRise { from { -webkit-transform:translateY(270px); } to { -webkit-transform:translateY(0); } }
+@keyframes idleRise { from { transform:translateY(270px); } to { transform:translateY(0); } }
+@-webkit-keyframes idleMistDrift { from { -webkit-transform:translateX(0); } to { -webkit-transform:translateX(480px); } }
+@keyframes idleMistDrift { from { transform:translateX(0); } to { transform:translateX(480px); } }
+
+/* Idle transition: animate outer wrappers, not the existing dock's focus transform.
+   Hide at the end of exit and restore visibility immediately on wake. */
+body:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #viewport,
+body:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #forecastArea,
+body:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #topButtons {
+  -webkit-transition: -webkit-transform 420ms ease, opacity 350ms ease, visibility 0s;
+  transition: transform 420ms ease, opacity 350ms ease, visibility 0s;
+}
+body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #viewport,
+body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #forecastArea,
+body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #topButtons {
+  opacity:0; pointer-events:none;
+  -webkit-transition: -webkit-transform 420ms ease, opacity 350ms ease, visibility 0s 420ms;
+  transition: transform 420ms ease, opacity 350ms ease, visibility 0s 420ms;
+}
+body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #viewport {
+  -webkit-transform-origin:50% 90%; transform-origin:50% 90%;
+  -webkit-transform:translateY(120px) scale(.92); transform:translateY(120px) scale(.92);
+}
+body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #forecastArea {
+  -webkit-transform-origin:50% 0; transform-origin:50% 0;
+  -webkit-transform:translateY(-20px) scale(.94); transform:translateY(-20px) scale(.94);
+}
+body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #topButtons {
+  -webkit-transform:translateY(-18px); transform:translateY(-18px);
+}
+
+/* Idle signature and photo crossfade, below clock/effects. */
+.idlePhoto { position:absolute; top:0; left:0; right:0; bottom:0; z-index:1; background-position:center; background-size:cover; background-repeat:no-repeat; opacity:0; pointer-events:none; transition:opacity 650ms ease; }
+body.idle-home .idlePhoto.shown { opacity:1; }
+body.motion-reduced .idlePhoto,body.launcher-covered .idlePhoto { transition:none!important; }
+#idleSignature { position:absolute; right:60px; bottom:40px; z-index:4; font-size:22px; letter-spacing:.04em; color:rgba(255,255,255,.82); text-shadow:0 1px 5px #000; pointer-events:none; opacity:0; visibility:hidden; transition:opacity 350ms ease; }
+body.idle-home:not(.launcher-covered) #idleSignature { opacity:1; visibility:visible; }
+body.motion-reduced #idleSignature { transition:none; }
+
+#customizeWallHost { overflow-wrap:break-word; word-break:break-all; max-width:100%; font-size:18px; }
+
+#customizeAppOptions .customizeChoice button { padding:8px 12px; font-size:19px; }

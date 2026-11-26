@@ -1,4 +1,6 @@
-# Infiniti LG Home Legacy — LG 49UH850T-TA
+> Tài liệu kỹ thuật và lịch sử kiểm thử. Hướng dẫn hiện hành: [Hướng dẫn chủ TV](owner-guide.vi.md). Các định danh cũ dùng để tương thích/khôi phục, xem [giải thích](compatibility-paths.md).
+
+# Designed by Tân Dev — Legacy Home technical reference
 
 Mục tiêu: webOS 3.4.3, firmware 05.70.45, ARMv7, Python 2.7.3, root UID 0. Home key 773 đã được đo trên LGE M-RCU Builtin [0] event4. V8 tương tác đã xác nhận close/launch/getForegroundAppInfo với Homebrew Channel; chưa thử với IPK Infiniti hoặc daemon mới.
 

@@ -1,3 +1,5 @@
+> Lịch sử phiên bản. Xem [hướng dẫn hiện hành](docs/owner-guide.vi.md); các tên và lệnh cũ chỉ mang tính tham chiếu lịch sử.
+
 # v1.6.2 — Designed by Tân Dev
 
 Xem RELEASE_NOTES_v1.6.2.md. Cài IPK và Root Tools đồng bộ qua SSH; không có mục Cập nhật trên TV.

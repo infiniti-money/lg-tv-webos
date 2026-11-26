@@ -68,7 +68,7 @@
 <body>
 <main>
   <h1 id="t-title"></h1>
-  <section class="remotePanel"><h2>Khóa truy cập riêng</h2><p class="hint">16–64 ký tự chữ, số, gạch dưới hoặc gạch ngang. Dùng khóa dài, khó đoán. Khi đổi khóa, liên kết QR cũ hết hiệu lực.</p><form id="keyForm"><label class="remoteRow">Khóa mới <input id="newKey" type="password" minlength="16" maxlength="64" autocomplete="new-password" required></label><label class="remoteRow">Nhập lại <input id="confirmKey" type="password" minlength="16" maxlength="64" autocomplete="new-password" required></label><button type="submit" class="btn" id="keySave">Đổi khóa riêng</button></form><p id="keyStatus" role="status"></p><a href="/" style="color:#b8d9ef">Về trang đăng nhập</a></section>
+  <section class="remotePanel"><h2>Khóa truy cập riêng</h2><p class="hint">8–64 ký tự, chỉ dùng chữ cái cũng được; không bắt buộc số hoặc ký tự đặc biệt. Dùng khóa dài, khó đoán. Khi đổi khóa, liên kết QR cũ hết hiệu lực.</p><form id="keyForm"><label class="remoteRow">Khóa mới <input id="newKey" type="password" minlength="8" maxlength="64" autocomplete="new-password" required></label><label class="remoteRow">Nhập lại <input id="confirmKey" type="password" minlength="8" maxlength="64" autocomplete="new-password" required></label><button type="submit" class="btn" id="keySave">Đổi khóa riêng</button></form><p id="keyStatus" role="status"></p><a href="/" style="color:#b8d9ef">Về trang đăng nhập</a></section>
 
   <!-- Normal view: the current wallpaper -->
   <section id="viewMode">
@@ -153,7 +153,7 @@
 </main>
 <script>
 (function () {
-  var match = /[?&]k=([A-Za-z0-9_-]{16,64})(?:&|$)/.exec(location.search);
+  var match = /[?&]k=([A-Za-z0-9_-]{8,64})(?:&|$)/.exec(location.search);
   var K = match ? match[1] : '';
   var T = {
     en: { title: 'Designed by Tân Dev · TV settings', dim: 'Darken', pick: 'Choose a photo', clear: 'Remove wallpaper', usb: 'From a USB stick in the TV',
@@ -367,7 +367,7 @@
   };
 
 
-  $('keyForm').onsubmit=function(e){e.preventDefault();var k=$('newKey').value,msg=$('keyStatus'),btn=$('keySave');if(!/^[A-Za-z0-9_-]{16,64}$/.test(k)||k!==$('confirmKey').value||k===K){msg.textContent='Khóa không hợp lệ, trùng khóa cũ hoặc nhập lại chưa khớp.';return;}if(!confirm('Đổi khóa và vô hiệu hóa đường dẫn cũ?'))return;btn.disabled=true;api('POST','api/key',JSON.stringify({key:k})).then(function(){location.replace('/?k='+encodeURIComponent(k));}).catch(function(){msg.textContent='Không đổi được khóa. Thử đăng nhập lại.';btn.disabled=false;});};
+  $('keyForm').onsubmit=function(e){e.preventDefault();var k=$('newKey').value,msg=$('keyStatus'),btn=$('keySave');if(!/^[A-Za-z0-9_-]{8,64}$/.test(k)||k!==$('confirmKey').value||k===K){msg.textContent='Khóa không hợp lệ, trùng khóa cũ hoặc nhập lại chưa khớp.';return;}if(!confirm('Đổi khóa và vô hiệu hóa đường dẫn cũ?'))return;btn.disabled=true;api('POST','api/key',JSON.stringify({key:k})).then(function(){location.replace('/?k='+encodeURIComponent(k));}).catch(function(){msg.textContent='Không đổi được khóa. Thử đăng nhập lại.';btn.disabled=false;});};
   // Album: sequential uploads, bounded full-HD JPEG conversion, no replacement of main wallpaper.
   var albumBusy=false,albumState=null;
   function albumMessage(s){$('albumStatus').textContent=s;}

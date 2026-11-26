@@ -40,7 +40,7 @@ function readJSON(file, fallback) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return fallback; }
 }
 
-function validKey(k){return typeof k==='string'&&/^[A-Za-z0-9_-]{16,64}$/.test(k);}
+function validKey(k){return typeof k==='string'&&/^[A-Za-z0-9_-]{8,64}$/.test(k);}
 function keyMatches(a,b){if(!validKey(a)||!validKey(b))return false;var x=crypto.createHash('sha256').update(a).digest(),y=crypto.createHash('sha256').update(b).digest(),v=0;for(var i=0;i<x.length;i++)v|=x[i]^y[i];return v===0;}
 function storeKey(k){var f=path.join(DATA,'.wallpaper-key'),tmp=f+'.new-'+process.pid;fs.writeFileSync(tmp,k,{mode:384});fs.chmodSync(tmp,384);fs.renameSync(tmp,f);}
 function loadKey() {
@@ -275,7 +275,7 @@ function handle(req, res) {
 }
 
 function loginPage(bad) {
-  return '<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Designed by Tân Dev</title><style>body{font:17px system-ui,sans-serif;background:#101820;color:#eee;margin:0;padding:28px}main{max-width:420px;margin:8vh auto;padding:24px;border:1px solid #3b4b58;border-radius:16px}input,button{box-sizing:border-box;width:100%;padding:13px;margin:8px 0;border-radius:8px;font:inherit}input{color:#fff;background:#22303c;border:1px solid #546674}button{background:#d1e5f5;border:0;color:#14232f;font-weight:bold}p{line-height:1.5;color:#b8c9d7}</style><main><h1>Designed by Tân Dev</h1><p>Tùy chỉnh TV qua mạng nội bộ.</p>'+(bad?'<p role="alert">Khóa không đúng. Thử lại hoặc xem mã QR trên TV.</p>':'')+'<form method="get" action="/"><label for="k">Khóa riêng</label><input type="password" name="k" id="k" required minlength="16" maxlength="64" autocomplete="current-password" pattern="[A-Za-z0-9_\\-]{16,64}"><button>Đăng nhập</button></form><p>Chỉ dùng trên Wi-Fi riêng. Không mở cổng ra Internet.</p></main></html>';
+  return '<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Designed by Tân Dev</title><style>body{font:17px system-ui,sans-serif;background:#101820;color:#eee;margin:0;padding:28px}main{max-width:420px;margin:8vh auto;padding:24px;border:1px solid #3b4b58;border-radius:16px}input,button{box-sizing:border-box;width:100%;padding:13px;margin:8px 0;border-radius:8px;font:inherit}input{color:#fff;background:#22303c;border:1px solid #546674}button{background:#d1e5f5;border:0;color:#14232f;font-weight:bold}p{line-height:1.5;color:#b8c9d7}</style><main><h1>Designed by Tân Dev</h1><p>Tùy chỉnh TV qua mạng nội bộ.</p>'+(bad?'<p role="alert">Khóa không đúng. Thử lại hoặc xem mã QR trên TV.</p>':'')+'<form method="get" action="/"><label for="k">Khóa riêng</label><input type="password" name="k" id="k" required minlength="8" maxlength="64" autocomplete="current-password" pattern="[A-Za-z0-9_\\-]{8,64}"><button>Đăng nhập</button></form><p>Chỉ dùng trên Wi-Fi riêng. Không mở cổng ra Internet.</p></main></html>';
 }
 
 

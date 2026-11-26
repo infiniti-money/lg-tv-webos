@@ -512,7 +512,7 @@
     root.INFINITI_WALLPAPER_GET_URL(function (url) {
       // The QR links to a TV-local, secret-authenticated phone service.
       // Only display a valid local IP:8090 URL written by the root helper.
-      if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:8090\/\?k=[A-Za-z0-9_-]{16,64}$/.test(url || '')) {
+      if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:8090\/\?k=[A-Za-z0-9_-]{8,64}$/.test(url || '')) {
         state.textContent = 'Chưa có địa chỉ dịch vụ hình nền. Qua SSH chạy legacy-home.sh wallpaper-on, sau đó bấm Lấy mã QR lại.';
         return;
       }

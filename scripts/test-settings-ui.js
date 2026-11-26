@@ -93,7 +93,7 @@ var window={
   INFINITI_WEATHER_RELOAD:function(){weatherCalls++;},
   INFINITI_LAUNCHER_LAYOUT_REFRESH:function(){},
   INFINITI_WALLPAPER_GET_URL:function(cb) {
-    cb('http://192.168.2.154:8090/?k=Test_PrivateKey-1234');
+    cb('http://192.168.2.154:8090/?k=TestOnly');
   }
 };
 function qrcode() {

@@ -23,7 +23,7 @@ assert.ok(html.indexOf('id="customizeWeatherTab"')!==-1,'Missing weather setting
 assert.ok(html.indexOf('id="customizeCalendarTab"')!==-1,'Missing calendar settings tab');
 assert.ok(html.indexOf('id="customizeSearchRow"')===-1,'Only class-based search row is expected');
 assert.ok(html.indexOf('id="customizeWeatherSearch"')!==-1,'Missing region search field');
-assert.ok(/overflow-y:\s*auto/.test(block('.customizeContent')),'Settings must scroll');
+assert.ok(/overflow:hidden/.test(block('.customizeContent')),'Fixed settings must not scroll');
 assert.ok(/flex-direction:\s*column/.test(block('.customizeDialog')),'Settings must keep header/footer visible');
 assert.ok(/height:\s*100%/.test(block('.customizeDialog')),'Settings must fit TV height');
 assert.ok(/max-width:\s*1640px/.test(block('.customizeDialog')),'Settings should fit safe TV width');
@@ -111,3 +111,6 @@ assert.equal(iconScope.iconLayout(256,256,[[255,255,255,255],flat[1],flat[2],fla
 assert.ok(/object-fit:contain/.test(block('.item .card.icon-contained img')));
 assert.ok(/width:100%; height:100%/.test(block('.item .card.icon-landscape img')));
 console.log('Icon aspect ratio and solid-edge background tests passed.');
+
+assert.ok(/flex-direction:column/.test(block('.customizeMain .customizeTabs')));
+assert.ok(html.indexOf('id="customizeCheckUpdate"')>=0 && html.indexOf('id="customizeAppNext"')>=0);

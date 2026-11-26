@@ -135,6 +135,7 @@
   }
   var PACKS=['minimal','neon','glass','pastel','gold'];
   var GLYPHS=['video','music','web','tv','game','settings','home','photo','apps'];
+  var GLYPH_NAMES=['Video','Nhạc','Web','TV','Game','Cài đặt','Home','Ảnh','Ứng dụng'];
   function iconCategory(app) {
     var s=String(app.id||'')+' '+String(app.title||'');
     if(/youtube|netflix|prime|video|jellyfin|kodi|plex|disney|hbo|tiktok/i.test(s))return 'video';
@@ -244,16 +245,18 @@
   var tabs = {
     apps:$('customizeAppsTab'), style:$('customizeStyleTab'),
     weather:$('customizeWeatherTab'), calendar:$('customizeCalendarTab'),
-    privacy:$('customizePrivacyTab')
+    privacy:$('customizePrivacyTab'), wallpaper:$('customizeWallpaperTab'), update:$('customizeUpdateTab')
   };
   var views = {
     apps:$('customizeAppsView'), style:$('customizeStyleView'),
     weather:$('customizeWeatherView'), calendar:$('customizeCalendarView'),
-    privacy:$('customizePrivacyView')
+    privacy:$('customizePrivacyView'), wallpaper:$('customizeWallpaperView'), update:$('customizeUpdateView')
   };
   var appsList = $('customizeAppList'), themeBox = $('customizeThemes');
   var fontBox = $('customizeFonts'), status = $('customizeStatus');
   var opened = false, activeTab = 'style', searchRequest = null;
+  var appPage=0, glyphPage=0, currentGlyphPack='minimal', APP_PAGE_SIZE=5, GLYPH_PAGE_SIZE=6;
+  var releaseRequest=null, installedVersion='';
 
   function applyAppearance() {
     var a = getAppearance(), body = document.body;
@@ -290,6 +293,9 @@
     uploadSequence++; iconBusy=false; editingApp=null; pendingIcon='';
     $('customizeAppEditor').classList.add('hidden');
     $('customizeAppList').classList.remove('hidden');
+    $('customizeAppBrowse').classList.remove('hidden');
+    $('customizeAppOptions').classList.remove('hidden');
+    $('customizeResetApps').classList.remove('hidden');
     $('customizeAppFile').value='';
   }
   function previewAppIcon() {
@@ -300,10 +306,14 @@
   function openAppEditor(app) {
     var style=getAppStyle(app.id);
     uploadSequence++; iconBusy=false; editingApp=app; pendingIcon=style.icon;
+    glyphPage=0;
     $('customizeAppEditorTitle').textContent='Tùy chỉnh: '+(app.title || app.id);
     $('customizeAppName').value=style.title || app.title || app.id;
     $('customizeAppFile').value='';
     $('customizeAppList').classList.add('hidden');
+    $('customizeAppBrowse').classList.add('hidden');
+    $('customizeAppOptions').classList.add('hidden');
+    $('customizeResetApps').classList.add('hidden');
     $('customizeAppEditor').classList.remove('hidden');
     previewAppIcon();
     renderIconChoices();
@@ -327,7 +337,7 @@
     PACKS.forEach(function(pack){
       var btn=addButton(box,pack.charAt(0).toUpperCase()+pack.slice(1),function(){
         uploadSequence++;iconBusy=false;pendingIcon=packIcon(pack,iconCategory(editingApp));
-        previewAppIcon();renderGlyphChoices(pack);
+        previewAppIcon();glyphPage=0;renderGlyphChoices(pack);
         message('Đã chọn bộ icon '+pack+'. Có thể chọn biểu tượng khác bên dưới.');
       },false);
     });
@@ -335,9 +345,14 @@
   }
   function renderGlyphChoices(pack){
     var box=$('customizeAppGlyphChoices');box.innerHTML='';
-    var names=['Video','Nhạc','Web','TV','Game','Cài đặt','Home','Ảnh','Ứng dụng'];
-    GLYPHS.forEach(function(g,i){
-      var btn=addButton(box,names[i],function(){
+    currentGlyphPack=pack;
+    var pages=Math.max(1,Math.ceil(GLYPHS.length/GLYPH_PAGE_SIZE));
+    glyphPage=Math.max(0,Math.min(glyphPage,pages-1));
+    $('customizeGlyphPage').textContent='Trang '+(glyphPage+1)+' / '+pages;
+    $('customizeGlyphPrev').disabled=glyphPage===0;
+    $('customizeGlyphNext').disabled=glyphPage>=pages-1;
+    GLYPHS.slice(glyphPage*GLYPH_PAGE_SIZE,(glyphPage+1)*GLYPH_PAGE_SIZE).forEach(function(g){
+      var btn=addButton(box,GLYPH_NAMES[GLYPHS.indexOf(g)],function(){
         uploadSequence++;iconBusy=false;pendingIcon=packIcon(pack,g);previewAppIcon();
       },false);
       var img=document.createElement('img');img.src=iconSource(packIcon(pack,g),'');img.alt='';btn.appendChild(img);
@@ -413,13 +428,18 @@
       var bb = String(b.title || b.id).toLowerCase();
       return aa < bb ? -1 : aa > bb ? 1 : 0;
     });
+    var pages=Math.max(1,Math.ceil(installed.length/APP_PAGE_SIZE));
+    appPage=Math.max(0,Math.min(appPage,pages-1));
+    $('customizeAppPage').textContent='Trang '+(appPage+1)+' / '+pages+' · '+installed.length+' ứng dụng';
+    $('customizeAppPrev').disabled=appPage===0;
+    $('customizeAppNext').disabled=appPage>=pages-1;
     if (!installed.length) {
       var empty = document.createElement('p');
       empty.textContent = 'Chưa có danh sách ứng dụng. Chạy đồng bộ ứng dụng trên TV.';
       appsList.appendChild(empty);
       return;
     }
-    installed.forEach(function (app) {
+    installed.slice(appPage*APP_PAGE_SIZE,(appPage+1)*APP_PAGE_SIZE).forEach(function (app) {
       var row = document.createElement('div');
       row.className = 'customizeApp';
       var name = document.createElement('span');
@@ -472,6 +492,28 @@
       }
     });
   }
+  function checkRelease(){
+    var out=$('customizeReleaseResult');
+    if(releaseRequest)return;
+    var x=new XMLHttpRequest();
+    releaseRequest=x;
+    out.textContent='Đang kiểm tra bản chính thức…';
+    x.open('GET','https://api.github.com/repos/infiniti-money/lg-tv-webos/releases/latest',true);
+    x.timeout=12000;
+    x.onload=function(){
+      if(releaseRequest!==x)return;
+      releaseRequest=null;
+      try{
+        var v=JSON.parse(x.responseText);
+        if(x.status!==200||v.draft||v.prerelease||!/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(v.tag_name))throw Error('bad release');
+        var latest=v.tag_name.slice(1), a=installedVersion.split('.').map(Number), b=latest.split('.').map(Number), cmp=0;
+        if(a.length===3)for(var i=0;i<3;i++){if(b[i]!==a[i]){cmp=b[i]>a[i]?1:-1;break;}}
+        out.textContent='Bản chính thức mới nhất: '+v.tag_name+'. '+(a.length!==3?'Hãy so sánh phiên bản.':cmp>0?'Có bản mới. Dùng hướng dẫn cài đặt.':'Không có bản mới hơn.');
+      }catch(e){out.textContent='Không đọc được thông tin phát hành. Kiểm tra mạng hoặc GitHub.';}
+    };
+    x.onerror=x.ontimeout=function(){if(releaseRequest===x){releaseRequest=null;out.textContent='Không kết nối được GitHub. Kiểm tra mạng hoặc mở trang phát hành trên điện thoại.';}};
+    try{x.send();}catch(e){x.onerror();}
+  }
   function renderUpdateStatus() {
     var output = $('customizeUpdateState');
     if (!output) return;
@@ -483,6 +525,7 @@
     sc.src = 'update-status.js?ts=' + Date.now();
     sc.onload = function () {
       var status = root.INFINITI_UPDATE_STATUS;
+      if(status && status.version){installedVersion=status.version;$('customizeVersion').textContent='Phiên bản hiện tại: '+status.version;}
       if (!status || !status.enabled) {
         output.textContent = 'Tự cập nhật chưa bật. Dùng --auto-update khi chạy bộ cài root để kích hoạt.';
       } else {
@@ -521,8 +564,6 @@
       }, a.font === entry[0]);
     });
     refreshToggles();
-    renderWallpaperQR();
-    renderUpdateStatus();
   }
   function markChoice(parent, selected) {
     var list = parent.querySelectorAll('button');
@@ -606,6 +647,8 @@
   }
   function activateTab(name) {
     closeAppEditor();
+    if(searchRequest){var oldSearch=searchRequest;searchRequest=null;oldSearch.abort();}
+    if(releaseRequest){var oldRelease=releaseRequest;releaseRequest=null;oldRelease.abort();}
     activeTab = name;
     var key;
     for (key in tabs) {
@@ -614,10 +657,12 @@
       if (key === name) views[key].classList.remove('hidden');
       else views[key].classList.add('hidden');
     }
-    if (name === 'apps') {renderGlobalPacks();renderApps();}
+    if (name === 'apps') {appPage=0;renderGlobalPacks();renderApps();}
     else if (name === 'style') renderStyle();
     else if (name === 'weather') renderWeather();
-    else renderCalendar();
+    else if (name === 'calendar') renderCalendar();
+    else if (name === 'wallpaper') renderWallpaperQR();
+    else if (name === 'update') renderUpdateStatus();
     message('');
   }
   function show() {
@@ -630,6 +675,7 @@
   function hide() {
     closeAppEditor();
     if (searchRequest) { searchRequest.abort(); searchRequest = null; }
+    if(releaseRequest){var req=releaseRequest;releaseRequest=null;req.abort();}
     opened = false;
     panel.classList.add('hidden');
     document.body.classList.remove('customize-open');
@@ -639,12 +685,25 @@
     // Inputs must participate in remote navigation, not only Magic Remote pointer clicks.
     var all = panel.querySelectorAll('button, input'), result = [];
     for (var i = 0; i < all.length; i++) {
-      if (all[i].offsetWidth > 0 && all[i].offsetHeight > 0) result.push(all[i]);
+      if (!all[i].disabled && all[i].offsetWidth > 0 && all[i].offsetHeight > 0) result.push(all[i]);
     }
     return result;
   }
   // Directional focus based on actual visible button geometry; no CSS spatial-navigation dependency.
   function moveFocus(buttons,i,code){
+    var active=buttons[i], menu=['style','wallpaper','weather','calendar','apps','privacy','update'];
+    var selected=menu.filter(function(k){return tabs[k]===active;})[0];
+    if(selected && (code===38||code===40)){
+      var index=menu.indexOf(selected)+(code===38?-1:1);
+      if(menu[index])tabs[menu[index]].focus();
+      return;
+    }
+    if(selected && code===39){
+      if(selected!==activeTab)activateTab(selected);
+      var controls=visibleControls(), targets=views[selected].querySelectorAll('button, input');
+      for(var k=0;k<targets.length;k++)if(controls.indexOf(targets[k])>=0){targets[k].focus();return;}
+      return;
+    }
     var rects=buttons.map(function(el){return el.getBoundingClientRect?el.getBoundingClientRect():null;});
     var next=rects[i]?directionalIndex(rects,i,code):-1;
     if(next<0 && (!rects[i] || code===37 || code===39)){
@@ -654,7 +713,7 @@
     if(i<0)next=0;
     if(buttons[next]){
       buttons[next].focus();
-      if(buttons[next].scrollIntoView)buttons[next].scrollIntoView(false);
+
     }
   }
   function stopKey(e) {
@@ -710,6 +769,14 @@
     tabs[name].addEventListener('click', function () { activateTab(name); tabs[name].focus(); });
   });
   $('customizeClose').addEventListener('click', hide);
+  function pageApps(delta){appPage+=delta;renderApps();var b=$('customizeAppList').querySelector('button');if(b)b.focus();}
+  function pageGlyphs(delta){glyphPage+=delta;renderGlyphChoices(currentGlyphPack);var b=$('customizeAppGlyphChoices').querySelector('button');if(b)b.focus();}
+  $('customizeAppPrev').addEventListener('click',function(){pageApps(-1);});
+  $('customizeAppNext').addEventListener('click',function(){pageApps(1);});
+  $('customizeGlyphPrev').addEventListener('click',function(){pageGlyphs(-1);});
+  $('customizeGlyphNext').addEventListener('click',function(){pageGlyphs(1);});
+  $('customizeCheckUpdate').addEventListener('click',checkRelease);
+  $('customizeUpdateHelp').addEventListener('click',function(){$('customizeUpdateHelpText').classList.remove('hidden');});
   $('customizeAppSave').addEventListener('click',function(){applyAppEditor(false);});
   $('customizeAppRestore').addEventListener('click',function(){applyAppEditor(true);});
   $('customizeAppCancel').addEventListener('click',function(){closeAppEditor();renderApps();tabs.apps.focus();});

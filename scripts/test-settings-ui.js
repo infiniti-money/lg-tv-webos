@@ -53,13 +53,14 @@ var document = {
   addEventListener:function (type,cb) { docEvents[type]=cb; }
 };
 var panel=node('customizePanel'); panel.className='hidden';
-['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizePrivacyTab'].forEach(function (id) {
+['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizePrivacyTab','customizeWallpaperTab','customizeUpdateTab'].forEach(function (id) {
   panel.appendChild(node(id,'button'));
 });
 var groups = {
   customizeStyleView:['customizeThemes','customizeFonts','customizeLargeText',
-    'customizeShowWeek','customizeMotion','customizeWallpaper','customizeWallQr',
-    'customizeWallState','customizeWallHost','customizeUpdateState','customizeResetStyle'],
+    'customizeShowWeek','customizeMotion','customizeResetStyle'],
+  customizeWallpaperView:['customizeWallpaper','customizeWallQr','customizeWallState','customizeWallHost'],
+  customizeUpdateView:['customizeUpdateState','customizeVersion','customizeReleaseResult','customizeCheckUpdate','customizeUpdateHelp','customizeUpdateHelpText'],
   customizeWeatherView:['customizeWeatherChoice',
     'customizeWeatherSearch','customizeWeatherSearchBtn','customizeWeatherResults',
     'customizeWeatherEnable','customizeWeatherUnit'],
@@ -71,15 +72,17 @@ Object.keys(groups).forEach(function (name) {
   var view=node(name); view.className='hidden'; panel.appendChild(view);
   groups[name].forEach(function (id) {
     view.appendChild(node(id,id==='customizeWeatherSearch'?'input':
-      /Btn$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
+      /Btn$|customizeCheckUpdate|customizeUpdateHelp$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
   });
 });
+var browse=node('customizeAppBrowse');node('customizeAppsView').appendChild(browse);browse.appendChild(node('customizeAppList'));node('customizeAppsView').appendChild(node('customizeAppOptions'));
+['customizeAppPrev','customizeAppNext'].forEach(function(id){browse.appendChild(node(id,'button'));});browse.appendChild(node('customizeAppPage'));
 var editor=node('customizeAppEditor');editor.className='hidden';node('customizeAppsView').appendChild(editor);
 node('customizeAppsView').appendChild(node('customizeGlobalPacks'));
 ['customizeAppEditorTitle','customizeAppPreview','customizeAppPackChoices','customizeAppGlyphChoices'].forEach(function(id){editor.appendChild(node(id));});
 ['customizeAppName','customizeAppFile'].forEach(function(id){editor.appendChild(node(id,'input'));});
-['customizeAppSave','customizeAppRestore','customizeAppCancel','customizeAppOriginalIcon','customizeAppPickFile','customizeAppBlue','customizeAppGreen','customizeAppRed','customizeAppDark'].forEach(function(id){editor.appendChild(node(id,'button'));});
-panel.appendChild(node('customizeStatus'));
+['customizeAppSave','customizeAppRestore','customizeAppCancel','customizeAppOriginalIcon','customizeAppPickFile','customizeAppBlue','customizeAppGreen','customizeAppRed','customizeAppDark','customizeGlyphPrev','customizeGlyphNext'].forEach(function(id){editor.appendChild(node(id,'button'));});
+editor.appendChild(node('customizeGlyphPage'));panel.appendChild(node('customizeStatus'));
 var storage={};
 var localStorage={
   getItem:function(k){return storage[k]||null;},
@@ -101,6 +104,7 @@ function qrcode() {
 function XMLHttpRequest() { lastXhr=this; this.status=200; }
 XMLHttpRequest.prototype.open=function(method,url){this.url=url;};
 XMLHttpRequest.prototype.send=function(){
+  if(this.url.indexOf('api.github.com')>=0){this.responseText=JSON.stringify({tag_name:'v1.6.1',draft:false,prerelease:false});if(this.onload)this.onload();return;}
   assert.ok(this.url.indexOf('geocoding-api.open-meteo.com')!==-1);
   this.responseText=JSON.stringify({results:[{name:'Nha Trang',country:'Việt Nam',
     latitude:12.2388,longitude:109.1967}]});
@@ -116,6 +120,7 @@ assert.equal(document.body.hasClass('customize-open'),true);
 assert.equal(document.activeElement.id,'customizeStyleTab','appearance page gets initial focus');
 assert.equal(node('customizeStyleView').hasClass('hidden'),false);
 assert.equal(node('customizeWeatherView').hasClass('hidden'),true);
+node('customizeWallpaperTab').click();
 assert.ok(node('customizeWallQr').innerHTML.indexOf('data:image/png')>=0,
   'Valid QR must render inside Customize, not on Home');
 assert.equal(node('customizeWallState').textContent,
@@ -123,6 +128,7 @@ assert.equal(node('customizeWallState').textContent,
 node('customizeWallpaper').click();
 assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true,
   'Wallpaper QR refresh must keep settings open, not return to Home');
+node('customizeUpdateTab').click();node('customizeCheckUpdate').click();assert.ok(node('customizeReleaseResult').textContent.indexOf('v1.6.1')>=0);
 assert.ok(document.body.children.some(function(el) {
   return el.id==='updateStatusJs' && el.src.indexOf('update-status.js?ts=')===0;
 }), 'Settings should load current automatic-update status from TV');
@@ -159,6 +165,8 @@ browserRow.querySelectorAll('button').filter(function(b){return b.textContent===
 node('customizeAppRestore').click();
 assert.equal(window.INFINITI_PREFS.styledApp(window.TV_APPS.apps[0]).title,'LG Browser');
 assert.equal(window.INFINITI_PREFS.getAppStyle('com.webos.app.browser').icon,'original');
+for(var k=0;k<12;k++)window.TV_APPS.apps.push({id:'test.app'+k,title:'Z app '+k});
+node('customizeAppsTab').click();assert.equal(node('customizeAppList').children.length,5);node('customizeAppNext').click();assert.ok(node('customizeAppPage').textContent.indexOf('Trang 2')===0);node('customizeAppPrev').click();assert.ok(node('customizeAppPage').textContent.indexOf('Trang 1')===0);
 node('customizeWeatherTab').click();
 assert.equal(node('customizeWeatherView').hasClass('hidden'),false);
 assert.equal(node('customizeStyleView').hasClass('hidden'),true);
@@ -167,7 +175,7 @@ var arrow={type:'keydown',keyCode:39,preventDefault:function(){},
   stopPropagation:function(){},stopImmediatePropagation:function(){}};
 var down={type:'keydown',keyCode:40,preventDefault:function(){},
   stopPropagation:function(){},stopImmediatePropagation:function(){}};
-node('customizePrivacyTab').focus();
+node('customizeWeatherTab').focus();
 docEvents.keydown(arrow);
 assert.equal(document.activeElement.id,'customizeWeatherSearch','Right should focus search input');
 var typed={type:'keydown',keyCode:78,stopped:false,prevented:false,

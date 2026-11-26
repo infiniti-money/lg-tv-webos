@@ -574,3 +574,6 @@ sh /tmp/infiniti-install.sh --enable-home
 \`\`\`
 
 The installer should first be downloaded from this repository into \`/tmp/infiniti-install.sh\`. The explicit Home setting only remaps the remote; it **does not auto-launch** the application during boot or standby/wake. For a conflicting binding, adding \`--rebind-home\` requires deliberate authorization and archives the previous binding. Run \`sh /home/root/lg-tv-vibehack/safe-recovery.sh\` to return to safe mode.
+
+### Repository stewardship
+This repository is owned and administered by [infiniti-money](https://github.com/infiniti-money), with the custom launcher branded Designed by Tân Dev. Upstream copyright and license notices remain in LICENSE. The TV owner controls the LAN password; the v1.6.3 candidate uses port 9090 (not the legacy 8090).

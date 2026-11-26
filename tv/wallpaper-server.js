@@ -21,7 +21,7 @@ var crypto = require('crypto');
 var parseUrl = require('url').parse;
 var execFile = require('child_process').execFile;
 
-var PORT = 8090;
+var PORT = 9090;
 var DATA = '/home/root/lg-tv-vibehack';
 var APP_DIR = require('./sync.js').findLauncherDir();
 var legacyLuna = require('./legacy-luna.js').luna;

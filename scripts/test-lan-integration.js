@@ -16,7 +16,7 @@ try{
  assert.equal(run(restored,'POST','/api/album/delete',{id:id}).code,200);assert.ok(!fs.existsSync(path.join(dest,'idle-photo-'+id+'.jpg')));assert.equal(run(restored,'GET','/api/album').value.transition,'cinema');
  fs.writeFileSync(path.join(dest,'apps.js'),'window.TV_APPS = {"apps":[{"id":"netflix","title":"Netflix"}]};\n');
  var m=remote.create(dir,function(){return dest;},function(){return allowed;},log);
- assert.equal(run(m,'POST','/api/remote-set',{},JSON.stringify({idleEffect:'snow'}),true).code,202);
+ assert.equal(run(m,'POST','/api/remote-set',{},JSON.stringify({idleEffect:'snow','app:netflix:pinned':true,weatherUnit:'fahrenheit'}),true).code,202);
  assert.equal(run(m,'POST','/api/remote-set',{},JSON.stringify({'app:unknown:title':'no'}),true).code,400);
  auth=false;assert.equal(run(m,'POST','/api/remote-set',{},JSON.stringify({idleEffect:'rain'}),true).code,403);auth=true;
  assert.equal(run(m,'GET','/api/remote-state',{},undefined,true).value.revision,1);

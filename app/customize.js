@@ -140,8 +140,7 @@
     current.place = String(current.place || '').slice(0, 90);
     current.enabled = current.enabled === true;
     current.unit = current.unit === 'fahrenheit' ? 'fahrenheit' : 'celsius';
-    safeWrite(WEATHER_KEY, current);
-    return current;
+    return safeWrite(WEATHER_KEY,current)?current:false;
   }
   function validAppId(id) {
     return typeof id === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}$/.test(id) &&
@@ -511,8 +510,8 @@
     }
     root.INFINITI_WALLPAPER_GET_URL(function (url) {
       // The QR links to a TV-local, secret-authenticated phone service.
-      // Only display a valid local IP:8090 URL written by the root helper.
-      if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:8090\/\?k=[A-Za-z0-9_-]{8,64}$/.test(url || '')) {
+      // Only display a valid local IP:9090 URL written by the root helper.
+      if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:9090\/\?k=[A-Za-z0-9_-]{8,64}$/.test(url || '')) {
         state.textContent = 'Chưa có địa chỉ dịch vụ hình nền. Qua SSH chạy legacy-home.sh wallpaper-on, sau đó bấm Lấy mã QR lại.';
         return;
       }

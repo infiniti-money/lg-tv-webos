@@ -551,7 +551,7 @@ Bạn đã thử trên TV khác? Tạo issue hoặc pull request để bổ sung
 
 ## Cảm ơn
 
-Infiniti Money duy trì phiên bản tùy chỉnh này; thông báo tác quyền và giấy phép của các tác giả gốc được giữ trong [LICENSE](LICENSE).
+**Chủ sở hữu kho mã và người quản lý bản phát hành:** [infiniti-money](https://github.com/infiniti-money) — Designed by Tân Dev. Chủ TV tự giữ mật khẩu và quyền quản lý cài đặt qua mạng nội bộ. Thông báo tác quyền và giấy phép của các tác giả gốc được giữ trong [LICENSE](LICENSE).
 
 Project này được xây trên công sức của nhiều người. Xin cảm ơn:
 
@@ -832,3 +832,6 @@ sh /home/root/lg-tv-vibehack/home-control.sh evdev-disable
 ```
 
 Khôi phục toàn bộ nút Home về trạng thái trước đó: `sh /home/root/lg-tv-vibehack/home-control.sh disable` và khởi động lại. **Không xóa hoặc sửa LG Home hệ thống**, không thay đổi nội dung `/dev/input/event3`, không áp dụng thiết bị event3 trên TV khác khi chưa kiểm tra.
+
+### Trung tâm tùy chỉnh v1.6.3 (ứng viên)
+Truy cập `http://IP-TV:9090/` cùng mạng Wi-Fi, nhập mật khẩu của chủ TV. Cổng 8090 thuộc bản cũ. Chức năng trên web không gồm root, firmware, DNS hệ thống hoặc cài IPK. Không mở cổng ra Internet.

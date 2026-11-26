@@ -2,13 +2,11 @@
 # Python 2.7.3 / ARMv7. Non-exclusive input observer; no firmware writes.
 from __future__ import print_function
 import errno
-import fcntl
 import glob
 import json
 import os
 import select
 import struct
-import subprocess
 import sys
 import time
 
@@ -60,42 +58,66 @@ def luna(uri, payload, timeout=8, max_bytes=65536):
     Unlike /dev/tty this also works in a detached service. Never use communicate()
     here: it closes stdin before waiting for the response.
     """
-    p = subprocess.Popen([LUNA, '-n', '1', '-f', uri, json.dumps(payload)],
-                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT, close_fds=True)
+    # LG's stripped Python has no fcntl (subprocess imports it too).
+    # Use POSIX pipes/fork/exec directly, keeping the writer of stdin open.
+    in_r, in_w = os.pipe()
+    out_r, out_w = os.pipe()
+    try:
+        pid = os.fork()
+    except:
+        for fd in (in_r, in_w, out_r, out_w):
+            os.close(fd)
+        raise
+    if pid == 0:
+        try:
+            os.close(in_w)
+            os.close(out_r)
+            os.dup2(in_r, 0)
+            os.dup2(out_w, 1)
+            os.dup2(out_w, 2)
+            os.close(in_r)
+            os.close(out_w)
+            os.execv(LUNA, [LUNA, '-n', '1', '-f', uri, json.dumps(payload)])
+        except:
+            os._exit(127)
+    os.close(in_r)
+    os.close(out_w)
     chunks = []
+    size = 0
     end = time.time() + timeout
     try:
         while time.time() < end:
-            ready, _, _ = select.select([p.stdout], [], [], min(0.2, max(0, end-time.time())))
-            if ready:
-                data = os.read(p.stdout.fileno(), 4096)
-                if not data:
-                    break
-                chunks.append(data)
-                if sum(len(x) for x in chunks) > max_bytes:
-                    raise RuntimeError('oversized Luna response')
-                try:
-                    reply = json.loads(b''.join(chunks).decode('utf-8'))
-                    if isinstance(reply, dict):
-                        if reply.get('returnValue') is not True:
-                            raise RuntimeError('Luna rejected: %s' % reply)
-                        return reply
-                except ValueError:
-                    pass
-            elif p.poll() is not None:
+            ready, _, _ = select.select([out_r], [], [], min(0.2, max(0, end-time.time())))
+            if not ready:
+                continue
+            data = os.read(out_r, 4096)
+            if not data:
                 break
+            chunks.append(data)
+            size += len(data)
+            if size > max_bytes:
+                raise RuntimeError('oversized Luna response')
+            try:
+                reply = json.loads(b''.join(chunks).decode('utf-8'))
+            except ValueError:
+                continue
+            if isinstance(reply, dict):
+                if reply.get('returnValue') is not True:
+                    raise RuntimeError('Luna rejected: %s' % reply)
+                return reply
         raise RuntimeError('missing/invalid Luna JSON: %r' % b''.join(chunks)[:240])
     finally:
-        if p.poll() is None:
+        os.close(in_w)
+        os.close(out_r)
+        # Reap only our child. No broad process kills.
+        if os.waitpid(pid, os.WNOHANG)[0] == 0:
             try:
-                p.kill()
+                os.kill(pid, 9)
             except OSError as e:
                 if e.errno != errno.ESRCH:
                     raise
-        p.wait()
-        p.stdin.close()
-        p.stdout.close()
+            os.waitpid(pid, 0)
+
 
 def manager(method, payload):
     return luna('luna://com.webos.applicationManager/' + method, payload)
@@ -156,6 +178,7 @@ def watch(mode):
     next_power = 0
     failures = 0
     refresh = 0
+    log('READY: press Home 773; mode=' + mode)
     try:
         while allowed(mode):
             now = time.time()
@@ -165,6 +188,7 @@ def watch(mode):
                     if path not in fds.values():
                         try:
                             fds[os.open(path, os.O_RDONLY | os.O_NONBLOCK)] = path
+                            log('input: ' + path)
                         except OSError:
                             pass
             ready, _, _ = select.select(list(fds), [], [], 1)
@@ -211,6 +235,13 @@ def watch(mode):
 
 def main():
     mode = sys.argv[1] if len(sys.argv) == 2 else ''
+    if mode == 'probe':
+        try:
+            print(json.dumps(manager('getForegroundAppInfo', {})))
+            return 0
+        except Exception as e:
+            log('probe failed: %s' % e)
+            return 1
     if mode == 'catalog':
         if os.getuid() != 0:
             return 2
@@ -226,13 +257,26 @@ def main():
             return 1
     if mode not in ('watch','trial','enabled') or os.getuid() != 0:
         return 2
-    # Separate persistent lock; kernel releases it on exit or reboot.
-    lock = open(os.path.join(DATA, 'legacy-v8.lock'), 'a')
+    # Atomic directory lock, no fcntl dependency. Stale locks fail closed;
+    # /tmp normally clears on reboot. Never remove an unverified active lock.
+    lock = '/tmp/infiniti-legacy-v8-lock'
     try:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        log('observer already running')
+        os.mkdir(lock, 448)
+    except OSError as e:
+        log('observer lock unavailable: %s; check for another process' % e)
         return 1
+    try:
+        with open(os.path.join(lock, 'pid'), 'w') as fp:
+            fp.write(str(os.getpid()) + '\n')
+        return run_mode(mode)
+    finally:
+        try:
+            os.unlink(os.path.join(lock, 'pid'))
+        except OSError:
+            pass
+        os.rmdir(lock)
+
+def run_mode(mode):
     if mode != 'watch':
         time.sleep(45)  # Homebrew's own failsafe marker must be cleared first.
     if not allowed(mode):

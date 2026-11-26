@@ -114,3 +114,11 @@ console.log('Icon aspect ratio and solid-edge background tests passed.');
 
 assert.ok(/flex-direction:column/.test(block('.customizeMain .customizeTabs')));
 assert.ok(html.indexOf('id="customizeCheckUpdate"')>=0 && html.indexOf('id="customizeAppNext"')>=0);
+
+// Idle rules hide only dock, controls and three-day forecast, never current weather or dates.
+var idleHide=css.match(/body\.idle-home #topButtons,[^{}]+\{\s*visibility:hidden;\s*\}/);
+assert.ok(idleHide,'Idle rule exists');
+['#forecastArea','#viewport','#penBtn'].forEach(function(id){assert.ok(idleHide[0].indexOf(id)>=0,id+' hidden while idle');});
+['header','#leftBlock','#clock','#date','#lunarDate','#weather'].forEach(function(id){assert.ok(idleHide[0].indexOf('body.idle-home '+id)<0,id+' stays visible');});
+assert.ok(/body\.idle-home\.idle-rain:not\(\.launcher-covered\):not\(\.motion-reduced\)/.test(css));
+console.log('Idle Home retains clock/calendar/current weather, hides forecast and dock.');

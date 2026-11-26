@@ -49,3 +49,5 @@ Log TV ngày 26/11/2026 xác nhận readiness 10,2s, render 1,5s/17 tile, watche
 - Chế độ chờ Home: 60 giây mặc định, chọn Tắt/30/60/120/300 giây; tùy chọn mưa hoạt động khi Home rảnh, không chạy khi app khác che phủ hoặc giảm chuyển động. Phím đầu tiên thoát chế độ chờ, không mở app. Không điều khiển nguồn TV, không thay thế bảo vệ màn hình LG.
 
 - Bộ icon: 21 hình khác nhau mỗi chủ đề, 5 chủ đề (105 tệp); tự phân biệt Netflix, YouTube, Spotify, Prime, Disney+, TikTok, Jellyfin và loại chức năng; giữ 45 tệp cũ để không mất tùy chỉnh. Icon dạng minh họa, không phải bộ logo chính thức. Các app không nhận diện được có thể vẫn dùng chung icon chức năng, hoặc chọn icon gốc.
+
+- Chế độ chờ giữ đồng hồ, ngày âm/dương và thời tiết hiện tại theo tùy chọn hiển thị đã lưu. Chỉ ẩn hàng ứng dụng, nút chức năng, dự báo 3 ngày và các lớp trang trí Home. Không thay đổi lựa chọn hiển thị dự báo 3 ngày khi thoát chế độ chờ.

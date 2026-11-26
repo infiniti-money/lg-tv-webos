@@ -17,7 +17,7 @@ check() {
 }
 case "${1:-status}" in
   status)
-    for f in session armed trial enabled wake; do
+    for f in session armed trial enabled wake wallpaper; do
       if [ -f "$D/legacy-v8-$f" ]; then echo "$f: ON"; else echo "$f: OFF"; fi
     done
     [ ! -f /tmp/infiniti-legacy-v8.log ] || tail -n 15 /tmp/infiniti-legacy-v8.log
@@ -65,7 +65,7 @@ HOOK
     check
     [ -f "$D/legacy-v8-trial" ] && [ -f "$PROOF" ] && [ -f "$I" ] ||
       { echo "No successful trial recorded on this boot"; exit 1; }
-    grep -qx 'foreground and render confirmed' "$PROOF" || { echo 'Render proof missing; re-arm and test V8.4'; exit 1; }
+    grep -qx 'foreground and render confirmed' "$PROOF" || { echo 'Render proof missing; re-arm and test V8.5'; exit 1; }
     touch "$D/legacy-v8-enabled"
     rm -f "$D/legacy-v8-trial" "$PROOF"
     echo "Confirmed. Persistent boot + Home observer starts on next cold boot."
@@ -76,16 +76,26 @@ HOOK
     touch "$D/legacy-v8-wake"
     echo "Experimental wake trigger enabled. Some standby states may not be observable."
     ;;
+  wallpaper-on)
+    check
+    [ -f "$D/wallpaper-server.js" ] && [ -f "$D/wallpaper.html" ] && [ -f "$D/sync.js" ] || { echo "Missing wallpaper tools"; exit 1; }
+    touch "$D/legacy-v8-wallpaper"
+    nohup /usr/bin/node "$D/wallpaper-server.js" --legacy-managed >> /tmp/infiniti-wallpaper.log 2>&1 </dev/null &
+    echo "Wallpaper service requested. Check /tmp/infiniti-wallpaper.log and refresh QR."
+    ;;
+  wallpaper-off)
+    rm -f "$D/legacy-v8-wallpaper"
+    ;;
   wake-off)
     rm -f "$D/legacy-v8-wake"
     ;;
   disable)
     rm -f "$D/legacy-v8-session" "$D/legacy-v8-armed" "$D/legacy-v8-trial" \
-      "$D/legacy-v8-enabled" "$D/legacy-v8-wake" "$PROOF"
+      "$D/legacy-v8-enabled" "$D/legacy-v8-wake" "$D/legacy-v8-wallpaper" "$PROOF"
     if [ -f "$I" ] && grep -q '^# Infiniti Legacy V8 hook$' "$I"; then
       rm -f "$I"
     fi
     echo "V8 disarmed; observer exits after current bounded operation. Native Home untouched."
     ;;
-  *) echo "Usage: $0 status|watch|arm|confirm|wake-on|wake-off|disable"; exit 2 ;;
+  *) echo "Usage: $0 status|watch|arm|confirm|wake-on|wake-off|wallpaper-on|wallpaper-off|disable"; exit 2 ;;
 esac

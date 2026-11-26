@@ -102,10 +102,16 @@ def watch(mode):
     next_sync = time.time() + 10
     failures = 0
     refresh = 0
+    previous_tick = time.time()
     log('READY: press Home 773; mode=' + mode)
+    if mode == 'enabled' and exists('wallpaper'):
+        os.system('/usr/bin/node ' + DATA + '/wallpaper-server.js --legacy-managed >> /tmp/infiniti-wallpaper.log 2>&1 </dev/null &')
     try:
         while allowed(mode):
             now = time.time()
+            if now - previous_tick > 15:
+                log('observer gap: %.1fs; power state must confirm wake' % (now-previous_tick))
+            previous_tick = now
             if now >= refresh:
                 refresh = now + 10
                 for path in input_paths():
@@ -203,6 +209,11 @@ def run_mode(mode):
         log('disabled, missing app, or conflicting Home configuration')
         return 1
     if mode != 'watch':
+        try:
+            with open('/proc/sys/kernel/random/boot_id') as fp:
+                log('boot id: ' + fp.read().strip())
+        except IOError:
+            pass
         # Node polls read-only readiness and respects Homebrew failsafe.
         # A cold boot never closes the app and attempts at most one launch.
         log('adaptive boot readiness started')

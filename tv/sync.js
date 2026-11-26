@@ -33,7 +33,17 @@ function isFile(p) { try { return !!p && fs.statSync(p).isFile(); } catch (e) { 
 
 // fs.copyFileSync only exists from Node 8.5. webOS 4 TVs run Node 0.12, where calling it threw and
 // every app was skipped, so the launcher ended up empty. Keep every TV script ES5 and Node 0.12 safe.
-function copyFile(src, dest) { fs.writeFileSync(dest, fs.readFileSync(src)); }
+function copyFile(src, dest) {
+  var st=fs.statSync(src);
+  try {
+    var old=fs.statSync(dest);
+    if(old.size===st.size && Math.abs(old.mtime.getTime()-st.mtime.getTime())<1000)return;
+  }catch(e){}
+  var tmp=dest+'.infiniti-'+process.pid+'.tmp';
+  fs.writeFileSync(tmp,fs.readFileSync(src));
+  fs.renameSync(tmp,dest);
+  try{fs.utimesSync(dest,st.atime,st.mtime);}catch(e){}
+}
 function atomicWrite(file, content) {
   try { if (fs.readFileSync(file,'utf8')===content) return; } catch(e) {}
   var temp = file + '.infiniti-' + process.pid + '.tmp';
@@ -210,8 +220,26 @@ function listPoints() {
   return { points: merged, source: 'Luna+disk', authoritative: lunaPoints.length > 0 };
 }
 
+function applySettings(){
+  // Personal settings and wallpaper. The copy is named after the photo's timestamp so a new photo
+  // gets a new file name and the launcher never shows a cached old one.
+  var settings = readJSON(path.join(DATA, 'settings.json'), {});
+  var wp = path.join(DATA, 'wallpaper.jpg');
+  var bgName = isFile(wp) ? 'bg-' + fs.statSync(wp).mtime.getTime() + '.jpg' : '';
+  if (bgName && !isFile(path.join(APP_DIR, bgName))) copyFile(wp, path.join(APP_DIR, bgName));
+  settings.wallpaper = bgName;
+  atomicWrite(path.join(APP_DIR, 'user.js'),
+    '// Generated on the TV by sync.js from ' + DATA + '/settings.json\n' +
+    '(function () { var u = ' + JSON.stringify(settings) + '; for (var k in u) window.CONFIG[k] = u[k]; })();\n');
+
+  fs.readdirSync(APP_DIR).forEach(function(f){
+    if(/^bg(-\d+)?\.jpg$/.test(f) && f!==bgName)fs.unlinkSync(path.join(APP_DIR,f));
+  });
+}
+
 function main() {
   APP_DIR = findLauncherDir();
+  if(process.argv.indexOf('--settings-only')!==-1){applySettings();return;}
   var found = listPoints(), points = found.points;
   var catalogOnly=process.argv.indexOf('--catalog-only')!==-1;
   if(catalogOnly && !found.authoritative){console.error('Catalog unavailable; preserving existing list');return;}
@@ -265,20 +293,7 @@ function main() {
 
   if(catalogOnly){console.log('Synced '+apps.length+' apps and '+inputs.length+' inputs (catalog only).');return;}
 
-  // Personal settings and wallpaper. The copy is named after the photo's timestamp so a new photo
-  // gets a new file name and the launcher never shows a cached old one.
-  var settings = readJSON(path.join(DATA, 'settings.json'), {});
-  var wp = path.join(DATA, 'wallpaper.jpg');
-  var bgName = isFile(wp) ? 'bg-' + Math.floor(fs.statSync(wp).mtime.getTime() / 1000) + '.jpg' : '';
-  fs.readdirSync(APP_DIR).forEach(function (f) {
-    if (/^bg(-\d+)?\.jpg$/.test(f) && f !== bgName) fs.unlinkSync(path.join(APP_DIR, f));
-  });
-  if (bgName && !isFile(path.join(APP_DIR, bgName))) copyFile(wp, path.join(APP_DIR, bgName));
-  settings.wallpaper = bgName;
-  atomicWrite(path.join(APP_DIR, 'user.js'),
-    '// Generated on the TV by sync.js from ' + DATA + '/settings.json\n' +
-    '(function () { var u = ' + JSON.stringify(settings) + '; for (var k in u) window.CONFIG[k] = u[k]; })();\n');
-
+  applySettings();
   console.log('Synced ' + apps.length + ' apps (from ' + found.source + ') and ' + inputs.length + ' inputs.');
 }
 

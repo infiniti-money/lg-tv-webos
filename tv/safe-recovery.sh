@@ -17,7 +17,7 @@ mkdir -p "$R" || { echo "ERROR: Cannot create recovery backup $R" >&2; exit 1; }
 echo "Recovery directory: $R"
 
 # Preserve evidence and the old binding BEFORE attempting to restore it.
-for item in /tmp/lg-tv-vibehack.log /tmp/infiniti-homekey.log /tmp/infiniti-homeevent.log /tmp/infiniti-legacy-v8.log /tmp/infiniti-legacy-v8-trial-ok             "$D/home-key-backup.json" /home/root/.config/lginputhook/keybinds.json; do
+for item in /tmp/lg-tv-vibehack.log /tmp/infiniti-homekey.log /tmp/infiniti-homeevent.log /tmp/infiniti-legacy-v8.log /tmp/infiniti-wallpaper.log /tmp/infiniti-legacy-v8-trial-ok             "$D/home-key-backup.json" /home/root/.config/lginputhook/keybinds.json; do
   if [ -f "$item" ]; then
     cp "$item" "$R/" 2>/dev/null || {
       echo "WARNING: Could not back up $item" >&2
@@ -28,7 +28,7 @@ done
 
 # First disarm *all* known activators, even if Input Hook has an unknown
 # binding or the older home-control.sh refuses its keymap rollback.
-for item in "$D/legacy-v8-session" "$D/legacy-v8-armed" "$D/legacy-v8-trial" "$D/legacy-v8-enabled" "$D/legacy-v8-wake" "$D/home-enabled" "$D/home-event-device" "$D/boot-services-enabled" \
+for item in "$D/legacy-v8-session" "$D/legacy-v8-armed" "$D/legacy-v8-trial" "$D/legacy-v8-enabled" "$D/legacy-v8-wake" "$D/legacy-v8-wallpaper" "$D/home-enabled" "$D/home-event-device" "$D/boot-services-enabled" \
   "$D/auto-update-enabled" "$D/boot-home-armed" "$D/boot-home-trial" "$D/boot-home-enabled"; do
   if [ -f "$item" ]; then
     mv "$item" "$R/" || {

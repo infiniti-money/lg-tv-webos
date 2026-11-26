@@ -64,7 +64,7 @@ function sampleReady(callback) {
 function waitReady(guard,sample,callback,options) {
   options=options||{};
   var deadline=process.uptime()+(options.seconds||90), consecutive=0, previous='';
-  var interval=typeof options.interval==='number'?options.interval:1000;
+  var interval=typeof options.interval==='number'?options.interval:500;
   function report(message){
     if(message!==previous){previous=message;if(options.log)options.log(message);}
   }
@@ -120,7 +120,7 @@ function renderSession(mode, closeFirst, callback) {
       res.writeHead(404,{'Connection':'close'});res.end();return;
     }
     rendered=true;
-    console.log('UI render acknowledgement: '+match[2]+' visible tiles');
+    console.log('UI render acknowledgement: '+match[2]+' rendered tiles');
     res.writeHead(204,{'Connection':'close','Cache-Control':'no-store'});res.end();
     complete();
   });
@@ -157,7 +157,7 @@ function boot(mode) {
     console.log('BOOT READY after '+(process.uptime()-start).toFixed(1)+'s');
     // One launch or relaunch with a fresh challenge, never close on boot.
     renderSession(mode,false,function(err){if(err)fail(err);});
-  },{log:function(s){console.log(s);}});
+  },{interval:500,log:function(s){console.log(s);}});
 }
 function syncCatalog(mode) {
   if(!allowed(mode))return;

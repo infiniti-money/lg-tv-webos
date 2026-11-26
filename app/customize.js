@@ -513,8 +513,8 @@
         qr.addData(url);
         qr.make();
         code.innerHTML = '<img alt="Quét để đổi hình nền" src="' + qr.createDataURL(6, 24) + '">';
-        state.textContent = 'Mở camera điện thoại cùng mạng LAN/Wi-Fi để chọn ảnh, ảnh USB hoặc xóa hình nền.';
-        host.textContent = url.split('?')[0];
+        state.textContent = 'Quét QR bằng điện thoại cùng Wi-Fi để chỉnh giao diện, icon và album ảnh.';
+        host.textContent = url;
       } catch (err) {
         state.textContent = 'Không tạo được mã QR. Hãy kiểm tra bộ cài và thử lại.';
       }

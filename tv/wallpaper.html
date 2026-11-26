@@ -50,6 +50,19 @@
   #cities button { display: block; width: 100%; margin-top: 8px; padding: 12px 14px; border: 1px solid #2a2a2e; border-radius: 12px; background: #18181c; color: #eee; text-align: left; font: 16px system-ui, sans-serif; }
   #cities small { color: #888; }
   #weatherNow { color: #bbb; }
+
+  main { max-width:1000px; }
+  .remotePanel { margin-top:24px; padding:16px; border:1px solid #353a46; background:#171b24; border-radius:16px; }
+  .remotePanel h2 { margin-top:0; font-size:21px; }
+  .remoteGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; }
+  .remoteRow { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:48px; }
+  .remoteRow select,.remoteRow input:not([type=checkbox]) { min-width:0; max-width:65%; background:#222b38; color:#fff; border:1px solid #465364; border-radius:8px; padding:8px; font:inherit; }
+  .remoteRow input[type=checkbox] { width:22px;height:22px; }
+  fieldset { border:0; padding:0; min-width:0; margin:12px 0; } legend { color:#b5d5ee; }
+  #albumPhotos { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px; }
+  #albumPhotos img { width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:8px;display:block; }
+  #albumPhotos button { width:100%; margin-top:4px;padding:7px;background:#34313e;color:white;border:0;border-radius:6px; }
+  #albumStatus,#remoteStatus { color:#b3dbea;min-height:24px; }
 </style>
 </head>
 <body>
@@ -89,6 +102,35 @@
 
   <div id="status"></div>
 
+  <section id="albumSection" class="remotePanel">
+    <h2>Album màn hình chờ</h2>
+    <p class="hint">Tối đa 20 ảnh. Ảnh được căn giữa và thu về 1920×1080 trước khi gửi. Hình nền chính không bị thay thế.</p>
+    <div class="remoteGrid">
+      <label class="remoteRow">Trình chiếu <input type="checkbox" id="albumEnabled"></label>
+      <label class="remoteRow">Đổi ảnh sau <select id="albumSeconds"><option value="15">15 giây</option><option value="30">30 giây</option><option value="60" selected>1 phút</option><option value="120">2 phút</option><option value="300">5 phút</option><option value="600">10 phút</option></select></label>
+      <label class="remoteRow">Ngẫu nhiên <input type="checkbox" id="albumRandom"></label>
+    </div>
+    <button class="btn" id="albumSave" type="button">Lưu chế độ trình chiếu</button>
+    <button class="btn ghost" id="albumChoose" type="button">Thêm nhiều ảnh</button><input type="file" id="albumFiles" accept="image/*" multiple hidden>
+    <p id="albumStatus" role="status" aria-live="polite"></p><div id="albumPhotos"></div>
+  </section>
+  <section id="remoteSection" class="remotePanel">
+    <h2>Tùy chỉnh Launcher</h2>
+    <p class="hint">Mở Home trên TV và đóng bảng Tùy chỉnh để đồng bộ. Chỉ trường đã sửa được gửi lên TV.</p>
+    <div class="pair"><button class="btn ghost" id="remoteRefresh" type="button">Đọc từ TV</button><button class="btn" id="remoteSave" type="button" disabled>Lưu thay đổi</button></div>
+    <p id="remoteStatus" role="status" aria-live="polite"></p>
+    <fieldset id="remoteControls" disabled>
+      <legend>Giao diện</legend><div id="remoteFields" class="remoteGrid"></div>
+      <h3>Ứng dụng</h3>
+      <label class="remoteRow">Ứng dụng <select id="remoteApp"></select></label>
+      <div id="remoteAppFields" class="remoteGrid" hidden>
+        <label class="remoteRow">Tên <input id="remoteTitle" maxlength="48" placeholder="Tên gốc nếu để trống"></label>
+        <label class="remoteRow">Icon <select id="remoteIcon"></select></label>
+        <label class="remoteRow">Hiển thị <input id="remoteVisible" type="checkbox"></label>
+      </div>
+      <p class="hint">Icon riêng đã tải trên TV được giữ nguyên trừ khi bạn chọn icon khác.</p>
+    </fieldset>
+  </section>
   <section id="weatherSection">
     <h2 id="t-weather"></h2>
     <div id="weatherNow"></div>
@@ -111,7 +153,7 @@
   var match = /[?&]k=([a-f0-9]{12,48})(?:&|$)/.exec(location.search);
   var K = match ? match[1] : '';
   var T = {
-    en: { title: 'TV wallpaper', dim: 'Darken', pick: 'Choose a photo', clear: 'Remove wallpaper', usb: 'From a USB stick in the TV',
+    en: { title: 'Designed by Tân Dev · TV settings', dim: 'Darken', pick: 'Choose a photo', clear: 'Remove wallpaper', usb: 'From a USB stick in the TV',
       usbNone: 'No photos found. Plug a USB stick with photos into the TV, then reload this page.', empty: 'No wallpaper',
       sending: 'Sending to the TV…', done: 'Done! The TV shows the new wallpaper.', fail: 'Something went wrong, try again.',
       removed: 'Wallpaper removed.', confirm: 'Remove the wallpaper?', loading: 'Opening the photo…',
@@ -121,7 +163,7 @@
       weather: 'Weather', weatherOn: 'Showing: ', weatherOffNow: 'Weather is off.', cityPh: 'City, e.g. Hanoi',
       find: 'Search', weatherOff: 'Turn weather off', noCity: 'No city found. Try another spelling.',
       cityDone: 'Done! The TV shows the weather for ', weatherOffDone: 'Weather turned off.', searching: 'Searching…' },
-    vi: { title: 'Hình nền TV', dim: 'Làm tối', pick: 'Chọn ảnh', clear: 'Xoá hình nền', usb: 'Ảnh từ USB cắm vào TV',
+    vi: { title: 'Designed by Tân Dev · Tùy chỉnh TV', dim: 'Làm tối', pick: 'Chọn ảnh', clear: 'Xoá hình nền', usb: 'Ảnh từ USB cắm vào TV',
       usbNone: 'Không thấy ảnh. Cắm USB có ảnh vào TV rồi tải lại trang này.', empty: 'Chưa có hình nền',
       sending: 'Đang gửi lên TV…', done: 'Xong! TV đã đổi hình nền.', fail: 'Có lỗi, thử lại nhé.',
       removed: 'Đã xoá hình nền.', confirm: 'Xoá hình nền?', loading: 'Đang mở ảnh…',
@@ -183,6 +225,7 @@
       $('usbSection').hidden = true;
       $('cropMode').hidden = false;
       $('weatherSection').hidden = true;
+      $('remoteSection').hidden=true;$('albumSection').hidden=true;
       st.src = src;
       st.min = Math.max(fw() / img.naturalWidth, fh() / img.naturalHeight);   // cover the frame
       st.s = st.min;
@@ -201,6 +244,7 @@
     $('viewMode').hidden = false;
     $('usbSection').hidden = false;
     $('weatherSection').hidden = false;
+    $('remoteSection').hidden=false;$('albumSection').hidden=false;
   }
 
   // One finger drags, two fingers pinch. Pointer events work for touch and mouse alike.
@@ -318,6 +362,61 @@
   $('dim').onchange = function () {
     api('POST', 'api/dim?v=' + this.value).then(function () { status(L.done); }).catch(function () { status(L.fail, 1); });
   };
+
+
+  // Album: sequential uploads, bounded full-HD JPEG conversion, no replacement of main wallpaper.
+  var albumBusy=false,albumState=null;
+  function albumMessage(s){$('albumStatus').textContent=s;}
+  function albumLock(b){albumBusy=b;['albumChoose','albumSave','albumEnabled','albumSeconds','albumRandom'].forEach(function(id){$(id).disabled=b;});Array.prototype.forEach.call($('albumPhotos').querySelectorAll('button'),function(el){el.disabled=b;});}
+  function albumRead(){return api('GET','api/album').then(function(s){
+    albumState=s;$('albumEnabled').checked=s.enabled;$('albumRandom').checked=s.random;$('albumSeconds').value=String(s.seconds);
+    var grid=$('albumPhotos');grid.textContent='';
+    s.photos.forEach(function(id){var card=document.createElement('div'),img=document.createElement('img'),b=document.createElement('button');img.loading='lazy';img.alt='Ảnh album';img.src='api/album/photo?id='+encodeURIComponent(id)+'&k='+K;b.textContent='Xóa ảnh';b.disabled=albumBusy;
+      b.onclick=function(){if(albumBusy||!confirm('Xóa ảnh này khỏi album?'))return;albumLock(true);api('POST','api/album/delete?id='+encodeURIComponent(id)).then(albumRead).then(function(){albumMessage('Đã xóa ảnh.');}).catch(function(){albumMessage('Không xóa được ảnh.');}).then(function(){albumLock(false);});};card.appendChild(img);card.appendChild(b);grid.appendChild(card);});
+    return s;
+  });}
+  function albumJpeg(f,max){return new Promise(function(resolve,reject){
+    var img=new Image(),url=URL.createObjectURL(f);
+    img.onerror=function(){URL.revokeObjectURL(url);reject(Error('Ảnh không đọc được'));};
+    img.onload=function(){try{var c=document.createElement('canvas');c.width=1920;c.height=1080;var w=img.naturalWidth,h=img.naturalHeight;if(!w||!h||w*h>48000000)throw Error('Ảnh quá lớn');var scale=Math.max(1920/w,1080/h),ctx=c.getContext('2d');ctx.drawImage(img,(1920-w*scale)/2,(1080-h*scale)/2,w*scale,h*scale);URL.revokeObjectURL(url);
+      var qualities=[.85,.72,.58,.45],i=0;function encode(){c.toBlob(function(b){if(b&&b.size<=max)resolve(b);else if(i<qualities.length)encode();else reject(Error('Không thể nén ảnh'));},'image/jpeg',qualities[i++]);}encode();
+    }catch(e){URL.revokeObjectURL(url);reject(e);}};img.src=url;
+  });}
+  $('albumChoose').onclick=function(){if(!albumBusy)$('albumFiles').click();};
+  $('albumFiles').onchange=function(){var files=Array.prototype.slice.call(this.files);this.value='';if(!files.length||albumBusy)return;
+    albumLock(true);var ok=0,fail=0,skipped=0;albumRead().then(function(s){var room=Math.max(0,s.max-s.photos.length);skipped=Math.max(0,files.length-room);files=files.slice(0,room);
+      return files.reduce(function(p,f,i){return p.then(function(){albumMessage('Đang gửi '+(i+1)+' / '+files.length+'…');return albumJpeg(f,s.maxBytes).then(function(b){return api('POST','api/album/upload',b);}).then(function(){ok++;},function(){fail++;});});},Promise.resolve());
+    }).then(albumRead).then(function(){albumMessage('Đã thêm '+ok+' ảnh; lỗi '+fail+'; bỏ qua '+skipped+'.');}).catch(function(){albumMessage('Không kết nối được album.');}).then(function(){albumLock(false);});
+  };
+  $('albumSave').onclick=function(){if(albumBusy)return;albumLock(true);api('POST','api/album/settings?enabled='+($('albumEnabled').checked?1:0)+'&seconds='+$('albumSeconds').value+'&random='+($('albumRandom').checked?1:0)).then(function(r){albumMessage(r.published?'Đã lưu. TV sẽ đọc album khi vào chế độ chờ hoặc đến lượt đổi ảnh.':'Đã lưu; đang chờ đồng bộ tệp lên Launcher.');return albumRead();}).catch(function(){albumMessage('Không lưu được album.');}).then(function(){albumLock(false);});};
+  albumRead().catch(function(){albumMessage('Album chưa sẵn sàng. Cập nhật Root Tools.');});
+  // Remote settings: edit only touched fields, never overwrite unseen local changes.
+  var defs={theme:['Chủ đề',['midnight','ocean','amber'],['Midnight','Ocean','Amber']],font:['Phông chữ',['lexend','sans','serif'],['Lexend','Sans','Serif']],idleSeconds:['Tự ẩn',[0,30,60,120,300],['Tắt','30 giây','1 phút','2 phút','5 phút']],idleEffect:['Hiệu ứng chờ',['rain','snow','petals','stars','fireflies','bubbles','mist','random'],['Mưa','Tuyết','Cánh hoa','Sao','Đom đóm','Bong bóng','Sương','Ngẫu nhiên']],pack:['Bộ icon',['original','minimal','neon','glass','pastel','gold'],['Gốc','Minimal','Neon','Glass','Pastel','Gold']],largeText:['Chữ lớn'],showWeek:['Dự báo 3 ngày'],reduceMotion:['Giảm chuyển động'],showSolar:['Dương lịch'],showLunar:['Âm lịch'],idleRain:['Bật hiệu ứng']};
+  var fields={},pending={},values={},remoteBusy=false,remoteApps=[],waiting=null,watch=null;
+  function remoteMsg(s){$('remoteStatus').textContent=s;}
+  function option(el,v,t){var o=document.createElement('option');o.value=String(v);o.textContent=t;el.appendChild(o);}
+  function touched(k,v){pending[k]=v;$('remoteSave').disabled=remoteBusy||!Object.keys(pending).length;}
+  Object.keys(defs).forEach(function(k){var d=defs[k],l=document.createElement('label'),el=document.createElement(d[1]?'select':'input');l.className='remoteRow';l.appendChild(document.createTextNode(d[0]));if(d[1])d[1].forEach(function(v,i){option(el,v,d[2][i]);});else el.type='checkbox';el.onchange=function(){touched(k,d[1]?(k==='idleSeconds'?Number(el.value):el.value):el.checked);};l.appendChild(el);$('remoteFields').appendChild(l);fields[k]=el;});
+  function appKey(k){return 'app:'+$('remoteApp').value+':'+k;}
+  function effective(k){return Object.prototype.hasOwnProperty.call(pending,k)?pending[k]:values[k];}
+  function appFields(){var id=$('remoteApp').value;$('remoteAppFields').hidden=!id;if(!id)return;
+    $('remoteTitle').value=effective(appKey('title'))||'';$('remoteIcon').value=effective(appKey('icon'))||'';$('remoteVisible').checked=effective(appKey('visible'))===true;
+  }
+  option($('remoteIcon'),'','Giữ bộ icon chung');option($('remoteIcon'),'original','Icon gốc');
+  ['minimal','neon','glass','pastel','gold'].forEach(function(p){['video','music','web','tv','game','settings','home','photo','apps','youtube','netflix','prime','disney','tiktok','jellyfin','spotify','radio','hdmi','store','files','network'].forEach(function(g){option($('remoteIcon'),'pack:'+p+':'+g,p+' / '+g);});});
+  $('remoteApp').onchange=appFields;$('remoteTitle').onchange=function(){touched(appKey('title'),this.value);};$('remoteIcon').onchange=function(){touched(appKey('icon'),this.value);};$('remoteVisible').onchange=function(){touched(appKey('visible'),this.checked);};
+  function remoteRead(){return api('GET','api/remote-state').then(function(s){
+    if(waiting!==null){if(s.applied!==null&&s.applied>=waiting){waiting=null;remoteMsg('TV đã xác nhận áp dụng.');}else{remoteMsg('Đã gửi. Chờ TV nhận thay đổi; mở Home và đóng Tùy chỉnh.');return s;}}
+    if(!s.online){$('remoteControls').disabled=true;remoteMsg('Chưa đọc được cài đặt TV. Mở Home và đóng Tùy chỉnh, sau đó bấm Đọc từ TV.');return s;}
+    values=s.values||{};$('remoteControls').disabled=false;
+    Object.keys(defs).forEach(function(k){var v=effective(k);if(defs[k][1])fields[k].value=String(v);else fields[k].checked=v===true;});
+    var id=$('remoteApp').value;$('remoteApp').textContent='';option($('remoteApp'),'','Chọn ứng dụng');(s.apps||[]).forEach(function(a){option($('remoteApp'),a.id,a.title);});$('remoteApp').value=id;if(!$('remoteApp').value)$('remoteApp').value='';appFields();
+    if(!Object.keys(pending).length&&s.pending.length===0)remoteMsg('Đã kết nối TV.');return s;
+  });}
+  $('remoteRefresh').onclick=function(){if(remoteBusy)return;remoteRead().catch(function(){remoteMsg('Không kết nối được TV.');});};
+  $('remoteSave').onclick=function(){if(remoteBusy||!Object.keys(pending).length)return;remoteBusy=true;$('remoteSave').disabled=true;$('remoteControls').disabled=true;var sent=pending;
+    api('POST','api/remote-set',JSON.stringify(sent)).then(function(r){pending={};waiting=r.revision;remoteMsg('Đã gửi; chờ TV xác nhận.');var tries=0;function pollAck(){remoteRead().then(function(){if(waiting!==null&&++tries<12)watch=setTimeout(pollAck,3000);}).catch(function(){remoteMsg('Đã gửi, chưa xác nhận TV. Bấm Đọc từ TV để kiểm tra.');});}if(watch)clearTimeout(watch);pollAck();}).catch(function(){remoteMsg('Không gửi được thay đổi.');$('remoteControls').disabled=false;}).then(function(){remoteBusy=false;$('remoteSave').disabled=!Object.keys(pending).length;});};
+  remoteRead().catch(function(){remoteMsg('Cần Root Tools mới để tùy chỉnh qua web.');});
 
   api('GET', 'api/state').then(function (s) {
     L = T[s.language] || T.en;

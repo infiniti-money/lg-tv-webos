@@ -32,7 +32,7 @@ function ack(inbox){
  var x=new XMLHttpRequest();try{x.open('POST','http://127.0.0.1:8090/api/remote-ack',true);x.timeout=4000;x.setRequestHeader('X-Infiniti-Remote',inbox.token);x.setRequestHeader('Content-Type','application/json');x.send(JSON.stringify({revision:applied,values:snapshot()}));}catch(e){}
 }
 function poll(){
- if(covered()||busy||(root.INFINITI_CUSTOMIZE_IS_OPEN&&root.INFINITI_CUSTOMIZE_IS_OPEN())||(root.INFINITI_REMOTE_CAN_APPLY&&!root.INFINITI_REMOTE_CAN_APPLY()))return;
+ if(document.body.classList.contains('launcher-covered')||covered()||busy||(root.INFINITI_CUSTOMIZE_IS_OPEN&&root.INFINITI_CUSTOMIZE_IS_OPEN())||(root.INFINITI_REMOTE_CAN_APPLY&&!root.INFINITI_REMOTE_CAN_APPLY()))return;
  busy=true;var n=++serial,s=document.createElement('script'),timeout;
  function done(){clearTimeout(timeout);if(s.parentNode)s.parentNode.removeChild(s);busy=false;}
  root.INFINITI_REMOTE_INBOX=null;

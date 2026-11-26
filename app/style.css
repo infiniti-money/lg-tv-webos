@@ -737,3 +737,10 @@ body.customize-open #penBtn,body.customize-open #arrangeBar { visibility:hidden;
 .customizeDialog button:focus,#customizeAppName:focus,.customizeSearchRow input:focus {
   outline:4px solid #ffd388; outline-offset:1px;
 }
+
+/* v1.6.1: square/portrait originals stay intact; 16:9 artwork fills the
+   existing landscape card. Solid side colour is sampled in JS, never stretched. */
+.item .card.icon-contained img { width:auto; height:92%; max-width:94%; object-fit:contain;
+  border-radius:0; top:50%; left:50%; transform:translate(-50%,-50%); }
+.item .card.icon-landscape img { width:100%; height:100%; max-width:100%; object-fit:contain;
+  border-radius:0; top:50%; left:50%; transform:translate(-50%,-50%); }

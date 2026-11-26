@@ -71,7 +71,7 @@ assert.ok(/var DOCK_TOP = 1030 - TILE_H - 46;/.test(app),
 assert.ok(/band.style.display = 'none'/.test(app),
   'Opaque dock background must be hidden');
 assert.ok(/item.card.style.background = ''/.test(app),
-  'Card background must come from CSS, not per-app inline fill');
+  'Default card background must reset before applying a safe edge colour');
 assert.ok(/#dockBand, body.theme-ocean #dockBand, body.theme-amber #dockBand/.test(css),
   'Transparent dock must also override theme backgrounds');
 assert.ok(/\.item\.dock \.name \{[\s\S]*?display:block/.test(css),
@@ -96,3 +96,18 @@ assert.ok(/background:rgba\(12,21,33,\.62\)/.test(block('.customizeDialog')),'Se
 assert.ok(/background:#fff/.test(block('#customizeWallQr')),'QR keeps white quiet zone');
 assert.ok(/body\.customize-open #viewport/.test(css),'Underlying widgets hidden during settings');
 assert.ok(!/backdrop-filter/.test(block('.customizeDialog')),'Legacy GPU: no modal backdrop blur');
+
+var iconFn=app.match(/function iconLayout\([^]*?\n  \}/)[0],iconScope={};
+vm.runInNewContext(iconFn,iconScope);
+var flat=[[12,35,80,255],[12,35,80,255],[12,35,80,255],[12,35,80,255]];
+assert.equal(iconScope.iconLayout(256,256,flat).kind,'contained');
+assert.equal(iconScope.iconLayout(256,256,flat).background,'rgb(12,35,80)');
+assert.equal(iconScope.iconLayout(256,144,flat).kind,'landscape');
+assert.equal(iconScope.iconLayout(256,144,flat).background,'');
+assert.equal(iconScope.iconLayout(128,256,flat).kind,'contained');
+assert.equal(iconScope.iconLayout(256,256,[]).background,'');
+assert.equal(iconScope.iconLayout(256,256,[[12,35,80,0],flat[1],flat[2],flat[3]]).background,'');
+assert.equal(iconScope.iconLayout(256,256,[[255,255,255,255],flat[1],flat[2],flat[3]]).background,'');
+assert.ok(/object-fit:contain/.test(block('.item .card.icon-contained img')));
+assert.ok(/width:100%; height:100%/.test(block('.item .card.icon-landscape img')));
+console.log('Icon aspect ratio and solid-edge background tests passed.');

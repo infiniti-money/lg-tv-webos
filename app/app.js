@@ -214,16 +214,16 @@
       var item = { app: app, el: el, card: card, color: null };
       var iconKey = app.id + ':' + app.icon + ':' + (app.iconColor || '');
       img.onload = function () {
-        var cached = iconCache[iconKey];
+        var key = img.infinitiFallback ? app.id + ':fallback:' + app.originalIcon : iconKey;
+        var cached = iconCache[key];
         if (cached) {
           item.color = cached.color;
-          item.card.style.background = '';
-          if (cached.glyph) item.card.classList.add('glyph');
+          applyIconLayout(item,cached.layout);
           if (items[focused] === item) setAmbient(item.color);
         } else {
           paintTile(item, img);
           if (Object.keys(iconCache).length >= 128) iconCache = {};
-          iconCache[iconKey] = {color:item.color,glyph:item.card.classList.contains('glyph')};
+          iconCache[key] = {color:item.color,layout:item.iconLayout};
         }
       };
       img.onerror = function(){if(app.originalIcon && img.src!==app.originalIcon && !img.infinitiFallback){img.infinitiFallback=true;img.src=app.originalIcon;}};
@@ -307,52 +307,55 @@
     items.forEach(function (it) { it.el.classList.add('shown'); });
   }
 
-  /**
-   * Store icons are square logos on a solid colour: fill the wide tile with that colour so the logo
-   * reads as a banner. LG's system icons are glyphs on transparent: use the app's own colour.
-   */
+  // Select a layout without distorting the source image.
+  // Match a solid square icon's side colours only if several edge samples agree.
+  function iconLayout(w,h,edges) {
+    var ratio=h>0?w/h:0;
+    if(ratio>=1.50 && ratio<=1.95) return {kind:'landscape',background:''};
+    var solid=edges.length===4, first=edges[0];
+    for(var i=0;i<edges.length;i++){
+      var p=edges[i];
+      if(p[3]<245 || Math.abs(p[0]-first[0])>18 ||
+         Math.abs(p[1]-first[1])>18 || Math.abs(p[2]-first[2])>18)solid=false;
+    }
+    return {kind:'contained',background:solid?'rgb('+[first[0],first[1],first[2]].join(',')+')':''};
+  }
+  function applyIconLayout(item,layout){
+    item.iconLayout=layout;
+    item.card.classList.remove('glyph');
+    item.card.classList.remove('icon-landscape');
+    item.card.classList.remove('icon-contained');
+    item.card.classList.add('icon-'+layout.kind);
+    item.card.style.background = '';
+    if(layout.background)item.card.style.backgroundColor=layout.background;
+  }
   function paintTile(item, img) {
-    var px = null, edge = null;
+    var px = null, edges = [];
     try {
       var c = document.createElement('canvas');
       c.width = 12; c.height = 12;
       var g = c.getContext('2d');
       g.drawImage(img, 0, 0, 12, 12);
       px = g.getImageData(0, 0, 12, 12).data;
-      edge = edgeColor(img);
-    } catch (e) { /* tainted canvas: fall back to the app's colour */ }
-
-    var glyphColor = null;
-    // Keep the dock completely transparent: no per-app coloured rectangle,
-    // even if the source icon has an opaque edge or the app uses a white glyph.
-    item.card.style.background = '';
-    if (!edge || edge[3] <= 200) {
-      item.card.classList.add('glyph');
-      glyphColor = glyphBackground(item.app.iconColor) === '#2c2c2e' ?
-        null : parseColor(item.app.iconColor);
-    }
-    // A white glyph says nothing about the app: glow in the tile's colour instead.
-    item.color = glyphColor || (px ? vividColor(px) : parseColor(item.app.iconColor));
-    if (items[focused] === item) setAmbient(item.color);
+      edges = edgeSamples(img);
+    } catch(e) { /* retain a neutral card if canvas is unavailable */ }
+    applyIconLayout(item,iconLayout(img.naturalWidth,img.naturalHeight,edges));
+    item.color=px?vividColor(px):parseColor(item.app.iconColor);
+    if(items[focused]===item)setAmbient(item.color);
   }
-
-  /**
-   * The icon's background at full size: a corner pixel, or the middle of the left edge for rounded
-   * icons whose corners are transparent. A downscaled sample would blend in the logo.
-   */
-  function edgeColor(img) {
-    var w = img.naturalWidth, h = img.naturalHeight;
-    var c = document.createElement('canvas');
-    if (!w || !h) return null;
-    // Sample individual source pixels, not a full-size canvas allocation.
+  function edgeSamples(img) {
+    var w=img.naturalWidth,h=img.naturalHeight;
+    if(!w||!h)return [];
+    var c=document.createElement('canvas');
     c.width = 1; c.height = 1;
-    var g = c.getContext('2d'), x=Math.min(2,w-1), y=Math.min(2,h-1);
-    g.drawImage(img,x,y,1,1,0,0,1,1);
-    var corner=g.getImageData(0,0,1,1).data;
-    if(corner[3]>200)return corner;
-    g.clearRect(0,0,1,1);
-    g.drawImage(img,x,Math.floor(h/2),1,1,0,0,1,1);
-    return g.getImageData(0,0,1,1).data;
+    var g=c.getContext('2d'),x=Math.min(2,w-1),y=Math.min(2,h-1);
+    var points=[[x,Math.floor(h/2)],[w-1-x,Math.floor(h/2)],
+      [Math.floor(w/2),y],[Math.floor(w/2),h-1-y]];
+    return points.map(function(p){
+      g.clearRect(0,0,1,1);
+      g.drawImage(img,p[0],p[1],1,1,0,0,1,1);
+      return g.getImageData(0,0,1,1).data;
+    });
   }
 
   function glyphBackground(hex) {

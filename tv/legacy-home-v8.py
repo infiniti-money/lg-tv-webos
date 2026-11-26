@@ -143,6 +143,14 @@ def watch(mode):
                     state = power()
                     if prev in ('Standby','Active Standby','Suspend','Screen Off') and state == 'Active':
                         wake_trigger = True
+                        try:
+                            with open('/tmp/infiniti-idle-wake.new', 'w') as fp:
+                                fp.write(str(int(time.time() * 1000)))
+                            os.rename('/tmp/infiniti-idle-wake.new', '/tmp/infiniti-idle-wake')
+                        except IOError:
+                            pass
+                        except OSError:
+                            pass
                     if state is not None:
                         if state != prev:
                             log('power: %s' % state)

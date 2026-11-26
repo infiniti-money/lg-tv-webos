@@ -83,3 +83,5 @@ assert.equal(p.resolveIdleEffect({idleRain:true,idleEffect:'random'},.999),'mist
 assert.equal(p.resolveIdleEffect({idleRain:false,idleEffect:'stars'},.5),'');
 assert.equal(p.resolveIdleEffect({idleRain:true,reduceMotion:true,idleEffect:'snow'},.5),'');
 console.log('Idle effect preferences and random choice passed.');
+
+assert.equal(p.setPinned('netflix',true),true);assert.equal(p.getPinned()[0],'netflix');assert.equal(p.setPinned('com.infinitimoney.tvhome',true),false);assert.equal(p.setPinned('netflix',false),true);assert.equal(p.getPinned().indexOf('netflix'),-1);

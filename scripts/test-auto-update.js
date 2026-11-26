@@ -43,7 +43,7 @@ check(safe,/auto-update-enabled/, 'black-screen rescue must disable auto-updater
 check(wall,/foreground === 'com\.infinitimoney\.tvhome'/,
   'phone wallpaper changes may reload only if Infiniti is foreground');
 check(html,/id="customizeWallQr"/, 'wallpaper QR should live in Customize');
-check(html,/id="customizeUpdateState"/, 'auto-update status should be in Customize');
+assert.ok(html.indexOf('id="customizeUpdateState"')<0,'Update UI intentionally removed');
 assert.strictEqual(html.indexOf('id="btnWall"'),-1,
   'wallpaper top pill should not trap remote navigation');
 // Execute only the semver decision code inside a sandbox to catch errors

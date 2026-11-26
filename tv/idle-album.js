@@ -1,7 +1,7 @@
 /* Bounded idle photo album, root service only. Files are never executed. */
 'use strict';
 var fs=require('fs'),path=require('path'),crypto=require('crypto');
-var TIMES=[15,30,60,120,300,600],MAX=20,LIMIT=1500000,ID=/^[a-f0-9]{24}$/;
+var TIMES=[0,15,30,60,120,300,600,1800,3600,7200,21600,43200,86400,172800,604800],MAX=20,LIMIT=1500000,ID=/^[a-f0-9]{24}$/;
 function settings(v){return {enabled:v&&v.enabled===true,seconds:v&&TIMES.indexOf(v.seconds)>=0?v.seconds:60,random:!!(v&&v.random===true)};}
 function jpeg(b){return b.length>=4&&b.length<=LIMIT&&b[0]===255&&b[1]===216&&b[b.length-2]===255&&b[b.length-1]===217;}
 function create(data,appDir,allowed,log){
@@ -10,11 +10,12 @@ function create(data,appDir,allowed,log){
  var st={enabled:false,seconds:60,random:false,photos:[]};
  try{var old=JSON.parse(fs.readFileSync(file,'utf8'));st=settings(old);st.photos=(old.photos||[]).filter(function(id,i,a){return typeof id==='string'&&ID.test(id)&&a.indexOf(id)===i&&fs.existsSync(path.join(dir,id+'.jpg'));}).slice(0,MAX);}catch(e){}
  function atomic(f,s,mode){var t=f+'.album-'+process.pid;fs.writeFileSync(t,s,{mode:mode});fs.renameSync(t,f);}
+ function powerEpoch(){try{var boot=fs.readFileSync('/proc/sys/kernel/random/boot_id','utf8').trim(),wake='';try{wake=fs.readFileSync('/tmp/infiniti-idle-wake','utf8').trim();}catch(e){}return /^[a-f0-9-]{36}$/.test(boot)?boot+':'+wake:'';}catch(e){return '';}}
  function publish(){if(!allowed())return false;try{
    var dest=appDir();if(!fs.existsSync(dest))return false;
    var valid=[];
    st.photos.forEach(function(id){var n='idle-photo-'+id+'.jpg',target=path.join(dest,n),src=path.join(dir,id+'.jpg');try{if(!fs.existsSync(target)||fs.statSync(target).size!==fs.statSync(src).size)atomic(target,fs.readFileSync(src),420);valid.push(id);}catch(e){log('album copy: '+e.message);}});
-   var script='window.INFINITI_IDLE_ALBUM = '+JSON.stringify({enabled:st.enabled,seconds:st.seconds,random:st.random,photos:valid})+';\n',f=path.join(dest,'idle-album.js'),same=false;
+   var script='window.INFINITI_IDLE_ALBUM = '+JSON.stringify({enabled:st.enabled,seconds:st.seconds,random:st.random,powerEpoch:powerEpoch(),photos:valid})+';\n',f=path.join(dest,'idle-album.js'),same=false;
    try{same=fs.readFileSync(f,'utf8')===script;}catch(e){}
    if(!same)atomic(f,script,420);
    fs.readdirSync(dest).forEach(function(n){var m=/^idle-photo-([a-f0-9]{24})\.jpg$/.exec(n);if(m&&st.photos.indexOf(m[1])<0)try{fs.unlinkSync(path.join(dest,n));}catch(e){}});

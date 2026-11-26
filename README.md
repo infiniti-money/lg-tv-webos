@@ -1,6 +1,8 @@
 <div align="center">
 
-# Infiniti TV Home
+# Designed by Tân Dev
+
+> V8.5 RC2 changes the displayed name and vendor only; the historical app ID, asset names and data directory stay unchanged. The AI assistant, Developer Mode settings tab and quick weather presets are removed from the launcher. Historical release descriptions below do not describe current features. For the managed QR wallpaper server use `sh /home/root/lg-tv-vibehack/legacy-home.sh wallpaper-on` without enabling auto-updates.
 
 **An Apple TV–style home screen for LG webOS TVs, with a real Home button, weather and your own wallpaper.**
 

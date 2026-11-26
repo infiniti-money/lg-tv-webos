@@ -1,6 +1,8 @@
-# Infiniti TV Home v1.6.0 — Legacy Home V8.4
+# Designed by Tân Dev — v1.6.0 RC2 (Legacy Home V8.5)
 
-- V8.3 đo được Luna sẵn sàng 11,2 giây từ hook trên LG 49UH850T-TA; Home và cold boot đã xác nhận qua log Foreground trên V8.2/V8.3.
-- V8.4 giảm thời gian chờ Home, tối ưu polling wake, bổ sung challenge render qua loopback và đồng bộ app nền, lưu log Recovery.
-- IPK và root tools phải cập nhật cùng nhau. Tích hợp Home/boot/wake vẫn opt-in, trial một lần, không sửa firmware. V8.4 render, wake, recovery và giao diện thực tế chưa nghiệm thu trên TV; release candidate không phải chứng nhận ổn định.
-- Giữ nguyên các tính năng tiếng Việt, HDMI, tùy chỉnh và SHA-256. Xem docs/legacy-home-v8.vi.md.
+- V8.4 trên LG 49UH850T-TA đã xác nhận Home 1,4 giây, readiness 11,2 giây và render boot 1,5 giây qua log; catalog 18 app, 5 input; tắt/bật Magic Remote tạo Boot ID mới. Standby thực sự chưa xác nhận.
+- V8.5: tên app và vendor Designed by Tân Dev; giữ app ID com.infinitimoney.tvhome và đường dẫn dữ liệu. Giữ bản quyền MIT gốc.
+- Bỏ trợ lý AI khỏi IPK, tab Dev Mode và khu vực nhanh thời tiết. Giữ tìm kiếm địa điểm và tính năng khác.
+- Giữ Homebrew Failsafe, hai mẫu readiness; chu kỳ 500ms, hiển thị các tile đồng thời và đợi toàn bộ class shown. Cache biểu tượng và giảm sao chép không đổi; chưa đo CPU/RAM thực tế.
+- QR: dịch vụ nền opt-in riêng, khóa ngẫu nhiên 48 ký tự, QR có viền, chọn JPG/PNG, cập nhật ảnh độc lập với catalog, refresh địa chỉ mạng. Chưa kiểm thử điện thoại thật; dùng cùng mạng LAN tin cậy, không mở cổng ra Internet.
+- Cài IPK và root tools cùng bản, thử Home và boot một lần rồi xác nhận thủ công. RC2 là prerelease, không thay latest; chưa nghiệm thu vật lý. Xem docs/legacy-home-v8.vi.md.

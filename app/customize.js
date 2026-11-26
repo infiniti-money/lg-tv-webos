@@ -6,7 +6,6 @@
   var VISIBILITY_KEY = 'tvhome.visibility.v1';
   var APPEARANCE_KEY = 'tvhome.appearance.v1';
   var WEATHER_KEY = 'tvhome.weather.v1';
-  var AI_KEY = 'tvhome.ai.v1';
   var cache = {};
   var defaults = {
     theme:'midnight', font:'lexend', largeText:false, showWeek:true,
@@ -14,17 +13,6 @@
   };
   var THEMES = ['midnight','ocean','amber'];
   var FONTS = ['lexend','sans','serif'];
-  // Offline quick picks; more provinces/districts can be found using Open-Meteo geocoding.
-  var PRESETS = [
-    {place:'Hà Nội',latitude:21.0285,longitude:105.8542},
-    {place:'Hải Phòng',latitude:20.8449,longitude:106.6881},
-    {place:'Hưng Yên',latitude:20.6464,longitude:106.0511},
-    {place:'Đà Nẵng',latitude:16.0678,longitude:108.2208},
-    {place:'Huế',latitude:16.4637,longitude:107.5909},
-    {place:'TP. Hồ Chí Minh',latitude:10.8231,longitude:106.6297},
-    {place:'Cần Thơ',latitude:10.0452,longitude:105.7469},
-    {place:'Đà Lạt',latitude:11.9404,longitude:108.4583}
-  ];
   function safeRead(key) {
     var obj = null;
     try {
@@ -111,16 +99,6 @@
     safeWrite(APPEARANCE_KEY, current);
     return current;
   }
-  // Default ON preserves existing installations; OFF is persisted locally.
-  // API secrets and access tokens are never saved by this setting.
-  function getAIEnabled() {
-    return safeRead(AI_KEY).enabled !== false;
-  }
-  function setAIEnabled(enabled) {
-    var value = enabled === true;
-    safeWrite(AI_KEY, {enabled:value});
-    return value;
-  }
   function getWeather() {
     var saved = safeRead(WEATHER_KEY);
     var original = (root.CONFIG || {}).weather || {};
@@ -153,7 +131,6 @@
     isVisible:isVisible, setVisible:setVisible, resetVisible:resetVisible,
     getAppearance:getAppearance, saveAppearance:saveAppearance,
     getWeather:getWeather, saveWeather:saveWeather,
-    getAIEnabled:getAIEnabled, setAIEnabled:setAIEnabled,
     validCoords:validCoords, isProtected:isProtected,
     isLGDefaultApp:isLGDefaultApp, hideLGDefaultApps:hideLGDefaultApps
   };
@@ -167,19 +144,16 @@
   var tabs = {
     apps:$('customizeAppsTab'), style:$('customizeStyleTab'),
     weather:$('customizeWeatherTab'), calendar:$('customizeCalendarTab'),
-    ai:$('customizeAITab'), devmode:$('customizeDevModeTab'),
     privacy:$('customizePrivacyTab')
   };
   var views = {
     apps:$('customizeAppsView'), style:$('customizeStyleView'),
     weather:$('customizeWeatherView'), calendar:$('customizeCalendarView'),
-    ai:$('customizeAIView'), devmode:$('customizeDevModeView'),
     privacy:$('customizePrivacyView')
   };
   var appsList = $('customizeAppList'), themeBox = $('customizeThemes');
   var fontBox = $('customizeFonts'), status = $('customizeStatus');
   var opened = false, activeTab = 'style', searchRequest = null;
-  var DEVMODE_APP = 'com.lennylxx.devmodeforever';
 
   function applyAppearance() {
     var a = getAppearance(), body = document.body;
@@ -194,17 +168,8 @@
     if (a.reduceMotion) body.classList.add('motion-reduced');
     if (!a.showSolar) body.classList.add('solar-hidden');
     if (!a.showLunar) body.classList.add('lunar-hidden');
-    applyAI();
     if (typeof root.INFINITI_LAUNCHER_LAYOUT_REFRESH === 'function')
       root.INFINITI_LAUNCHER_LAYOUT_REFRESH();
-  }
-  function applyAI() {
-    if (getAIEnabled()) document.body.classList.remove('ai-disabled');
-    else document.body.classList.add('ai-disabled');
-    if (!getAIEnabled() && typeof root.INFINITI_AI_SET_ENABLED === 'function')
-      root.INFINITI_AI_SET_ENABLED(false);
-    if (typeof root.INFINITI_AI_VISIBILITY_CHANGED === 'function')
-      root.INFINITI_AI_VISIBILITY_CHANGED();
   }
   function message(v) { status.textContent = v || ''; }
   function refreshLauncher() {
@@ -270,15 +235,15 @@
     root.INFINITI_WALLPAPER_GET_URL(function (url) {
       // The QR links to a TV-local, secret-authenticated phone service.
       // Only display a valid local IP:8090 URL written by the root helper.
-      if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:8090\/\?k=[a-f0-9]{12}$/.test(url || '')) {
-        state.textContent = 'Chưa bật dịch vụ hình nền. Trên TV đã root, cài gói root và bật --auto-update để kích hoạt dịch vụ nền; LG Home vẫn được giữ nguyên.';
+      if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:8090\/\?k=[a-f0-9]{12,48}$/.test(url || '')) {
+        state.textContent = 'Chưa có địa chỉ dịch vụ hình nền. Qua SSH chạy legacy-home.sh wallpaper-on, sau đó bấm Lấy mã QR lại.';
         return;
       }
       try {
         var qr = qrcode(0, 'M');
         qr.addData(url);
         qr.make();
-        code.innerHTML = '<img alt="Quét để đổi hình nền" src="' + qr.createDataURL(6, 0) + '">';
+        code.innerHTML = '<img alt="Quét để đổi hình nền" src="' + qr.createDataURL(6, 24) + '">';
         state.textContent = 'Mở camera điện thoại để chọn ảnh, ảnh USB hoặc xóa hình nền.';
         host.textContent = url.split('?')[0];
       } catch (err) {
@@ -354,16 +319,11 @@
     if (typeof root.INFINITI_WEATHER_RELOAD === 'function') root.INFINITI_WEATHER_RELOAD();
   }
   function renderWeather() {
-    var w = getWeather(), presetBox = $('customizeWeatherPresets');
+    var w = getWeather();
     $('customizeWeatherChoice').textContent = w.place ?
       'Khu vực đang chọn: ' + w.place : 'Chưa chọn khu vực';
     $('customizeWeatherEnable').textContent = w.enabled ? 'Đang bật thời tiết · Tắt' : 'Đang tắt thời tiết · Bật';
     $('customizeWeatherUnit').textContent = w.unit === 'fahrenheit' ? 'Đơn vị: °F' : 'Đơn vị: °C';
-    presetBox.innerHTML = '';
-    PRESETS.forEach(function (city) {
-      addButton(presetBox, city.place, function () { selectRegion(city); },
-        w.place === city.place);
-    });
   }
   function selectRegion(city) {
     var lat = Number(city.latitude), lon = Number(city.longitude);
@@ -418,37 +378,10 @@
     };
     x.send();
   }
-  function renderAI() {
-    $('customizeAIToggle').textContent = 'Trợ lý AI tiếng Việt: ' + (getAIEnabled() ? 'Bật' : 'Tắt');
-    $('customizeAIState').textContent = getAIEnabled() ?
-      'AI được hiển thị trên Home. Tài khoản API và máy chủ AI phải được cấu hình riêng.' :
-      'AI đã tắt: ẩn nút trên Home, không gửi yêu cầu AI hoặc dùng micro.';
-  }
   function renderCalendar() {
     refreshToggles();
     var d = new Date();
     $('customizeCalendarNote').textContent = 'Dương lịch dùng ngày giờ TV; âm lịch tính theo múi giờ Việt Nam (UTC+7).';
-  }
-  // On a previously-rooted TV, even simply opening a separately installed
-  // Developer Mode watchdog can reboot the panel. This page is information
-  // only. There is no launcher call, service call, or root-state guess.
-  function devModeInstalled() {
-    var list = (root.TV_APPS && root.TV_APPS.apps) || [];
-    for (var i = 0; i < list.length; i++) {
-      if (list[i] && list[i].id === DEVMODE_APP) return true;
-    }
-    return false;
-  }
-  function renderDevMode() {
-    $('customizeRootModeState').textContent =
-      'Chưa xác minh quyền root trong phiên hiện tại. TV đã root không nên bật ' +
-      'Developer Mode chính thức; hãy kiểm tra Homebrew Channel → Settings → Root status.';
-    $('customizeDevModeState').textContent = devModeInstalled() ?
-      'Đã tìm thấy Dev Mode Forever (chỉ thông tin; Infiniti không khởi chạy).' :
-      'Không thấy Dev Mode Forever trong danh sách đã đồng bộ. Không cần cài trên TV đã root.';
-    $('customizeDevModeWarning').textContent =
-      'Không gửi lệnh mở ứng dụng, gia hạn phiên, thay đổi root hoặc REBOOT. ' +
-      'Nếu TV vào Failsafe, chỉ thực hiện kiểm tra đọc qua SSH/Homebrew.';
   }
   function activateTab(name) {
     activeTab = name;
@@ -462,8 +395,6 @@
     if (name === 'apps') renderApps();
     else if (name === 'style') renderStyle();
     else if (name === 'weather') renderWeather();
-    else if (name === 'ai') renderAI();
-    else if (name === 'devmode') renderDevMode();
     else renderCalendar();
     message('');
   }
@@ -568,11 +499,6 @@
   $('customizeResetStyle').addEventListener('click', function () {
     saveAppearance(defaults); applyAppearance(); renderStyle();
     message('Đã khôi phục giao diện mặc định.');
-  });
-  $('customizeAIToggle').addEventListener('click', function () {
-    var enabled = setAIEnabled(!getAIEnabled());
-    applyAI(); renderAI();
-    message(enabled ? 'Đã bật trợ lý AI.' : 'Đã tắt trợ lý AI và ẩn nút trên Home.');
   });
   $('customizeWeatherSearchBtn').addEventListener('click', searchRegion);
   $('customizeWeatherEnable').addEventListener('click', function () {

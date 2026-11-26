@@ -74,7 +74,7 @@
   // Set sizing directly on elements rather than relying on var(--tile-...).
   glass.style.borderRadius = Math.round(TILE_W * 74 / 360) + 'px';
   var ambients = [$('ambientA'), $('ambientB')], ambientFront = 0, ambientColor = null;
-  var pills = [$('btnInputs'), $('btnWifi'), $('btnSettings'), $('btnAI'), $('btnCustomize')];
+  var pills = [$('btnInputs'), $('btnWifi'), $('btnSettings'), $('btnCustomize')];
   var panel = $('inputsPanel'), pen = $('penBtn'), colsPanel = $('colsPanel');
 
   var items = [];               // {app, el, color}
@@ -291,12 +291,7 @@
   function animateIn() {
     clearEntranceTimers();
     if (launcherCovered()) return;
-    items.forEach(function (it, i) {
-      it.el.classList.remove('shown');
-      entranceTimers.push(setTimeout(function () {
-        if (!launcherCovered()) it.el.classList.add('shown');
-      }, 60 + Math.min(i, 16) * 40));
-    });
+    items.forEach(function (it) { it.el.classList.add('shown'); });
   }
 
   /**
@@ -492,16 +487,11 @@
     ambientFront = 1 - ambientFront;
   }
 
-  function aiEnabled() {
-    return !window.INFINITI_PREFS || window.INFINITI_PREFS.getAIEnabled();
-  }
   function focusPill(i) {
     setZone('top');
     document.body.classList.remove('scrolled');
     pills[pillFocus].classList.remove('focused');
     var next = Math.max(0, Math.min(i, pills.length - 1));
-    // The hidden AI pill must never trap a D-pad-only TV remote.
-    if (next === 3 && !aiEnabled()) next = i < pillFocus ? 2 : 4;
     pillFocus = next;
     pills[pillFocus].classList.add('focused');
   }
@@ -521,7 +511,6 @@
   function pillAbove(i) {
     var cx = tileLeft(i) - offset + TILE_W / 2, best = 0, bestD = Infinity;
     pills.forEach(function (p, k) {
-      if (k === 3 && !aiEnabled()) return;
       var r = p.getBoundingClientRect();
       var d = Math.abs(r.left + r.width / 2 - cx);
       if (d < bestD) { bestD = d; best = k; }
@@ -563,9 +552,7 @@
     if (i === 0) showInputs();
     else if (i === 1) launch('com.palm.app.settings', 'Settings', { target: 'network' });
     else if (i === 2) launch('com.palm.app.settings', 'Settings');
-    else if (i === 3 && window.INFINITI_AI_OPEN &&
-      (!window.INFINITI_PREFS || window.INFINITI_PREFS.getAIEnabled())) window.INFINITI_AI_OPEN();
-    else if (i === 4 && window.INFINITI_CUSTOMIZE_OPEN) window.INFINITI_CUSTOMIZE_OPEN();
+    else if (i === 3 && window.INFINITI_CUSTOMIZE_OPEN) window.INFINITI_CUSTOMIZE_OPEN();
   }
 
   // Wallpaper is configured inside Customize > Giao diện, not as a top-row pill.
@@ -791,9 +778,8 @@
   // On tiles OK acts on release, so a held OK can start rearranging instead of opening the app.
   document.addEventListener('keyup', function (e) {
     if (launcherCovered()) return;
-    // Leave remote and LG keyboard events to the active settings/AI dialog.
+    // Leave remote and LG keyboard events to the active settings dialog.
     if (window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()) return;
-    if (window.INFINITI_AI_IS_OPEN && window.INFINITI_AI_IS_OPEN()) return;
     if (e.keyCode !== KEY.OK) return;
     okDown = false;
     if (!okTimer) return;
@@ -807,7 +793,6 @@
     if (launcherCovered()) return;
     // Leave remote and LG keyboard events to the active settings/AI dialog.
     if (window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()) return;
-    if (window.INFINITI_AI_IS_OPEN && window.INFINITI_AI_IS_OPEN()) return;
     var k = e.keyCode;
     if (k >= KEY.LEFT && k <= KEY.DOWN) {
       var now = Date.now();
@@ -966,6 +951,7 @@
       if(id!==renderRequest || Date.now()>until)return;
       var tiles=tilesEl.querySelectorAll('.item.shown');
       var anchor=tiles.length?tiles[0]:$('noApps');
+      if (items.length && tiles.length!==items.length) {setTimeout(check,100);return;}
       var rect=anchor && anchor.getBoundingClientRect();
       if(launcherCovered() || !rect || rect.width<=0 || rect.height<=0 ||
           !document.body || !document.body.clientWidth || !document.body.clientHeight){
@@ -1027,7 +1013,6 @@
     lifecycle.onHome(function () {
       if (launcherCovered()) return;
       if (window.INFINITI_CUSTOMIZE_CLOSE) window.INFINITI_CUSTOMIZE_CLOSE();
-      if (window.INFINITI_AI_CLOSE) window.INFINITI_AI_CLOSE();
       onLauncherVisible();
     });
   } else {
@@ -1048,10 +1033,6 @@
     if (items.length) focusTile(focused);
     else focusPill(pills.length - 1);
   };
-  window.INFINITI_AI_VISIBILITY_CHANGED = function () {
-    cachedHeaderBottom = null;
-    if (!aiEnabled() && pillFocus === 3) focusPill(4);
-  };
   window.INFINITI_LAUNCHER_LAYOUT_REFRESH = function () {
     cachedHeaderBottom = null;
   };
@@ -1062,9 +1043,6 @@
   }
   window.INFINITI_CUSTOMIZE_CLOSED = function () {
     resetDialogOk(); focusPill(pills.length - 1);
-  };
-  window.INFINITI_AI_CLOSED = function () {
-    resetDialogOk(); focusPill(3);
   };
   // Wallpaper settings now open within the Customize panel.
   build();

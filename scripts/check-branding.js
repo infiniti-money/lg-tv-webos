@@ -8,8 +8,8 @@ var fs = require('fs');
 function read(p) { return fs.readFileSync(p, 'utf8'); }
 var meta = JSON.parse(read('app/appinfo.json'));
 assert.strictEqual(meta.id, 'com.infinitimoney.tvhome');
-assert.strictEqual(meta.title, 'Infiniti TV Home');
-assert.strictEqual(meta.vendor, 'Infiniti Money');
+assert.strictEqual(meta.title, 'Designed by Tân Dev');
+assert.strictEqual(meta.vendor, 'Designed by Tân Dev');
 assert.ok(/^1\.[0-9]+\.[0-9]+$/.test(meta.version), 'Expected compatible 1.x semantic release');
 var en = read('README.md'), vi = read('README.vi.md'), notes = read('RELEASE.vi.md');
 var watcher = read('home-watch.py');

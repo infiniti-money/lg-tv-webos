@@ -200,6 +200,7 @@
   function tileLeft(i) { return 112 + i * CELL_W + (CELL_W - TILE_W) / 2; }
   function tileTop(i) { return DOCK_TOP; }
 
+  var iconCache = {};
   function build() {
     tilesEl.innerHTML = '';
     items = orderedApps().map(function (app) {
@@ -213,7 +214,20 @@
       card.style.borderRadius = Math.round(TILE_W * 68 / 360) + 'px';
       var img = document.createElement('img');
       var item = { app: app, el: el, card: card, color: null };
-      img.onload = function () { paintTile(item, img); };
+      var iconKey = app.id + ':' + app.icon + ':' + (app.iconColor || '');
+      img.onload = function () {
+        var cached = iconCache[iconKey];
+        if (cached) {
+          item.color = cached.color;
+          item.card.style.background = 'transparent';
+          if (cached.glyph) item.card.classList.add('glyph');
+          if (items[focused] === item) setAmbient(item.color);
+        } else {
+          paintTile(item, img);
+          if (Object.keys(iconCache).length >= 128) iconCache = {};
+          iconCache[iconKey] = {color:item.color,glyph:item.card.classList.contains('glyph')};
+        }
+      };
       img.src = app.icon;
       card.appendChild(img);
       el.appendChild(card);

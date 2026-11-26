@@ -32,7 +32,7 @@ jobs:
       - name: Validate app metadata
         shell: bash
         run: |
-          node -e "const a=require('./app/appinfo.json');if(a.id!=='com.infinitimoney.tvhome'||a.title!=='Infiniti TV Home')process.exit(1);console.log(a.id, a.version)"
+          node -e "const a=require('./app/appinfo.json');if(a.id!=='com.infinitimoney.tvhome'||a.title!=='Designed by Tân Dev'||a.vendor!=='Designed by Tân Dev')process.exit(1);console.log(a.id, a.version)"
 
       - name: Check ES5 compatibility, Home rollback, and shell syntax
         shell: bash
@@ -148,7 +148,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.6.0-rc.2
-          name: Infiniti TV Home v1.6.0 RC2 — V8.5
+          name: Designed by Tân Dev v1.6.0 RC2 — V8.5
           prerelease: true
           make_latest: false
           files: |

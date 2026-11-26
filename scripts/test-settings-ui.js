@@ -141,7 +141,7 @@ var arrow={type:'keydown',keyCode:39,preventDefault:function(){},
   stopPropagation:function(){},stopImmediatePropagation:function(){}};
 var down={type:'keydown',keyCode:40,preventDefault:function(){},
   stopPropagation:function(){},stopImmediatePropagation:function(){}};
-node('customizeWeatherTab').focus();
+node('customizePrivacyTab').focus();
 docEvents.keydown(arrow);
 assert.equal(document.activeElement.id,'customizeWeatherSearch','Right should focus search input');
 var typed={type:'keydown',keyCode:78,stopped:false,prevented:false,

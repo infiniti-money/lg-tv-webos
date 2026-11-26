@@ -912,7 +912,7 @@
    */
   function appsFingerprint() {
     var all = (window.TV_APPS && TV_APPS.apps) || [];
-    return all.map(function (a) { return a.id; }).sort().join(',');
+    return JSON.stringify(all.map(function (a) { return [a.id,a.title,a.icon,a.iconColor]; }).sort()) + JSON.stringify((window.TV_APPS && TV_APPS.inputs) || []);
   }
   var appsSeen = appsFingerprint();
 
@@ -952,12 +952,47 @@
     document.body.appendChild(sc);
   }
 
+  // V8.4: only a fresh launch challenge may acknowledge browser-side render.
+  var renderRequest=0;
+  function acknowledgeRender(params) {
+    if (!params || typeof params.infinitiRenderToken!=='string' ||
+        !/^[a-f0-9]{48}$/.test(params.infinitiRenderToken) ||
+        typeof params.infinitiRenderPort!=='number' ||
+        params.infinitiRenderPort%1!==0 || params.infinitiRenderPort<1024 ||
+        params.infinitiRenderPort>65535) return;
+    var id=++renderRequest, until=Date.now()+12000;
+    var frame=window.requestAnimationFrame || function(cb){setTimeout(cb,32);};
+    function check(){
+      if(id!==renderRequest || Date.now()>until)return;
+      var tiles=tilesEl.querySelectorAll('.item.shown');
+      var anchor=tiles.length?tiles[0]:$('noApps');
+      var rect=anchor && anchor.getBoundingClientRect();
+      if(launcherCovered() || !rect || rect.width<=0 || rect.height<=0 ||
+          !document.body || !document.body.clientWidth || !document.body.clientHeight){
+        setTimeout(check,100);return;
+      }
+      frame(function(){frame(function(){
+        if(id!==renderRequest || launcherCovered()){setTimeout(check,100);return;}
+        var image=new Image();
+        image.src='http://127.0.0.1:'+params.infinitiRenderPort+'/render/'+params.infinitiRenderToken+'/'+tiles.length;
+        // Image beacon needs no CORS privileges. Server checks the random token.
+        window.INFINITI_RENDER_BEACON=image;
+      });});
+    }
+    check();
+  }
+  function readLaunchParams(){
+    try {return window.PalmSystem?JSON.parse(PalmSystem.launchParams||'{}'):{};}
+    catch(e){return {};}
+  }
+
   // The wallpaper page relaunches us with {reload: true} after changing the wallpaper.
   document.addEventListener('webOSRelaunch', function (e) {
     var p = (e && e.detail) || {};
     if (!p.reload && window.PalmSystem) { try { p = JSON.parse(PalmSystem.launchParams || '{}'); } catch (x) { p = {}; } }
     if (p.reload) { location.reload(); return; }
     resume();
+    acknowledgeRender(p.infinitiRenderToken?p:readLaunchParams());
   });
   // Glasshouse owns Home and wake; this app never launches itself on resume.
   var clockTicker = null, appsTicker = null;
@@ -1045,4 +1080,5 @@
   zone = 'none';
   if (items.length) focusTile(0);
   else focusPill(pills.length - 1);
+  acknowledgeRender(readLaunchParams());
 })();

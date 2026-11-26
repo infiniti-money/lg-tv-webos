@@ -30,5 +30,12 @@ class LegacyTests(unittest.TestCase):
         self.assertNotIn('time.sleep(45)', source)
         self.assertIn("helper('boot-' + mode)", source)
 
+    def test_fast_home_and_sync(self):
+        source = pathlib.Path("tv/legacy-home-v8.py").read_text()
+        self.assertIn('time.sleep(0.15)', source)
+        self.assertIn('next_power = now + 2', source)
+        self.assertIn('sync-enabled &', source)
+        self.assertIn('foreground and render confirmed', source)
+
 if __name__ == '__main__':
     unittest.main()

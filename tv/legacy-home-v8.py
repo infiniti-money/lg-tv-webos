@@ -99,6 +99,7 @@ def watch(mode):
     last = 0
     prev = None
     next_power = 0
+    next_sync = time.time() + 10
     failures = 0
     refresh = 0
     log('READY: press Home 773; mode=' + mode)
@@ -116,6 +117,7 @@ def watch(mode):
                             pass
             ready, _, _ = select.select(list(fds), [], [], 1)
             trigger = False
+            wake_trigger = False
             for fd in ready:
                 try:
                     data = os.read(fd, EVENT.size)
@@ -130,18 +132,28 @@ def watch(mode):
                         del fds[fd]
             now = time.time()
             if mode == 'enabled' and exists('wake') and now >= next_power:
-                next_power = now + 5
+                next_power = now + 2
                 try:
                     state = power()
                     if prev in ('Standby','Active Standby','Suspend','Screen Off') and state == 'Active':
-                        trigger = True
-                    prev = state
+                        wake_trigger = True
+                    if state is not None:
+                        if state != prev:
+                            log('power: %s' % state)
+                        prev = state
                 except Exception:
+                    pass
+            else:
+                if not exists('wake'):
                     prev = None
-            if trigger and now - last >= 5 and allowed(mode):
-                log('Home/wake trigger')
-                time.sleep(1)
-                if redirect(mode):
+            if (trigger or wake_trigger) and now - last >= 2 and allowed(mode):
+                log('Home trigger' if trigger else 'Wake trigger')
+                if trigger:
+                    time.sleep(0.15)
+                    ok = redirect(mode)
+                else:
+                    ok = helper('wake-enabled') == 0
+                if ok:
                     failures = 0
                 else:
                     failures += 1
@@ -151,6 +163,11 @@ def watch(mode):
                             disarm_enabled()
                         return 1
                 last = time.time()
+            if mode == 'enabled' and now >= next_sync and allowed(mode):
+                next_sync = now + 120
+                if prev != 'Standby':
+                    # Background catalog only; never blocks remote input.
+                    os.system('/usr/bin/node ' + DATA + '/legacy-luna.js sync-enabled &')
     finally:
         for fd in fds:
             os.close(fd)
@@ -196,7 +213,7 @@ def run_mode(mode):
             return 1
         if mode == 'trial':
             with open(PROOF, 'w') as fp:
-                fp.write('foreground confirmed\n')
+                fp.write('foreground and render confirmed\n')
             # Trial exits after one launch. Confirm manually before persistent watch.
             return 0
     return watch(mode)

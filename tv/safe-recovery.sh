@@ -17,7 +17,7 @@ mkdir -p "$R" || { echo "ERROR: Cannot create recovery backup $R" >&2; exit 1; }
 echo "Recovery directory: $R"
 
 # Preserve evidence and the old binding BEFORE attempting to restore it.
-for item in /tmp/lg-tv-vibehack.log /tmp/infiniti-homekey.log /tmp/infiniti-homeevent.log             "$D/home-key-backup.json" /home/root/.config/lginputhook/keybinds.json; do
+for item in /tmp/lg-tv-vibehack.log /tmp/infiniti-homekey.log /tmp/infiniti-homeevent.log /tmp/infiniti-legacy-v8.log /tmp/infiniti-legacy-v8-trial-ok             "$D/home-key-backup.json" /home/root/.config/lginputhook/keybinds.json; do
   if [ -f "$item" ]; then
     cp "$item" "$R/" 2>/dev/null || {
       echo "WARNING: Could not back up $item" >&2
@@ -37,6 +37,9 @@ for item in "$D/legacy-v8-session" "$D/legacy-v8-armed" "$D/legacy-v8-trial" "$D
     }
   fi
 done
+
+# Invalidate stale trial proof after flags were removed.
+rm -f /tmp/infiniti-legacy-v8-trial-ok || FAIL=1
 
 # Homebrew executes every executable file in init.d on boot.
 # 97-homekey is the user's experimental 25s physical-key loop.

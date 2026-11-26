@@ -1,0 +1,16 @@
+'use strict';
+var assert=require('assert'),fs=require('fs');
+var app=fs.readFileSync('app/app.js','utf8');
+var helper=fs.readFileSync('tv/legacy-luna.js','utf8');
+var sh=fs.readFileSync('tv/legacy-home.sh','utf8');
+var sync=fs.readFileSync('tv/sync.js','utf8');
+assert.ok(/randomBytes\(24\)/.test(helper));
+assert.ok(/server\.listen\(0,'127\.0\.0\.1'/.test(helper));
+assert.ok(/match\[1\]!==token/.test(helper));
+assert.ok(/rendered && foreground && launchOK/.test(helper));
+assert.ok(/frame\(function\(\)\{frame\(function/.test(app));
+assert.ok(/launcherCovered\(\)/.test(app));
+assert.ok(/acknowledgeRender\(readLaunchParams\(\)\)/.test(app));
+assert.ok(/foreground and render confirmed/.test(sh));
+assert.ok(/catalogOnly && !found.authoritative/.test(sync));
+console.log('V8.4 render challenge wiring, recovery proof and non-destructive sync checks passed (static).');

@@ -34,3 +34,6 @@ Launcher không có quảng cáo. Customize > Privacy đã hỗ trợ ẩn biể
 V8.2: Python chỉ đọc phím và điều phối; Node.js xử lý JSON/Luna vì Python trên TV thiếu fcntl và json. Chạy `node /home/root/lg-tv-vibehack/legacy-luna.js probe` trước khi watch.
 
 CI kiểm tra ES5, IPK, checksum và mô phỏng Luna stdin: giữ đầu ghi pipe mở tránh EOF khi daemon không có TTY. Đây không thay thế thử nghiệm vật lý. Không phát hành bản ổn định hoặc tự bật hook khi chưa nghiệm thu TV.
+
+## V8.4
+Home giảm thời gian chờ trước close/launch; wake kiểm tra 2 giây, giữ trạng thái standby qua lỗi truy vấn tạm thời, không suy đoán wake khi chưa thấy standby. IPK mới xác nhận DOM/layout và hai frame bằng challenge ngẫu nhiên qua HTTP loopback tạm thời; không phải bằng chứng màn hình vật lý. Nếu không nhận render trong 18 giây thì dừng, không retry boot. Khi enabled, đồng bộ catalog nền sau 10 giây rồi mỗi 120 giây, bảo toàn danh sách nếu Luna trống; giao diện đã có refresh mỗi 30 giây. Recovery lưu log V8 và vô hiệu hóa proof. Cần cài IPK và sidecar cùng phiên bản, không dùng V8.4 với IPK cũ. Wake và render chưa nghiệm thu vật lý.

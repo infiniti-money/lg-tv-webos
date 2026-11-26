@@ -35,6 +35,7 @@ function isFile(p) { try { return !!p && fs.statSync(p).isFile(); } catch (e) { 
 // every app was skipped, so the launcher ended up empty. Keep every TV script ES5 and Node 0.12 safe.
 function copyFile(src, dest) { fs.writeFileSync(dest, fs.readFileSync(src)); }
 function atomicWrite(file, content) {
+  try { if (fs.readFileSync(file,'utf8')===content) return; } catch(e) {}
   var temp = file + '.infiniti-' + process.pid + '.tmp';
   fs.writeFileSync(temp, content);
   fs.renameSync(temp, file);
@@ -73,6 +74,11 @@ function normalizeLegacyApps(apps) {
 }
 function fromLuna(diskAvailable) {
   var legacy = path.join(DATA, 'legacy-luna.js');
+  // Prefer the real visible launchpoint catalog on legacy LG, verified on webOS 3.4.3.
+  try {
+    var direct=luna('luna://com.webos.applicationManager/listLaunchPoints');
+    if(direct.returnValue===true && direct.launchPoints && direct.launchPoints.length) return direct.launchPoints;
+  }catch(e){}
   if (isFile(legacy) && isFile('/usr/bin/node')) {
     try {
       var catalog = JSON.parse(execFileSync('/usr/bin/node', [legacy, 'catalog'],
@@ -201,12 +207,14 @@ function listPoints() {
   var merged = mergePoints(lunaPoints, diskPoints);
   console.error('App discovery: Luna ' + lunaPoints.length + ', installed packages ' +
     diskPoints.length + ', user-facing apps ' + merged.length + '.');
-  return { points: merged, source: 'Luna+disk' };
+  return { points: merged, source: 'Luna+disk', authoritative: lunaPoints.length > 0 };
 }
 
 function main() {
   APP_DIR = findLauncherDir();
   var found = listPoints(), points = found.points;
+  var catalogOnly=process.argv.indexOf('--catalog-only')!==-1;
+  if(catalogOnly && !found.authoritative){console.error('Catalog unavailable; preserving existing list');return;}
 
   if (process.argv.indexOf('--list') !== -1) {
     points.forEach(function (p) { console.log((p.id + '                                             ').slice(0, 45) + ' ' + p.title); });
@@ -254,6 +262,8 @@ function main() {
 
   atomicWrite(path.join(APP_DIR, 'apps.js'),
     '// Generated on the TV by sync.js\nwindow.TV_APPS = ' + JSON.stringify({ apps: apps, inputs: inputs }, null, 1) + ';\n');
+
+  if(catalogOnly){console.log('Synced '+apps.length+' apps and '+inputs.length+' inputs (catalog only).');return;}
 
   // Personal settings and wallpaper. The copy is named after the photo's timestamp so a new photo
   // gets a new file name and the launcher never shows a cached old one.

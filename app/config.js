@@ -18,9 +18,8 @@ window.CONFIG = {
   // The Live TV app, offered at the end of the Inputs menu. Leave empty to omit.
   liveTvApp: 'com.webos.app.livetv',
 
-  // Icon-size setting (3–10): higher number means smaller dock icons.
-  // The dock is always a single horizontal row at the bottom of the TV.
-  columns: 6,
+  // Four landscape cards per screen in a single scrolling row.
+  columns: 4,
 
   // 'en' or 'vi'
   language: 'vi',

@@ -671,3 +671,20 @@ body.launcher-covered #hero {
   -webkit-transition: none !important;
   transition: none !important;
 }
+
+/* V8.6: four horizontal 16:9 cards, one row, no expensive blur or continuous animation. */
+#viewport { clip:rect(0,1800px,1080px,100px); }
+#stage { transition:transform 230ms ease-out; }
+.item .card { background:rgba(22,29,43,.78); border:1px solid rgba(255,255,255,.16);
+  border-radius:24px!important; box-shadow:none; transition:transform 180ms ease-out; }
+.item .card img { height:88%; max-width:88%; top:50%; left:50%; transform:translate(-50%,-50%); }
+.item .card.glyph img { height:68%; border-radius:0; }
+.item.dock .name { font-size:25px; height:34px; line-height:32px; margin-top:10px; }
+.item.focused { z-index:1; }
+.item.focused .card { transform:scale(1.07); border-color:rgba(255,255,255,.65); }
+#glass { border:3px solid rgba(255,255,255,.95); background:transparent;
+  box-shadow:0 0 12px rgba(255,255,255,.28); transition:opacity 150ms ease,transform 200ms ease-out; z-index:2; }
+#penBtn { z-index:3; }
+body.font-large .item.dock .name { font-size:28px; }
+body.motion-reduced .item.focused .card { transform:none; }
+body.motion-reduced #glass { box-shadow:none; }

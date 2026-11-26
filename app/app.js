@@ -7,21 +7,12 @@
 (function () {
   'use strict';
 
-  // Compact icon size selected via the pencil; always a single horizontal dock row.
-  var COLS_KEY = 'tvhome.columns', COLS_CHOICES = [4, 5, 6, 7, 8, 9, 10];
-  var COLUMNS = (function () {
-    var n = 0;
-    try { n = parseInt(localStorage.getItem(COLS_KEY), 10); } catch (e) { /* storage unavailable */ }
-    return n >= 3 && n <= 10 ? n : Math.max(1, CONFIG.columns || 4);
-  })();
-  // Compact, transparent single-row dock. COLUMNS now controls icon size,
-  // not the number of rows or how many installed apps can be reached.
-  var TILE_W = Math.max(96, Math.min(158, Math.round(203 - COLUMNS * 11)));
-  var TILE_H = Math.round(TILE_W * 0.85);
-  var CELL_W = TILE_W + 26;
-  var DOCK_TOP = 1030 - TILE_H - 34;
-  var FOCUS_SCALE = 1.06;
-  var GLASS_PAD = 5;
+  // Four landscape cards across a 1920x1080 logical stage.
+  // Ignore legacy saved compact sizes so in-place upgrades get the new layout.
+  var COLUMNS = 4, COLS_CHOICES = [4];
+  var TILE_W = 380, TILE_H = 214, CELL_W = 420;
+  var DOCK_TOP = 1030 - TILE_H - 46;
+  var FOCUS_SCALE = 1.07, GLASS_PAD = 3;
 
   var KEY = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, OK: 13, BACK: 461, ESC: 27 };
 
@@ -39,7 +30,7 @@
       moveHint: 'Arrows or pointer to move  ·  OK to place  ·  Back to cancel',
       noApps: 'No apps were found on this TV. Run the installer again over SSH; if it keeps happening, ' +
         'please report your TV model and webOS version at github.com/infiniti-money/lg-tv-webos/issues',
-      colsTitle: 'Icon size (higher = smaller)', arrange: 'Rearrange apps', done: 'Done',
+      colsTitle: 'Layout: 4 apps per screen', arrange: 'Rearrange apps', done: 'Done',
       arrangeHint: 'Click an app to pick it up, point where it should go, click again to drop it.',
       wallTitle: 'Change wallpaper',
       wallScan: 'Scan this code with your phone camera, then pick a photo.',
@@ -54,7 +45,7 @@
       moveHint: 'Mũi tên hoặc con trỏ để di chuyển  ·  OK để đặt  ·  Back để huỷ',
       noApps: 'Không tìm thấy ứng dụng nào trên TV này. Chạy lại lệnh cài qua SSH; nếu vẫn vậy, ' +
         'báo giúp model TV và phiên bản webOS tại github.com/infiniti-money/lg-tv-webos/issues',
-      colsTitle: 'Cỡ biểu tượng (số lớn = nhỏ hơn)', arrange: 'Sắp xếp ứng dụng', done: 'Xong',
+      colsTitle: 'Bố cục: 4 ứng dụng trên màn hình', arrange: 'Sắp xếp ứng dụng', done: 'Xong',
       arrangeHint: 'Bấm vào app để nhấc lên, trỏ tới chỗ mới rồi bấm lần nữa để đặt.',
       wallTitle: 'Đổi hình nền',
       wallScan: 'Quét mã này bằng camera điện thoại rồi chọn ảnh.',
@@ -197,7 +188,13 @@
 
   // One horizontal app row. COLUMNS sets visible tile size; never creates another row.
   function rowOf(i) { return 0; }
-  function tileLeft(i) { return 112 + i * CELL_W + (CELL_W - TILE_W) / 2; }
+  function tileLeft(i) { return 130 + i * CELL_W; }
+  function dockOffset(index, current, total) {
+    var first = Math.round(current / CELL_W);
+    if (index < first) first = index;
+    else if (index >= first + COLUMNS) first = index - COLUMNS + 1;
+    return Math.max(0, Math.min(first, Math.max(0, total - COLUMNS))) * CELL_W;
+  }
   function tileTop(i) { return DOCK_TOP; }
 
   var iconCache = {};
@@ -219,7 +216,7 @@
         var cached = iconCache[iconKey];
         if (cached) {
           item.color = cached.color;
-          item.card.style.background = 'transparent';
+          item.card.style.background = '';
           if (cached.glyph) item.card.classList.add('glyph');
           if (items[focused] === item) setAmbient(item.color);
         } else {
@@ -277,7 +274,8 @@
 
   /** Places every tile by its position in items; tiles glide when the order changes. */
   function layout() {
-    offset = Math.max(0, offset);
+    offset = dockOffset(Math.max(0, Math.min(focused, items.length - 1)), offset, items.length);
+    stage.style.transform = 'translateX(' + (-offset) + 'px)';
     items.forEach(function (it, i) {
       it.el.style.left = tileLeft(i) + 'px';
       it.el.style.top = tileTop(i) + 'px';
@@ -292,10 +290,9 @@
     band.style.width = ((n - 1) * CELL_W + TILE_W + 56) + 'px';
     band.style.height = (TILE_H + 56) + 'px';
 
-    // The pencil sits just right of the dock band, centred on the dock row.
+    // A fixed edit button never takes one of the four app slots.
     pen.style.display = n ? 'flex' : 'none';
-    // Place the edit control after the final app in the same scrolling row.
-    pen.style.left = (n ? tileLeft(n - 1) + TILE_W + 45 : 1750) + 'px';
+    pen.style.left = '1824px';
     pen.style.top = (DOCK_TOP + TILE_H / 2 - 26) + 'px';
   }
 
@@ -427,9 +424,7 @@
     var top = tileTop(i), left = tileLeft(i);
     // Slide the one app row horizontally, keeping the selected tile within the TV safe area.
     // No expensive layout reads on each remote press.
-    if (left - offset < 130) offset = Math.max(0, left - 130);
-    if (left + TILE_W - offset > 1780) offset = left + TILE_W - 1780;
-    offset = Math.max(0, offset);
+    offset = dockOffset(i, offset, items.length);
     stage.style.transform = 'translateX(' + (-offset) + 'px)';
     document.body.classList.remove('scrolled');
 
@@ -589,10 +584,7 @@
   function focusPen() {
     setZone('pen');
     hideHero();
-    // Keep the edit pencil visible even when the row contains many apps.
-    var penLeft = items.length ? tileLeft(items.length - 1) + TILE_W + 45 : 1750;
-    offset = Math.max(offset, penLeft + 80 - 1780);
-    stage.style.transform = 'translateX(' + (-offset) + 'px)';
+    // The pencil is fixed outside the scrolling viewport.
     pen.classList.add('focused');
   }
 
@@ -623,8 +615,7 @@
     colsPanel.appendChild(arrangeBtn);
 
     // Above the dock, right-aligned with the pencil.
-    var r = pen.getBoundingClientRect();
-    colsPanel.style.right = Math.round(1920 - r.right) + 'px';
+    colsPanel.style.right = '44px';
     colsPanel.style.bottom = Math.round(1080 - (DOCK_TOP - 28 - 24)) + 'px';
     colsPanel.classList.remove('hidden');
     pen.classList.remove('focused');
@@ -671,11 +662,7 @@
     focusPen();
   }
 
-  function applyCols(n) {
-    if (n === COLUMNS) { hideCols(); return; }
-    try { localStorage.setItem(COLS_KEY, String(n)); } catch (e) { /* storage unavailable */ }
-    location.reload();
-  }
+  function applyCols(n) { hideCols(); }
 
   // ---- inputs dropdown -----------------------------------------------------------------------
 
@@ -870,6 +857,17 @@
     e.preventDefault();
   });
 
+  var lastWheelAt = 0;
+  $('viewport').addEventListener('wheel', function(e) {
+    if (launcherCovered() || editing || arranging || (zone !== 'grid' && zone !== 'pen')) return;
+    var delta = Math.abs(e.deltaX || 0) > Math.abs(e.deltaY || 0) ? e.deltaX : e.deltaY;
+    if (!delta) return;
+    e.preventDefault();
+    var now = Date.now();
+    if (now-lastWheelAt < 160) return;
+    lastWheelAt=now;
+    focusTile(focused+(delta>0?1:-1));
+  });
   pen.addEventListener('mouseover', function () { if (zone !== 'inputs' && zone !== 'wall' && zone !== 'cols' && !editing && !arranging) focusPen(); });
   pen.addEventListener('click', function () { if (!editing && !arranging) showCols(); });
   $('arrangeDone').addEventListener('click', stopArrange);

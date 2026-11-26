@@ -43,8 +43,19 @@ assert.ok(/function rowOf\(i\) \{ return 0; \}/.test(app),
 assert.ok(/translateX\(/.test(app),'Single app row must scroll horizontally');
 assert.ok(/background:rgba\(12,22,33,\.13\)/.test(css),
   'Weather cards must remain translucent, not opaque');
-assert.ok(/var TILE_W = Math.max\(96, Math.min\(158,/.test(app),
-  'App icons should be slightly larger (96–158px) without extra rows');
+assert.ok(/var COLUMNS = 4,/.test(app),'Exactly four app slots');
+assert.ok(/var TILE_W = 380, TILE_H = 214, CELL_W = 420/.test(app),'Landscape card dimensions');
+assert.ok(/clip:rect\(0,1800px,1080px,100px\)/.test(css),'Clip adjacent cards');
+assert.ok(/transform:scale\(1\.07\)/.test(css),'Focus zoom');
+var vm=require('vm'), offsetFn=app.match(/function dockOffset\([^]*?\n  \}/)[0];
+var scope={CELL_W:420,COLUMNS:4};vm.runInNewContext(offsetFn,scope);
+assert.strictEqual(scope.dockOffset(3,0,18),0);
+assert.strictEqual(scope.dockOffset(4,0,18),420);
+assert.strictEqual(scope.dockOffset(17,420,18),14*420);
+assert.strictEqual(scope.dockOffset(0,14*420,18),0);
+assert.strictEqual(scope.dockOffset(1,420,2),0);
+assert.ok(130+3*420+380*1.035+3<1800,'Fourth focused card fits');
+assert.ok(130+4*420>=1800,'Fifth card clipped at rest');
 assert.ok(/border-radius:24px!important/.test(css) &&
   /\.item \.card img \{[^}]*border-radius:24px/.test(css),
   'Icons must have more rounded corners in transparent dock');
@@ -55,12 +66,12 @@ assert.ok(html.indexOf('id="customizeUpdateState"')>=0,
   'Settings should explain automatic update availability');
 assert.ok(app.indexOf("var pills = [")>=0 && app.indexOf("'btnWall'")<0,
   'Remote focus must not navigate to a removed wallpaper top button');
-assert.ok(/var DOCK_TOP = 1030 - TILE_H - 34;/.test(app),
+assert.ok(/var DOCK_TOP = 1030 - TILE_H - 46;/.test(app),
   'Single app row must be placed near bottom, above the TV overscan');
 assert.ok(/band.style.display = 'none'/.test(app),
   'Opaque dock background must be hidden');
-assert.ok(/item.card.style.background = 'transparent'/.test(app),
-  'Per-app inline background must not obscure the wallpaper');
+assert.ok(/item.card.style.background = ''/.test(app),
+  'Card background must come from CSS, not per-app inline fill');
 assert.ok(/#dockBand, body.theme-ocean #dockBand, body.theme-amber #dockBand/.test(css),
   'Transparent dock must also override theme backgrounds');
 assert.ok(/\.item\.dock \.name \{[\s\S]*?display:block/.test(css),

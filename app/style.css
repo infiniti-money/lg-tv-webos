@@ -833,3 +833,5 @@ body.motion-reduced .idlePhoto,body.launcher-covered .idlePhoto { transition:non
 #idleSignature { position:absolute; right:60px; bottom:40px; z-index:4; font-size:22px; letter-spacing:.04em; color:rgba(255,255,255,.82); text-shadow:0 1px 5px #000; pointer-events:none; opacity:0; visibility:hidden; transition:opacity 350ms ease; }
 body.idle-home:not(.launcher-covered) #idleSignature { opacity:1; visibility:visible; }
 body.motion-reduced #idleSignature { transition:none; }
+
+#customizeWallHost { overflow-wrap:break-word; word-break:break-all; max-width:100%; font-size:18px; }

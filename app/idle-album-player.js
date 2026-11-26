@@ -1,9 +1,9 @@
 /* Two bounded image layers, only while idle; no background timer otherwise. */
 (function(root){
 'use strict';
-var active=false,seq=0,timer=null,index=-1,current='',layer=0,prefs=null,loaded=null,script=null,loadTimer=null;
+var active=false,seq=0,timer=null,index=-1,current='',layer=0,prefs=null,loaded=null,script=null,loadTimer=null,imageTimer=null;
 var allowed=[15,30,60,120,300,600],a=document.getElementById('idlePhotoA'),b=document.getElementById('idlePhotoB');
-function clean(){if(timer!==null){clearTimeout(timer);timer=null;}if(loadTimer!==null){clearTimeout(loadTimer);loadTimer=null;}if(script&&script.parentNode)script.parentNode.removeChild(script);script=null;if(loaded){loaded.onload=loaded.onerror=null;loaded=null;}}
+function clean(){if(imageTimer!==null){clearTimeout(imageTimer);imageTimer=null;}if(timer!==null){clearTimeout(timer);timer=null;}if(loadTimer!==null){clearTimeout(loadTimer);loadTimer=null;}if(script&&script.parentNode)script.parentNode.removeChild(script);script=null;if(loaded){loaded.onload=loaded.onerror=null;loaded=null;}}
 function stop(){active=false;seq++;clean();[a,b].forEach(function(el){el.classList.remove('shown');el.style.backgroundImage='';});current='';index=-1;layer=0;}
 function nextIndex(n,i,random,r){if(n<=1)return 0;if(!random)return(i+1)%n;var j=Math.floor(r*(n-(i>=0?1:0)));return i>=0&&j>=i?j+1:j;}
 function schedule(n){if(active&&n===seq)timer=setTimeout(function(){timer=null;read(n);},prefs?prefs.seconds*1000:60000);}
@@ -13,9 +13,9 @@ function render(n){
  index=prefs.photos.indexOf(current);var i=nextIndex(prefs.photos.length,index,prefs.random,Math.random()),id=prefs.photos[i];
  if(id===current){schedule(n);return;}
  var src='idle-photo-'+id+'.jpg',im=new Image();loaded=im;
- im.onload=function(){if(!active||n!==seq)return;loaded=null;var dim=typeof CONFIG.wallpaperDim==='number'?Math.max(0,Math.min(.8,CONFIG.wallpaperDim)):.35,front=layer===0?a:b,back=layer===0?b:a;
- front.style.backgroundImage='linear-gradient(rgba(0,0,0,'+dim+'),rgba(0,0,0,'+dim+')),url("'+src+'")';front.classList.add('shown');back.classList.remove('shown');layer=1-layer;current=id;schedule(n);};
- im.onerror=function(){if(active&&n===seq){loaded=null;schedule(n);}};im.src=src;
+ im.onload=function(){if(!active||n!==seq||loaded!==im)return;clearTimeout(imageTimer);imageTimer=null;loaded=null;var dim=typeof CONFIG.wallpaperDim==='number'?Math.max(0,Math.min(.8,CONFIG.wallpaperDim)):.35,front=layer===0?a:b,back=layer===0?b:a;
+ front.style.backgroundImage='linear-gradient(rgba(0,0,0,'+dim+'),rgba(0,0,0,'+dim+')),url("'+src+'")';front.style.zIndex='1';back.style.zIndex='1';front.classList.add('shown');back.classList.remove('shown');layer=1-layer;current=id;schedule(n);};
+ im.onerror=function(){if(active&&n===seq&&loaded===im){clearTimeout(imageTimer);imageTimer=null;loaded=null;schedule(n);}};imageTimer=setTimeout(function(){if(loaded===im){im.onload=im.onerror=null;loaded=null;imageTimer=null;schedule(n);}},8000);im.src=src;
 }
 function read(n){
  if(!active||n!==seq)return;

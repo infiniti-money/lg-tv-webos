@@ -279,7 +279,7 @@ http.createServer(function (req, res) {
   // reopening the launcher or interacting with LG's Home on wake.
   setInterval(function () {
     if(!permitted()){try{writeWallJs();}catch(e){}process.exit(0);}
-    try {writeWallJs();remote.publish();} catch(e){log('wall.js refresh failed: '+e.message);}
+    try {writeWallJs();remote.publish();album.publish();} catch(e){log('wall.js refresh failed: '+e.message);}
   }, 5000);
   log('listening on port ' + PORT);
 });

@@ -9,6 +9,7 @@
   <!-- Ambient glow in the colour of the focused dock app; two layers so colours crossfade. -->
   <div id="ambientA" class="ambient"></div>
   <div id="ambientB" class="ambient"></div>
+  <div id="idleRain" aria-hidden="true"><div class="rainSheet"></div></div>
 
   <!-- Top shelf: the focused dock app's name, above the dock. -->
   <div id="hero"></div>
@@ -73,12 +74,15 @@
         <div><div class="customizeEyebrow">Designed by Tân Dev</div><strong>Cài đặt giao diện</strong></div>
         <button id="customizeClose" type="button">Đóng ×</button>
       </div>
+      <div class="customizeMain">
       <div class="customizeTabs" role="navigation" aria-label="Chuyên mục cài đặt">
         <button type="button" id="customizeStyleTab">Giao diện</button>
+        <button type="button" id="customizeWallpaperTab">Hình nền</button>
         <button type="button" id="customizeWeatherTab">Thời tiết</button>
         <button type="button" id="customizeCalendarTab">Âm · dương lịch</button>
         <button type="button" id="customizeAppsTab">Ứng dụng</button>
         <button type="button" id="customizePrivacyTab">Chặn quảng cáo</button>
+        <button type="button" id="customizeUpdateTab">Cập nhật</button>
       </div>
       <div class="customizeContent">
         <div id="customizeStyleView">
@@ -92,6 +96,11 @@
             <button type="button" id="customizeShowWeek">Thời tiết 3 ngày</button>
             <button type="button" id="customizeResetStyle">Khôi phục giao diện</button>
           </div>
+          <h3>Chế độ chờ · hình nền</h3>
+          <div class="customizeChoice"><button id="customizeIdleTime" type="button">Tự ẩn: 60 giây</button><button id="customizeIdleRain" type="button">Mưa khi chờ: Bật</button></div>
+          <p class="customizeHint">Khi chờ: giữ đồng hồ, lịch và thời tiết hiện tại; ẩn ứng dụng, nút chức năng và dự báo 3 ngày. Bấm phím hoặc di chuyển remote để trở về.</p>
+        </div>
+        <div id="customizeWallpaperView" class="hidden">
           <h3>Hình nền</h3>
           <p>Đổi ảnh từ điện thoại hoặc USB, căn chỉnh và xóa hình nền. Quét mã QR bên dưới bằng điện thoại cùng mạng Wi-Fi với TV.</p>
           <div id="customizeWallpaperBox" class="customizeWallpaperBox">
@@ -102,8 +111,13 @@
               <button type="button" id="customizeWallpaper">Lấy mã QR hình nền</button>
             </div>
           </div>
+        </div>
+        <div id="customizeUpdateView" class="hidden">
           <h3>Cập nhật ứng dụng</h3>
-          <p>TV đã root có thể tự tải bản phát hành mới từ GitHub khi đã bật dịch vụ cập nhật an toàn. Không tự khởi chạy hoặc thay thế LG Home.</p>
+          <p id="customizeVersion">Phiên bản hiện tại: 1.6.1</p>
+          <p id="customizeReleaseResult">Kiểm tra bản chính thức mới nhất.</p>
+          <div class="customizeChoice"><button id="customizeCheckUpdate" type="button">Kiểm tra cập nhật</button><button id="customizeUpdateHelp" type="button">Hướng dẫn cài đặt</button></div>
+          <p id="customizeUpdateHelpText" class="hidden">Cài IPK và Root Tools cùng phiên bản qua SSH. Tải tại github.com/infiniti-money/lg-tv-webos/releases/latest. Kiểm tra SHA-256, tắt watcher trước khi thay tệp. Không gỡ app cũ.</p>
           <p id="customizeUpdateState">Tự cập nhật: chưa cấu hình. Chạy trình cài đặt root với --auto-update để kích hoạt.</p>
         </div>
         <div id="customizeWeatherView" class="hidden">
@@ -131,13 +145,13 @@
           <p id="customizeCalendarNote" class="customizeHint"></p>
         </div>
         <div id="customizeAppsView" class="hidden">
-          <p>Thêm hoặc ẩn biểu tượng trên Designed by Tân Dev. Không gỡ ứng dụng khỏi TV.</p>
+          <div id="customizeAppOptions"><p>Thêm hoặc ẩn biểu tượng trên Designed by Tân Dev. Không gỡ ứng dụng khỏi TV.</p>
           <div class="customizeChoice">
             <button id="customizeHideLGApps" type="button">Ẩn nhanh ứng dụng LG mặc định</button>
           </div>
           <p class="customizeHint">Chỉ ẩn biểu tượng trong Infiniti. Không xóa hoặc vô hiệu hóa các ứng dụng LG, Input Hook, Homebrew, HDMI và Live TV.</p>
           <h3>Bộ icon toàn bộ ứng dụng</h3><div id="customizeGlobalPacks" class="customizeChoice"></div>
-          <div id="customizeAppList"></div>
+          </div><div id="customizeAppBrowse"><div id="customizeAppList"></div><div class="customizePager"><button id="customizeAppPrev" type="button">‹ Trước</button><span id="customizeAppPage"></span><button id="customizeAppNext" type="button">Sau ›</button></div></div>
           <div id="customizeAppEditor" class="hidden">
             <h3 id="customizeAppEditorTitle">Tùy chỉnh ứng dụng</h3>
             <div class="customizeAppEditorHead">
@@ -150,6 +164,7 @@
             <p>Bộ icon có sẵn — chọn kiểu, sau đó chọn biểu tượng:</p>
             <div id="customizeAppPackChoices" class="customizeChoice"></div>
             <div id="customizeAppGlyphChoices" class="customizeChoice iconPackGrid"></div>
+            <div class="customizePager"><button id="customizeGlyphPrev" type="button">‹ Trước</button><span id="customizeGlyphPage"></span><button id="customizeGlyphNext" type="button">Sau ›</button></div>
             <p>Hoặc dùng màu chữ cái / ảnh riêng:</p>
             <div class="customizeChoice">
               <button id="customizeAppBlue" type="button">Xanh dương</button>
@@ -180,6 +195,7 @@
           <p class="customizeHint">DNS chỉ chặn một phần quảng cáo và theo dõi; không bảo đảm chặn quảng cáo nằm trong video YouTube. Nếu TV dùng DNS riêng/hardcoded, một số yêu cầu có thể không đi qua bộ lọc.</p>
           <p class="customizeHint">Nguồn: adguard-dns.io/en/public-dns.html. Để lọc theo thiết bị hoặc dùng danh sách LG chuyên biệt, có thể cấu hình AdGuard Home/Pi-hole trên router.</p>
         </div>
+      </div>
       </div>
       <div id="customizeStatus" role="status" aria-live="polite"></div>
       <p class="customizeHint">Mũi tên: di chuyển · OK: chọn · Back: đóng · Phím đỏ: mở cài đặt</p>

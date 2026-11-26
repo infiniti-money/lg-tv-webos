@@ -26,7 +26,7 @@ var DATA = '/home/root/lg-tv-vibehack';
 var APP_DIR = require('./sync.js').findLauncherDir();
 var legacyLuna = require('./legacy-luna.js').luna;
 var managed = process.argv.indexOf('--legacy-managed')!==-1;
-function permitted(){return !fs.existsSync('/var/luna/preferences/webosbrew_failsafe') && (!managed || fs.existsSync(path.join(DATA,'legacy-v8-wallpaper')));}
+function permitted(){return !fs.existsSync('/var/luna/preferences/webosbrew_failsafe') && (managed ? fs.existsSync(path.join(DATA,'legacy-v8-wallpaper')) : fs.existsSync(path.join(DATA,'boot-services-enabled')));}
 if(!permitted())process.exit(1);
 var WALLPAPER = path.join(DATA, 'wallpaper.jpg');
 var SETTINGS = path.join(DATA, 'settings.json');
@@ -64,15 +64,19 @@ function tvAddress() {
 }
 
 /** Tells the launcher where this page is (for the QR code). */
+var wallHeartbeat=0, wallLastUrl='';
 function writeWallJs() {
   APP_DIR = require('./sync.js').findLauncherDir();
   var ip = tvAddress();
-  var url = ip ? 'http://' + ip + ':' + PORT + '/?k=' + KEY : '';
+  var url = permitted() && ip ? 'http://' + ip + ':' + PORT + '/?k=' + KEY : '';
+  var now=Date.now();
   try {
-    var file=path.join(APP_DIR,'wall.js'), value='// Written by wallpaper-server.js\nwindow.WALL_URL = '+JSON.stringify(url)+';\n';
-    try{if(fs.readFileSync(file,'utf8')===value)return;}catch(e){}
-    fs.writeFileSync(file+'.tmp',value);
+    var file=path.join(APP_DIR,'wall.js');
+    if(url===wallLastUrl && now-wallHeartbeat<30000 && fs.existsSync(file))return;
+    var value='// Written by wallpaper-server.js\nwindow.WALL_URL = '+JSON.stringify(url)+';\nwindow.WALL_EXPIRES = '+(url?now+90000:0)+';\n';
+    fs.writeFileSync(file+'.tmp',value,{mode:420});
     fs.renameSync(file+'.tmp',file);
+    wallHeartbeat=now;wallLastUrl=url;
   } catch (e) { log('cannot write wall.js: ' + e.message); }
 }
 
@@ -83,11 +87,11 @@ function sync(cb) {
     writeWallJs();
     if(!permitted())return cb(new Error('service disabled'));
     legacyLuna('luna://com.webos.applicationManager/getForegroundAppInfo',{},function(e,r){
-      var foreground=!e && r.appId;
+      var foreground=!e && r && r.appId;
       if(foreground === 'com.infinitimoney.tvhome' && permitted()){
-        legacyLuna('luna://com.webos.applicationManager/launch',{id:foreground,params:{reload:true}},function(){},null,3000);
+        return legacyLuna('luna://com.webos.applicationManager/launch',{id:foreground,params:{reload:true}},function(err){if(err)log('wallpaper saved; foreground refresh not confirmed: '+err.message);cb(null,!err);},null,3000);
       }
-      cb(null);
+      cb(null,false);
     },null,1500);
   });
 }
@@ -96,7 +100,7 @@ function saveSettings(change, res) {
   var st = readJSON(SETTINGS, {});
   change(st);
   fs.writeFileSync(SETTINGS, JSON.stringify(st, null, 1));
-  sync(function (err) { json(res, err ? 500 : 200, { ok: !err }); });
+  sync(function (err, refreshed) { json(res, err ? 500 : 200, { ok: !err, reloadRequested: !!refreshed }); });
 }
 
 /** City search on Open-Meteo. curl, because Node 8's certificates are too old for some sites. */
@@ -116,7 +120,7 @@ function findCity(q, lang, cb) {
 }
 
 function send(res, code, type, body, extra) {
-  var h = { 'Content-Type': type, 'Cache-Control': 'no-store' };
+  var h = { 'Content-Type': type, 'Cache-Control': 'no-store', 'Referrer-Policy':'no-referrer', 'X-Content-Type-Options':'nosniff' };
   for (var k in extra || {}) h[k] = extra[k];
   res.writeHead(code, h);
   res.end(body);
@@ -169,7 +173,7 @@ function handle(req, res) {
       language: s.language === 'vi' ? 'vi' : 'en',
       hasWallpaper: fs.existsSync(WALLPAPER),
       dim: typeof s.wallpaperDim === 'number' ? s.wallpaperDim : 0.35,
-      weather: { enabled: !!(w.enabled && w.latitude), place: w.place || '' }
+      weather: { enabled: !!(w.enabled && typeof w.latitude==='number' && typeof w.longitude==='number'), place: w.place || '' }
     });
   }
 
@@ -215,12 +219,12 @@ function handle(req, res) {
     req.on('end', function () {
       if (tooBig) return;
       var buf = Buffer.concat(chunks);
-      if (buf.length < 4 || buf[0] !== 0xff || buf[1] !== 0xd8) return json(res, 400, { error: 'not a JPEG' });
+      if (buf.length < 4 || buf[0] !== 0xff || buf[1] !== 0xd8 || buf[buf.length-2]!==0xff || buf[buf.length-1]!==0xd9) return json(res, 400, { error: 'not a JPEG' });
       var tmp = WALLPAPER + '.part-' + process.pid;
       if(!permitted())return json(res,503,{error:'service disabled'});
       try {fs.writeFileSync(tmp,buf);fs.renameSync(tmp,WALLPAPER);} catch(e){return json(res,500,{error:'cannot save photo'});}
       log('new wallpaper, ' + Math.round(buf.length / 1024) + ' KB');
-      sync(function (err) { json(res, err ? 500 : 200, { ok: !err }); });
+      sync(function (err, refreshed) { json(res, err ? 500 : 200, { ok: !err, reloadRequested: !!refreshed }); });
     });
     return;
   }
@@ -234,7 +238,7 @@ function handle(req, res) {
   if (route === 'POST /api/clear') {
     try { fs.unlinkSync(WALLPAPER); } catch (e) { /* already gone */ }
     log('wallpaper removed');
-    return sync(function (err) { json(res, err ? 500 : 200, { ok: !err }); });
+    return sync(function (err, refreshed) { json(res, err ? 500 : 200, { ok: !err, reloadRequested: !!refreshed }); });
   }
 
   if (route === 'GET /api/usb') {
@@ -270,7 +274,7 @@ http.createServer(function (req, res) {
   // An app-only auto-update may replace wall.js. Restore the QR URL without
   // reopening the launcher or interacting with LG's Home on wake.
   setInterval(function () {
-    if(!permitted())process.exit(0);
+    if(!permitted()){try{writeWallJs();}catch(e){}process.exit(0);}
     try {writeWallJs();} catch(e){log('wall.js refresh failed: '+e.message);}
   }, 5000);
   log('listening on port ' + PORT);

@@ -253,7 +253,7 @@
     busy(true);
     status(L.sending);
     cropped().then(function (b) { return api('POST', 'api/upload', b); })
-      .then(function () { closeCrop(); refresh(true); status(L.done); })
+      .then(function (r) { closeCrop(); refresh(true); status(r.reloadRequested ? L.done : 'Đã lưu ảnh. Mở lại Launcher để thấy hình nền mới.'); })
       .catch(function () { status(L.fail, 1); })
       .then(function () { busy(false); });
   };

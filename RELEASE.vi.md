@@ -1,3 +1,7 @@
+# v1.6.1 — Designed by Tân Dev
+
+Xem RELEASE_NOTES_v1.6.1.md để cài đặt và biết giới hạn kiểm thử.
+
 ## v1.6.0 — Legacy Home V8 (bản thử nghiệm)
 
 Xem [ghi chú v1.6.0](RELEASE_NOTES_v1.6.0.md) và [hướng dẫn TV webOS 3.4.3](docs/legacy-home-v8.vi.md). Chưa phát hành ổn định.

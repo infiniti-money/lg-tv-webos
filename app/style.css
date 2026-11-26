@@ -538,11 +538,11 @@ body.solar-hidden #date, body.lunar-hidden #lunarDate { display:none; }
 .customizeDialog button.selected { background:rgba(209,234,255,.82); color:#132236; border-color:#d9eeff; text-shadow:none; }
 .customizeDialog button:focus { outline:4px solid #ffd388; outline-offset:1px; }
 .customizeDialog p { margin:7px 0 19px; font-size:22px; color:#cbd4e2; line-height:1.4; }
-.customizeContent { flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; padding:0 12px 12px 0; }
+.customizeContent { flex:1; min-height:0; overflow:hidden; padding:0 12px 12px 0; }
 .customizeContent h3 { font-size:25px; margin:18px 0 8px; color:#f1d8a5; }
 .customizeChoice { display:flex; flex-wrap:wrap; align-items:center; }
 .customizeChoice button { flex-shrink:0; }
-#customizeAppList { max-height:520px; overflow-y:auto; display:flex; flex-wrap:wrap;
+#customizeAppList { max-height:520px; overflow:hidden; display:flex; flex-wrap:wrap;
   margin:6px 0 18px; }
 .customizeApp { display:flex; align-items:center; width:49%; min-height:66px; padding:5px 12px;
   margin-right:1%; border-bottom:1px solid #3b4c62; }
@@ -737,3 +737,46 @@ body.customize-open #penBtn,body.customize-open #arrangeBar { visibility:hidden;
 .customizeDialog button:focus,#customizeAppName:focus,.customizeSearchRow input:focus {
   outline:4px solid #ffd388; outline-offset:1px;
 }
+
+/* v1.6.1: square/portrait originals stay intact; 16:9 artwork fills the
+   existing landscape card. Solid side colour is sampled in JS, never stretched. */
+.item .card.icon-contained img { width:auto; height:92%; max-width:94%; object-fit:contain;
+  border-radius:0; top:50%; left:50%; transform:translate(-50%,-50%); }
+.item .card.icon-landscape img { width:100%; height:100%; max-width:100%; object-fit:contain;
+  border-radius:0; top:50%; left:50%; transform:translate(-50%,-50%); }
+
+/* Fixed TV dashboard: no scroll containers, only remote-operated pages. */
+.customizeMain { display:flex; flex:1; min-height:0; overflow:hidden; }
+.customizeMain .customizeTabs { width:278px; flex-shrink:0; flex-direction:column; flex-wrap:nowrap; align-items:stretch; padding:10px 20px 0 0; margin:0 24px 0 0; border-right:1px solid rgba(205,225,244,.25); }
+.customizeMain .customizeTabs button { text-align:left; font-size:23px; padding:15px 16px; margin:0 0 12px; min-height:58px; }
+.customizeMain .customizeContent { flex:1; min-width:0; padding:8px 10px; overflow:hidden; }
+.customizeContent .hidden { display:none!important; }
+.customizeContent h3 { font-size:25px; margin:12px 0 8px; }
+.customizeDialog .customizeContent p { margin:5px 0 12px; font-size:21px; line-height:1.35; }
+.customizeContent .customizeChoice button { font-size:20px; padding:11px 15px; margin:4px 9px 4px 0; }
+.customizeContent #customizeAppList { margin:2px 0; max-height:none; flex-direction:column; flex-wrap:nowrap; }
+.customizeContent .customizeApp { height:62px; min-height:62px; padding:3px 6px; }
+.customizeContent .customizeApp button { width:195px; margin:3px 0 3px 10px; font-size:19px; }
+.customizePager { display:flex; align-items:center; justify-content:space-between; height:57px; margin:3px 0; }
+.customizePager span { font-size:20px; color:#d1e3ee; }
+.customizeDialog button:disabled { opacity:.35; }
+.customizeContent .iconPackGrid button { width:15%; min-width:0; height:91px; font-size:16px; padding:4px; }
+.customizeContent .iconPackGrid button img { width:104px; height:58px; }
+.customizeContent .customizeAppEditorHead { margin:5px 0; }
+.customizeContent #customizeAppPreview { width:192px; height:108px; }
+.customizeContent #customizeWeatherResults { max-height:225px; overflow:hidden; }
+.customizeContent #customizeWeatherResults button { width:48%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.customizeContent #customizeAppName { padding:10px; font-size:23px; }
+.customizeDialog #customizeStatus { height:38px; min-height:38px; max-height:38px; white-space:nowrap; text-overflow:ellipsis; }
+
+/* Idle Home: hide only this launcher's UI. One tiled rain layer, no per-drop JS or blur. */
+#idleRain { display:none; position:absolute; top:0; left:0; right:0; bottom:0; overflow:hidden; pointer-events:none; z-index:2; }
+#idleRain .rainSheet { position:absolute; left:0; right:0; top:-270px; bottom:0; background:url('icons/rain-tile.svg') repeat; opacity:.55; }
+/* Keep header's clock, solar/lunar date and current weather visible. */
+body.idle-home #topButtons, body.idle-home #forecastArea, body.idle-home #hero,
+body.idle-home #viewport, body.idle-home #penBtn, body.idle-home #arrangeBar,
+body.idle-home #toast, body.idle-home #noApps, body.idle-home .ambient { visibility:hidden; }
+body.idle-home.idle-rain:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-rain:not(.launcher-covered):not(.motion-reduced) .rainSheet { -webkit-animation:idleRainFall 1.35s linear infinite; animation:idleRainFall 1.35s linear infinite; }
+@-webkit-keyframes idleRainFall { from { -webkit-transform:translateY(0); } to { -webkit-transform:translateY(270px); } }
+@keyframes idleRainFall { from { transform:translateY(0); } to { transform:translateY(270px); } }

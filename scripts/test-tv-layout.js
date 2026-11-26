@@ -23,7 +23,7 @@ assert.ok(html.indexOf('id="customizeWeatherTab"')!==-1,'Missing weather setting
 assert.ok(html.indexOf('id="customizeCalendarTab"')!==-1,'Missing calendar settings tab');
 assert.ok(html.indexOf('id="customizeSearchRow"')===-1,'Only class-based search row is expected');
 assert.ok(html.indexOf('id="customizeWeatherSearch"')!==-1,'Missing region search field');
-assert.ok(/overflow-y:\s*auto/.test(block('.customizeContent')),'Settings must scroll');
+assert.ok(/overflow:hidden/.test(block('.customizeContent')),'Fixed settings must not scroll');
 assert.ok(/flex-direction:\s*column/.test(block('.customizeDialog')),'Settings must keep header/footer visible');
 assert.ok(/height:\s*100%/.test(block('.customizeDialog')),'Settings must fit TV height');
 assert.ok(/max-width:\s*1640px/.test(block('.customizeDialog')),'Settings should fit safe TV width');
@@ -71,7 +71,7 @@ assert.ok(/var DOCK_TOP = 1030 - TILE_H - 46;/.test(app),
 assert.ok(/band.style.display = 'none'/.test(app),
   'Opaque dock background must be hidden');
 assert.ok(/item.card.style.background = ''/.test(app),
-  'Card background must come from CSS, not per-app inline fill');
+  'Default card background must reset before applying a safe edge colour');
 assert.ok(/#dockBand, body.theme-ocean #dockBand, body.theme-amber #dockBand/.test(css),
   'Transparent dock must also override theme backgrounds');
 assert.ok(/\.item\.dock \.name \{[\s\S]*?display:block/.test(css),
@@ -96,3 +96,29 @@ assert.ok(/background:rgba\(12,21,33,\.62\)/.test(block('.customizeDialog')),'Se
 assert.ok(/background:#fff/.test(block('#customizeWallQr')),'QR keeps white quiet zone');
 assert.ok(/body\.customize-open #viewport/.test(css),'Underlying widgets hidden during settings');
 assert.ok(!/backdrop-filter/.test(block('.customizeDialog')),'Legacy GPU: no modal backdrop blur');
+
+var iconFn=app.match(/function iconLayout\([^]*?\n  \}/)[0],iconScope={};
+vm.runInNewContext(iconFn,iconScope);
+var flat=[[12,35,80,255],[12,35,80,255],[12,35,80,255],[12,35,80,255]];
+assert.equal(iconScope.iconLayout(256,256,flat).kind,'contained');
+assert.equal(iconScope.iconLayout(256,256,flat).background,'rgb(12,35,80)');
+assert.equal(iconScope.iconLayout(256,144,flat).kind,'landscape');
+assert.equal(iconScope.iconLayout(256,144,flat).background,'');
+assert.equal(iconScope.iconLayout(128,256,flat).kind,'contained');
+assert.equal(iconScope.iconLayout(256,256,[]).background,'');
+assert.equal(iconScope.iconLayout(256,256,[[12,35,80,0],flat[1],flat[2],flat[3]]).background,'');
+assert.equal(iconScope.iconLayout(256,256,[[255,255,255,255],flat[1],flat[2],flat[3]]).background,'');
+assert.ok(/object-fit:contain/.test(block('.item .card.icon-contained img')));
+assert.ok(/width:100%; height:100%/.test(block('.item .card.icon-landscape img')));
+console.log('Icon aspect ratio and solid-edge background tests passed.');
+
+assert.ok(/flex-direction:column/.test(block('.customizeMain .customizeTabs')));
+assert.ok(html.indexOf('id="customizeCheckUpdate"')>=0 && html.indexOf('id="customizeAppNext"')>=0);
+
+// Idle rules hide only dock, controls and three-day forecast, never current weather or dates.
+var idleHide=css.match(/body\.idle-home #topButtons,[^{}]+\{\s*visibility:hidden;\s*\}/);
+assert.ok(idleHide,'Idle rule exists');
+['#forecastArea','#viewport','#penBtn'].forEach(function(id){assert.ok(idleHide[0].indexOf(id)>=0,id+' hidden while idle');});
+['header','#leftBlock','#clock','#date','#lunarDate','#weather'].forEach(function(id){assert.ok(idleHide[0].indexOf('body.idle-home '+id)<0,id+' stays visible');});
+assert.ok(/body\.idle-home\.idle-rain:not\(\.launcher-covered\):not\(\.motion-reduced\)/.test(css));
+console.log('Idle Home retains clock/calendar/current weather, hides forecast and dock.');

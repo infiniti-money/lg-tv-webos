@@ -325,7 +325,7 @@
     var glyphColor = null;
     // Keep the dock completely transparent: no per-app coloured rectangle,
     // even if the source icon has an opaque edge or the app uses a white glyph.
-    item.card.style.background = 'transparent';
+    item.card.style.background = '';
     if (!edge || edge[3] <= 200) {
       item.card.classList.add('glyph');
       glyphColor = glyphBackground(item.app.iconColor) === '#2c2c2e' ?
@@ -343,11 +343,16 @@
   function edgeColor(img) {
     var w = img.naturalWidth, h = img.naturalHeight;
     var c = document.createElement('canvas');
-    c.width = w; c.height = h;
-    var g = c.getContext('2d');
-    g.drawImage(img, 0, 0);
-    var corner = g.getImageData(2, 2, 1, 1).data;
-    return corner[3] > 200 ? corner : g.getImageData(2, Math.floor(h / 2), 1, 1).data;
+    if (!w || !h) return null;
+    // Sample individual source pixels, not a full-size canvas allocation.
+    c.width = 1; c.height = 1;
+    var g = c.getContext('2d'), x=Math.min(2,w-1), y=Math.min(2,h-1);
+    g.drawImage(img,x,y,1,1,0,0,1,1);
+    var corner=g.getImageData(0,0,1,1).data;
+    if(corner[3]>200)return corner;
+    g.clearRect(0,0,1,1);
+    g.drawImage(img,x,Math.floor(h/2),1,1,0,0,1,1);
+    return g.getImageData(0,0,1,1).data;
   }
 
   function glyphBackground(hex) {
@@ -573,11 +578,16 @@
     var old = $('wallJs');
     if (old && old.parentNode) old.parentNode.removeChild(old);
     window.WALL_URL = '';
+    window.WALL_EXPIRES = 0;
     var sc = document.createElement('script');
     sc.id = 'wallJs';
     sc.src = 'wall.js?ts=' + Date.now();
-    sc.onload = function () { cb(window.WALL_URL || ''); };
-    sc.onerror = function () { cb(''); };
+    sc.onload = function () {
+      // Expired heartbeat means a stopped root service, not a valid QR.
+      if ($('wallJs') !== sc) return;
+      cb(window.WALL_EXPIRES > Date.now() ? (window.WALL_URL || '') : '');
+    };
+    sc.onerror = function () { if ($('wallJs') === sc) cb(''); };
     document.body.appendChild(sc);
   }
   window.INFINITI_WALLPAPER_GET_URL = loadWallUrl;

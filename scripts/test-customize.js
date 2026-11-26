@@ -59,3 +59,9 @@ assert.equal(p.directionalIndex(rects,3,38),1);
 assert.equal(p.directionalIndex(rects,2,39),3);
 assert.equal(p.directionalIndex(rects,0,38),-1);
 console.log('Icon pack and spatial remote navigation tests passed.');
+
+assert.equal(p.setIconPack('neon'),true);
+assert.equal(p.saveAppStyle('netflix','','original'),true);
+assert.equal(p.styledApp({id:'netflix',title:'Netflix',icon:'native.png'}).icon,'native.png');
+assert.equal(p.saveAppStyle('netflix','',''),true);
+assert.equal(p.styledApp({id:'netflix',title:'Netflix',icon:'native.png'}).icon,'icons/packs/neon-video.svg');

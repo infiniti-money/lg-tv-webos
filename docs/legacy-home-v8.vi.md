@@ -40,3 +40,6 @@ Home giảm thời gian chờ trước close/launch; wake kiểm tra 2 giây, gi
 
 ## V8.5 RC2 — Designed by Tân Dev
 Cold Boot đã được xác nhận qua Boot ID thay đổi và thông báo halt. Giữ failsafe, hai mẫu readiness, giảm polling xuống 500ms; không suy đoán Wake chỉ từ gián đoạn. Bỏ AI, trang Dev Mode và preset thời tiết; giữ tìm kiếm. Render đợi toàn bộ tile được tạo và class shown, không chứng minh tất cả ảnh decode hoặc màn hình vật lý. QR: `sh /home/root/lg-tv-vibehack/legacy-home.sh wallpaper-on` bật dịch vụ LAN có khóa, điện thoại cùng mạng, cổng 8090; `wallpaper-off` tắt dịch vụ managed. Khi enabled, dịch vụ tự chạy lại nếu đã bật cờ. Kiểm tra `/tmp/infiniti-wallpaper.log`. Không mở port ra Internet. Giữ nguyên app ID và thư mục dữ liệu để cập nhật tại chỗ. RC2 cần thử trên TV.
+
+## Bảo trì sau V9.0 (ứng viên v1.6.1)
+Log TV ngày 26/11/2026 xác nhận readiness 10,2s, render 1,5s/17 tile, watcher enabled. Giữ nguyên đường khởi động. Bản bảo trì giảm canvas icon xuống 1x1, sửa khôi phục icon gốc dưới bộ icon toàn cục, QR chỉ hiện khi heartbeat còn hạn (90s; ghi lại mỗi 30s), báo rõ ảnh đã lưu nhưng cần mở lại Launcher khi không xác nhận yêu cầu reload. Cần cài IPK và Root Tools đồng bộ; chưa nghiệm thu QR thực tế. Không nhúng ảnh thác nước do chưa chuyển được ảnh nhị phân vào repo.

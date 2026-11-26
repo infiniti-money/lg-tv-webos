@@ -170,11 +170,12 @@
     return typeof icon === 'string' && icon.length <= MAX_ICON &&
       /^data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(icon);
   }
-  function getAppStyle(id) {
-    var map = safeRead(APP_STYLE_KEY), v = validAppId(id) && Object.prototype.hasOwnProperty.call(map,id) ? map[id] : null;
+  function readAppStyle(map,id) {
+    var v = validAppId(id) && Object.prototype.hasOwnProperty.call(map,id) ? map[id] : null;
     return {title:v && typeof v.title==='string' ? v.title.slice(0,48) : '',
       icon:v && validIcon(v.icon) ? v.icon : ''};
   }
+  function getAppStyle(id) { return readAppStyle(safeRead(APP_STYLE_KEY),id); }
   function saveAppStyle(id, title, icon) {
     if (!validAppId(id) || typeof title !== 'string' || typeof icon !== 'string' ||
         (icon && !validIcon(icon))) return false;
@@ -182,7 +183,7 @@
     var old = safeRead(APP_STYLE_KEY), map = {}, count = 0;
     Object.keys(old).forEach(function(k) {
       if (k !== id && validAppId(k) && count < 250) {
-        var v = getAppStyle(k);
+        var v = readAppStyle(old,k);
         if (v.title || v.icon) { map[k]=v; count++; }
       }
     });
@@ -314,7 +315,7 @@
     var id=editingApp.id;
     var title=reset?'':String($('customizeAppName').value || '').replace(/^\s+|\s+$/g,'').slice(0,48);
     if (!reset && title===editingApp.title) title='';
-    if (!saveAppStyle(id,title,reset?'':pendingIcon)) {
+    if (!saveAppStyle(id,title,reset?(getIconPack()==='original'?'':'original'):pendingIcon)) {
       message('Không lưu được. Bộ nhớ có thể đã đầy; hãy thử ảnh nhỏ hơn.'); return;
     }
     closeAppEditor(); refreshLauncher(); renderApps();

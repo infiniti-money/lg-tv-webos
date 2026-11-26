@@ -272,7 +272,7 @@
   var fontBox = $('customizeFonts'), status = $('customizeStatus');
   var opened = false, activeTab = 'style', searchRequest = null;
   var appPage=0, glyphPage=0, currentGlyphPack='minimal', APP_PAGE_SIZE=5, GLYPH_PAGE_SIZE=6;
-  var releaseRequest=null, installedVersion='';
+  var releaseRequest=null, installedVersion='1.6.1';
 
   function applyAppearance() {
     var a = getAppearance(), body = document.body;

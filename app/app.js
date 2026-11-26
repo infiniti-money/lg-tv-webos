@@ -135,7 +135,7 @@
   }
   ['keydown','keyup','mousemove','mousedown','click','touchstart','wheel'].forEach(function(type){document.addEventListener(type,idleInput,true);});
   window.INFINITI_IDLE_REFRESH=idleReset;
-  window.INFINITI_REMOTE_CAN_APPLY=function(){return !launcherCovered()&&!editing&&!arranging&&!okDown&&!pressTimer&&(zone==='grid'||zone==='top'||zone==='pen');};
+  window.INFINITI_REMOTE_CAN_APPLY=function(){return !launcherCovered()&&!editing&&!arranging&&(idleActive||(!okDown&&!pressTimer))&&(zone==='grid'||zone==='top'||zone==='pen'||zone==='none');};
   var entranceTimers = [];
   function clearEntranceTimers() {
     while (entranceTimers.length) clearTimeout(entranceTimers.pop());
@@ -1084,7 +1084,7 @@
     document.body.classList.remove('launcher-covered');
     if (clockTicker === null) clockTicker = setInterval(updateClock, 10000);
     if (appsTicker === null) appsTicker = setInterval(function () {
-      if (!launcherCovered() &&
+      if (!launcherCovered() && !idleActive &&
           !(window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()))
         refreshApps(function () {});
     }, 30000);

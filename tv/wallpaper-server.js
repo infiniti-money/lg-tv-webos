@@ -42,6 +42,9 @@ function readJSON(file, fallback) {
 
 function validKey(k){return typeof k==='string'&&/^[A-Za-z0-9_-]{8,64}$/.test(k);}
 function keyMatches(a,b){if(!validKey(a)||!validKey(b))return false;var x=crypto.createHash('sha256').update(a).digest(),y=crypto.createHash('sha256').update(b).digest(),v=0;for(var i=0;i<x.length;i++)v|=x[i]^y[i];return v===0;}
+// Bounded per-source failure backoff; correct keys still work after a typo burst.
+var keyAttempts={};
+function keyFailure(ip,now){var ks=Object.keys(keyAttempts);if(ks.length>=128&&!keyAttempts[ip]){ks.sort(function(a,b){return keyAttempts[a].at-keyAttempts[b].at;});delete keyAttempts[ks[0]];}var v=keyAttempts[ip];if(!v||now-v.at>=60000)v={at:now,count:0};v.count++;keyAttempts[ip]=v;return v.count>5;}
 function storeKey(k){var f=path.join(DATA,'.wallpaper-key'),tmp=f+'.new-'+process.pid;fs.writeFileSync(tmp,k,{mode:384});fs.chmodSync(tmp,384);fs.renameSync(tmp,f);}
 function loadKey() {
   var f = path.join(DATA, '.wallpaper-key');
@@ -166,9 +169,11 @@ function handle(req, res) {
   var authenticated=keyMatches(q.k,KEY);
   if(remote.route(req,res,u,json,authenticated))return;
   if(!authenticated){
+    if(q.k!==undefined&&keyFailure('ip:'+String(req.socket.remoteAddress||''),Date.now()))return send(res,429,'text/plain; charset=utf-8','Thử sai quá nhiều. Hãy đợi 1 phút hoặc nhập đúng mật khẩu.',{'Retry-After':'60'});
     if(route==='GET /')return send(res,q.k?403:200,'text/html; charset=utf-8',loginPage(!!q.k));
     return json(res,403,{error:'key'});
   }
+  delete keyAttempts['ip:'+String(req.socket.remoteAddress||'')];
   if(route==='POST /api/key'){
     var chunks=[],size=0,done=false;
     req.on('data',function(d){if(done)return;size+=d.length;if(size>512){done=true;chunks=[];json(res,413,{error:'too large'});return;}chunks.push(d);});
@@ -239,7 +244,7 @@ function handle(req, res) {
       var buf = Buffer.concat(chunks);
       if (buf.length < 4 || buf[0] !== 0xff || buf[1] !== 0xd8 || buf[buf.length-2]!==0xff || buf[buf.length-1]!==0xd9) return json(res, 400, { error: 'not a JPEG' });
       var tmp = WALLPAPER + '.part-' + process.pid;
-      if(!permitted())return json(res,503,{error:'service disabled'});
+      if(!permitted()||!refreshKey()||!keyMatches(q.k,KEY))return json(res,403,{error:'key or service changed'});
       try {fs.writeFileSync(tmp,buf);fs.renameSync(tmp,WALLPAPER);} catch(e){return json(res,500,{error:'cannot save photo'});}
       log('new wallpaper, ' + Math.round(buf.length / 1024) + ' KB');
       sync(function (err, refreshed) { json(res, err ? 500 : 200, { ok: !err, reloadRequested: !!refreshed }); });

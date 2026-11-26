@@ -11,7 +11,9 @@ check() {
     { echo "Existing Home hook: use existing recovery before V8"; exit 1; }
   [ ! -e /var/luna/preferences/webosbrew_failsafe ] ||
     { echo "Homebrew FAILSAFE: do not activate"; exit 1; }
+  [ -f "$D/legacy-luna.js" ] || { echo "Missing legacy-luna.js"; exit 1; }
   command -v python >/dev/null
+  command -v /usr/bin/node >/dev/null
 }
 case "${1:-status}" in
   status)
@@ -22,6 +24,7 @@ case "${1:-status}" in
     ;;
   watch)
     check
+    /usr/bin/node "$D/legacy-luna.js" probe || exit 1
     [ ! -e "$D/legacy-v8-enabled" ] && [ ! -e "$D/legacy-v8-armed" ] ||
       { echo "Disable boot mode before interactive testing"; exit 1; }
     [ ! -e "$D/legacy-v8-session" ] || { echo "Session already armed; use disable first"; exit 1; }
@@ -32,6 +35,7 @@ case "${1:-status}" in
     ;;
   arm)
     check
+    /usr/bin/node "$D/legacy-luna.js" probe || exit 1
     [ ! -e "$D/legacy-v8-session" ] && [ ! -e "$D/legacy-v8-enabled" ] ||
       { echo "Disable existing mode first"; exit 1; }
     rm -f "$D/legacy-v8-trial" "$PROOF" "$D/legacy-v8-wake"

@@ -42,6 +42,7 @@ jobs:
           node scripts/test-glasshouse-lifecycle.js
           python3 scripts/test-tv-service-wake.py
           python3 scripts/test-legacy-home-v8.py
+          node scripts/test-legacy-luna.js
           node scripts/check-branding.js
           node scripts/test-homewatch.js
           node scripts/test-homekey-runtime.js

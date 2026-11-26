@@ -2,8 +2,6 @@
 # Python 2.7.3 / ARMv7. Non-exclusive input observer; no firmware writes.
 from __future__ import print_function
 import errno
-import glob
-import json
 import os
 import select
 import struct
@@ -53,100 +51,22 @@ def allowed(mode):
         return exists('trial') and not exists('enabled')
     return exists('enabled')
 
-def luna(uri, payload, timeout=8, max_bytes=65536):
-    """Keep stdin PIPE open until the reply; EOF broke V6/V7 on legacy TV.
-    Unlike /dev/tty this also works in a detached service. Never use communicate()
-    here: it closes stdin before waiting for the response.
-    """
-    # LG's stripped Python has no fcntl (subprocess imports it too).
-    # Use POSIX pipes/fork/exec directly, keeping the writer of stdin open.
-    in_r, in_w = os.pipe()
-    out_r, out_w = os.pipe()
-    try:
-        pid = os.fork()
-    except:
-        for fd in (in_r, in_w, out_r, out_w):
-            os.close(fd)
-        raise
-    if pid == 0:
-        try:
-            os.close(in_w)
-            os.close(out_r)
-            os.dup2(in_r, 0)
-            os.dup2(out_w, 1)
-            os.dup2(out_w, 2)
-            os.close(in_r)
-            os.close(out_w)
-            os.execv(LUNA, [LUNA, '-n', '1', '-f', uri, json.dumps(payload)])
-        except:
-            os._exit(127)
-    os.close(in_r)
-    os.close(out_w)
-    chunks = []
-    size = 0
-    end = time.time() + timeout
-    try:
-        while time.time() < end:
-            ready, _, _ = select.select([out_r], [], [], min(0.2, max(0, end-time.time())))
-            if not ready:
-                continue
-            data = os.read(out_r, 4096)
-            if not data:
-                break
-            chunks.append(data)
-            size += len(data)
-            if size > max_bytes:
-                raise RuntimeError('oversized Luna response')
-            try:
-                reply = json.loads(b''.join(chunks).decode('utf-8'))
-            except ValueError:
-                continue
-            if isinstance(reply, dict):
-                if reply.get('returnValue') is not True:
-                    raise RuntimeError('Luna rejected: %s' % reply)
-                return reply
-        raise RuntimeError('missing/invalid Luna JSON: %r' % b''.join(chunks)[:240])
-    finally:
-        os.close(in_w)
-        os.close(out_r)
-        # Reap only our child. No broad process kills.
-        if os.waitpid(pid, os.WNOHANG)[0] == 0:
-            try:
-                os.kill(pid, 9)
-            except OSError as e:
-                if e.errno != errno.ESRCH:
-                    raise
-            os.waitpid(pid, 0)
-
-
-def manager(method, payload):
-    return luna('luna://com.webos.applicationManager/' + method, payload)
+def helper(action):
+    # Only fixed action names, no user input or shell expansion.
+    return os.system('/usr/bin/node ' + DATA + '/legacy-luna.js ' + action)
 
 def power():
-    return luna('luna://com.webos.service.tvpower/power/getPowerState', {}).get('state')
+    result = helper('power')
+    if result == 0:
+        return 'Active'
+    if result == (3 << 8):
+        return 'Standby'
+    return None
 
 def redirect(mode):
     if not allowed(mode):
         return False
-    try:
-        manager('closeByAppId', {'id': APP})
-    except Exception as e:
-        # Not running is normal; still require affirmative launch and foreground.
-        log('close: %s' % e)
-    time.sleep(1)
-    if not allowed(mode):
-        return False
-    try:
-        manager('launch', {'id': APP})
-        time.sleep(3)
-        if not allowed(mode):
-            return False
-        reply = manager('getForegroundAppInfo', {})
-        log('foreground: %s' % reply.get('appId'))
-        return reply.get('appId') == APP
-    except Exception as e:
-        log('redirect failed: %s' % e)
-        return False
+    return helper('redirect-' + mode) == 0 and allowed(mode)
 
 def home_down(data):
     if len(data) != EVENT.size:
@@ -158,7 +78,10 @@ def input_paths():
     # Device numbering can change on reconnect. Prefer the actual named remote.
     preferred = []
     fallback = []
-    for path in sorted(glob.glob('/dev/input/event*')):
+    for entry in sorted(os.listdir('/dev/input')):
+        if not entry.startswith('event') or not entry[5:].isdigit():
+            continue
+        path = '/dev/input/' + entry
         namepath = '/sys/class/input/' + os.path.basename(path) + '/device/name'
         try:
             with open(namepath) as fp:
@@ -235,26 +158,8 @@ def watch(mode):
 
 def main():
     mode = sys.argv[1] if len(sys.argv) == 2 else ''
-    if mode == 'probe':
-        try:
-            print(json.dumps(manager('getForegroundAppInfo', {})))
-            return 0
-        except Exception as e:
-            log('probe failed: %s' % e)
-            return 1
-    if mode == 'catalog':
-        if os.getuid() != 0:
-            return 2
-        try:
-            reply = luna('luna://com.webos.applicationManager/listApps', {},
-                         timeout=20, max_bytes=4 * 1024 * 1024)
-            if not isinstance(reply.get('apps'), list):
-                raise RuntimeError('listApps missing apps array')
-            print(json.dumps(reply))
-            return 0
-        except Exception as e:
-            sys.stderr.write('Legacy catalog: %s\n' % e)
-            return 1
+    if mode in ('probe','catalog'):
+        return 0 if helper(mode) == 0 else 1
     if mode not in ('watch','trial','enabled') or os.getuid() != 0:
         return 2
     # Atomic directory lock, no fcntl dependency. Stale locks fail closed;

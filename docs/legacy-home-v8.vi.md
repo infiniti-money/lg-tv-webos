@@ -11,7 +11,7 @@ sh legacy-home.sh status
 sh legacy-home.sh watch
 ```
 
-Nếu chỉ cài IPK thủ công thì apps.js ban đầu rỗng: cài root tools, chạy `node /home/root/lg-tv-vibehack/sync.js` rồi đóng/mở Launcher. Legacy sync ưu tiên listApps qua Python với stdin mở; loại bỏ app ẩn và dịch vụ nền. Không arm boot nếu danh sách còn rỗng.
+Nếu chỉ cài IPK thủ công thì apps.js ban đầu rỗng: cài root tools, chạy `node /home/root/lg-tv-vibehack/sync.js` rồi đóng/mở Launcher. Legacy sync ưu tiên listApps qua Node.js với stdin mở; loại bỏ app ẩn và dịch vụ nền. Không arm boot nếu danh sách còn rỗng.
 
 Nhấn Home, kiểm tra log foreground phải là com.infinitimoney.tvhome và quan sát màn hình. Ctrl+C để dừng. Đây là quan sát phím không độc quyền, có thể lóe LG Home gốc; không phải thay thế compositor.
 
@@ -28,4 +28,6 @@ Lệnh đầu gỡ cờ và hook V8 do dự án tạo. Lệnh thứ hai xử lý
 Launcher không có quảng cáo. Customize > Privacy đã hỗ trợ ẩn biểu tượng và hướng dẫn DNS AdGuard thủ công, khôi phục DNS tự động. Homebrew startup có hạn chế telemetry riêng. Tắt Live Plus/ACR trong cài đặt TV nếu có. Không vô hiệu hóa/mount chồng gói hệ thống ACR khi chưa xác minh tác động HDMI và Live TV. Không cam kết chặn mọi quảng cáo trong app.
 
 ## Kiểm thử
+V8.2: Python chỉ đọc phím và điều phối; Node.js xử lý JSON/Luna vì Python trên TV thiếu fcntl và json. Chạy `node /home/root/lg-tv-vibehack/legacy-luna.js probe` trước khi watch.
+
 CI kiểm tra ES5, IPK, checksum và mô phỏng Luna stdin: giữ đầu ghi pipe mở tránh EOF khi daemon không có TTY. Đây không thay thế thử nghiệm vật lý. Không phát hành bản ổn định hoặc tự bật hook khi chưa nghiệm thu TV.

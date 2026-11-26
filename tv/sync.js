@@ -72,10 +72,10 @@ function normalizeLegacyApps(apps) {
   });
 }
 function fromLuna(diskAvailable) {
-  var legacy = path.join(DATA, 'legacy-home-v8.py');
-  if (isFile(legacy) && isFile('/usr/bin/python')) {
+  var legacy = path.join(DATA, 'legacy-luna.js');
+  if (isFile(legacy) && isFile('/usr/bin/node')) {
     try {
-      var catalog = JSON.parse(execFileSync('/usr/bin/python', [legacy, 'catalog'],
+      var catalog = JSON.parse(execFileSync('/usr/bin/node', [legacy, 'catalog'],
         {encoding:'utf8', timeout:25000, maxBuffer:10*1024*1024}));
       var normalized = normalizeLegacyApps(catalog.apps);
       if (catalog.returnValue === true && normalized.some(function(a){return a.visible;})) {

@@ -19,26 +19,11 @@ class LegacyTests(unittest.TestCase):
         self.assertFalse(legacy.home_down(event(272, 1)))
         self.assertFalse(legacy.home_down(b'bad'))
 
-    def test_pipe_held_open(self):
-        # Fake old luna-send: exits with no JSON on EOF, replies otherwise.
-        with tempfile.TemporaryDirectory() as d:
-            f = pathlib.Path(d) / "luna-send"
-            f.write_text("#!/usr/bin/env python3\nimport select,sys,json\n"
-                         "if select.select([sys.stdin],[],[],0.15)[0]: sys.exit(0)\n"
-                         "print(json.dumps({'returnValue':True,'appId':'com.infinitimoney.tvhome'}),flush=True)\n")
-            f.chmod(0o700)
-            old = legacy.LUNA
-            try:
-                legacy.LUNA = str(f)
-                self.assertEqual(legacy.manager('getForegroundAppInfo', {})['appId'], legacy.APP)
-                f.write_text("#!/bin/sh\nexit 0\n")
-                with self.assertRaises(RuntimeError):
-                    legacy.manager('launch', {})
-                f.write_text("#!/bin/sh\nprintf '%s\\n' '{\"returnValue\":false}'\n")
-                with self.assertRaises(RuntimeError):
-                    legacy.manager('launch', {})
-            finally:
-                legacy.LUNA = old
+    def test_no_optional_modules(self):
+        source = pathlib.Path("tv/legacy-home-v8.py").read_text()
+        for name in ('json', 'fcntl', 'subprocess', 'glob'):
+            self.assertNotIn('import ' + name, source)
+        self.assertIn("helper('redirect-' + mode)", source)
 
 if __name__ == '__main__':
     unittest.main()

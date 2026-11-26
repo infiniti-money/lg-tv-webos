@@ -17,7 +17,7 @@ function create(dir,appDir,allowed,log){
  function catalog(){try{var s=fs.readFileSync(path.join(appDir(),'apps.js'),'utf8'),m=/window\.TV_APPS\s*=\s*([\s\S]*);\s*$/.exec(s);return m?(JSON.parse(m[1]).apps||[]).filter(function(a){return a&&idOK(a.id);}).slice(0,250).map(function(a){return{id:a.id,title:String(a.title||a.id).slice(0,100)};}):[];}catch(e){return [];}}
  function commit(changes){if(!obj(changes))throw Error('bad data');var ks=Object.keys(changes),ids=catalog().map(function(a){return a.id;});if(!ks.length||ks.length>40)throw Error('bad count');ks.forEach(function(k){if(!validate(k,changes[k]))throw Error('bad field');var m=/^app:(.+):(title|icon|visible)$/.exec(k);if(m&&ids.indexOf(m[1])<0)throw Error('unknown app');});var n={revision:data.revision+1,changes:{}};Object.keys(data.changes).forEach(function(k){n.changes[k]=data.changes[k];});ks.forEach(function(k){n.changes[k]={rev:n.revision,value:changes[k]};});if(Object.keys(n.changes).length>800||!allowed())throw Error('disabled or full');write(store,JSON.stringify(n),384);data=n;publish();return n.revision;}
  function body(req,res,limit,send,cb){var chunks=[],len=0,done=false;req.on('data',function(d){if(done)return;len+=d.length;if(len>limit){done=true;chunks=[];send(413,{error:'too large'});return;}chunks.push(d);});req.on('end',function(){if(done)return;done=true;if(!allowed())return send(503,{error:'disabled'});try{cb(JSON.parse(Buffer.concat(chunks).toString('utf8')));}catch(e){send(400,{error:'invalid request'});}});}
- function route(req,res,url,json,authenticated){
+ function route(req,res,url,json,authenticated,authorized){
   var p=url.pathname,m=req.method,local=/^(127\.0\.0\.1|::1|::ffff:127\.0\.0\.1)$/.test(req.socket.remoteAddress||'');
   function send(code,v){json(res,code,v);}
   if(p==='/api/remote-ack'){
@@ -37,7 +37,7 @@ function create(dir,appDir,allowed,log){
   if(p!=='/api/remote-state'&&p!=='/api/remote-set')return false;
   if(!authenticated){send(403,{error:'key'});return true;}
   if(m==='GET'&&p==='/api/remote-state'){send(200,{revision:data.revision,applied:snap?snap.revision:null,online:Date.now()-seen<25000,idle:snap?snap.idle:null,values:snap?snap.values:{},apps:catalog(),pending:Object.keys(data.changes).filter(function(k){return !snap||data.changes[k].rev>snap.revision;})});return true;}
-  if(m==='POST'&&p==='/api/remote-set'){body(req,res,24000,send,function(v){send(202,{revision:commit(v),queued:true});});return true;}
+  if(m==='POST'&&p==='/api/remote-set'){body(req,res,24000,send,function(v){if(authorized&&!authorized())return send(403,{error:'key or service changed'});send(202,{revision:commit(v),queued:true});});return true;}
   send(405,{error:'method'});return true;
  }
  return {publish:publish,route:route};

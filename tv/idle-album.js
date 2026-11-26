@@ -25,7 +25,7 @@ function create(data,appDir,allowed,log){
    if(valid.length===st.photos.length){lastDest=dest;lastEpoch=epoch;lastPublish=now;return true;}return false;
  }catch(e){log('album publish: '+e.message);return false;}}
  function save(next){if(!allowed())throw Error('disabled');atomic(file,JSON.stringify(next),384);st=next;return publish(true);}
- function route(req,res,u,json,send){
+ function route(req,res,u,json,send,authorized){
   var p=u.pathname,m=req.method,q=u.query;
   if(p.indexOf('/api/album')!==0)return false;
   function reply(code,v){json(res,code,v);}
@@ -42,7 +42,7 @@ function create(data,appDir,allowed,log){
   if(m==='POST'&&p==='/api/album/upload'){
    if(st.photos.length>=MAX){reply(409,{error:'album full'});return true;}
    var chunks=[],size=0,done=false;req.on('data',function(d){if(done)return;size+=d.length;if(size>LIMIT){done=true;chunks=[];reply(413,{error:'too large'});return;}chunks.push(d);});
-   req.on('end',function(){if(done)return;done=true;if(!allowed()||st.photos.length>=MAX){reply(409,{error:'disabled or full'});return;}var buf=Buffer.concat(chunks);if(!jpeg(buf)){reply(400,{error:'invalid JPEG'});return;}var id=crypto.randomBytes(12).toString('hex'),src=path.join(dir,id+'.jpg');try{atomic(src,buf,384);var ok=save({enabled:st.enabled,seconds:st.seconds,random:st.random,transition:st.transition,motion:st.motion,photos:st.photos.concat(id)});reply(201,{id:id,published:ok});}catch(e){if(st.photos.indexOf(id)<0)try{fs.unlinkSync(src);}catch(x){}reply(500,{error:'save failed'});}});return true;
+   req.on('end',function(){if(done)return;done=true;if(!allowed()||(authorized&&!authorized())){reply(403,{error:'key or service changed'});return;}if(st.photos.length>=MAX){reply(409,{error:'album full'});return;}var buf=Buffer.concat(chunks);if(!jpeg(buf)){reply(400,{error:'invalid JPEG'});return;}var id=crypto.randomBytes(12).toString('hex'),src=path.join(dir,id+'.jpg');try{atomic(src,buf,384);var ok=save({enabled:st.enabled,seconds:st.seconds,random:st.random,transition:st.transition,motion:st.motion,photos:st.photos.concat(id)});reply(201,{id:id,published:ok});}catch(e){if(st.photos.indexOf(id)<0)try{fs.unlinkSync(src);}catch(x){}reply(500,{error:'save failed'});}});return true;
   }
   reply(405,{error:'method'});return true;
  }

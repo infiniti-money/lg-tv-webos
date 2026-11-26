@@ -71,3 +71,5 @@ Log TV ngày 26/11/2026 xác nhận readiness 10,2s, render 1,5s/17 tile, watche
 - Idle trên webOS cũ: mặc định renderer JavaScript 10 FPS chỉ khi Home idle và đang hiển thị, đặt ảnh tile và vị trí trực tiếp; CSS trên trình duyệt mới vẫn có fallback. Chống mouse jitter 12px, bỏ event tổng hợp và bảo vệ lúc xem thử. Trang web báo trạng thái idle/engine dựa ACK TV, không khẳng định pixel đã render. Thử trực tiếp trên TV; không ép chạy khi Standby/tắt màn hình.
 
 - Rà soát v1.6.3: mật khẩu 8–64 ký tự (chữ cái đơn thuần được), giới hạn phản hồi khi thử sai quá 5 lần/phút theo IP, xác minh khóa lại trước khi ghi hình nền. Đây chỉ là giảm phản hồi cho thử sai, không thay thế HTTPS hay khóa mạnh. Album native legacy dùng transform/opacity cập nhật 10 FPS, dừng khi covered/thoát chờ; bỏ làm mới danh mục UI lúc idle. Cần nghiệm thu trên thiết bị thật.
+
+- Kiểm thử bổ sung: album lưu/đọc lại/xóa ảnh, giữ hiệu ứng khi thêm/xóa, từ chối tham số sai, đồng bộ web xác minh khóa lại khi hoàn tất tải. Sau 5 lần nhập sai trong một phút, khóa theo IP trước khi so sánh mật khẩu cho đến hết cửa sổ 60s. HTTP vẫn không mã hóa; chỉ dùng LAN tin cậy.

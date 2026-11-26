@@ -42,8 +42,9 @@ function readJSON(file, fallback) {
 
 function validKey(k){return typeof k==='string'&&/^[A-Za-z0-9_-]{8,64}$/.test(k);}
 function keyMatches(a,b){if(!validKey(a)||!validKey(b))return false;var x=crypto.createHash('sha256').update(a).digest(),y=crypto.createHash('sha256').update(b).digest(),v=0;for(var i=0;i<x.length;i++)v|=x[i]^y[i];return v===0;}
-// Bounded per-source failure backoff; correct keys still work after a typo burst.
+// Bounded per-source lockout; refuse guesses before password comparison.
 var keyAttempts={};
+function keyBlocked(ip,now){var v=keyAttempts[ip];return !!(v&&now-v.at<60000&&v.count>=5);}
 function keyFailure(ip,now){var ks=Object.keys(keyAttempts);if(ks.length>=128&&!keyAttempts[ip]){ks.sort(function(a,b){return keyAttempts[a].at-keyAttempts[b].at;});delete keyAttempts[ks[0]];}var v=keyAttempts[ip];if(!v||now-v.at>=60000)v={at:now,count:0};v.count++;keyAttempts[ip]=v;return v.count>5;}
 function storeKey(k){var f=path.join(DATA,'.wallpaper-key'),tmp=f+'.new-'+process.pid;fs.writeFileSync(tmp,k,{mode:384});fs.chmodSync(tmp,384);fs.renameSync(tmp,f);}
 function loadKey() {
@@ -166,14 +167,18 @@ function handle(req, res) {
   if(!permitted())return json(res,503,{error:'service disabled'});
   var u = parseUrl(req.url, true), q = u.query, route = req.method + ' ' + u.pathname;
   if(!refreshKey())return json(res,503,{error:'key unavailable'});
+  var ip='ip:'+String(req.socket.remoteAddress||''),now=Date.now();
+  if(u.pathname==='/api/remote-ack'&&remote.route(req,res,u,json,false))return;
+  if(q.k!==undefined&&keyBlocked(ip,now))return send(res,429,'text/plain; charset=utf-8','Thử sai quá nhiều. Vui lòng đợi 1 phút.',{'Retry-After':'60'});
   var authenticated=keyMatches(q.k,KEY);
-  if(remote.route(req,res,u,json,authenticated))return;
+  function stillAuthorized(){return permitted()&&refreshKey()&&keyMatches(q.k,KEY);}
   if(!authenticated){
-    if(q.k!==undefined&&keyFailure('ip:'+String(req.socket.remoteAddress||''),Date.now()))return send(res,429,'text/plain; charset=utf-8','Thử sai quá nhiều. Hãy đợi 1 phút hoặc nhập đúng mật khẩu.',{'Retry-After':'60'});
+    if(q.k!==undefined)keyFailure(ip,now);
     if(route==='GET /')return send(res,q.k?403:200,'text/html; charset=utf-8',loginPage(!!q.k));
     return json(res,403,{error:'key'});
   }
-  delete keyAttempts['ip:'+String(req.socket.remoteAddress||'')];
+  delete keyAttempts[ip];
+  if(remote.route(req,res,u,json,true,stillAuthorized))return;
   if(route==='POST /api/key'){
     var chunks=[],size=0,done=false;
     req.on('data',function(d){if(done)return;size+=d.length;if(size>512){done=true;chunks=[];json(res,413,{error:'too large'});return;}chunks.push(d);});
@@ -182,7 +187,7 @@ function handle(req, res) {
     });return;
   }
 
-  if(album.route(req,res,u,json,send))return;
+  if(album.route(req,res,u,json,send,stillAuthorized))return;
   if (route === 'GET /') {
     return fs.readFile(path.join(DATA, 'wallpaper.html'), function (err, buf) {
       if (err) return send(res, 500, 'text/plain', 'wallpaper.html missing, run the installer again');
@@ -286,7 +291,7 @@ function loginPage(bad) {
 
 http.createServer(function (req, res) {
   try { handle(req, res); } catch (e) { log('error: ' + e.message); try { json(res, 500, { error: 'server error' }); } catch (x) { /* sent */ } }
-}).on('error', function (e) {
+}).on('connection',function(s){s.setTimeout(45000,function(){s.destroy();});}).on('error', function (e) {
   log('cannot start: ' + e.message);
   process.exit(1);
 }).listen(PORT, function () {

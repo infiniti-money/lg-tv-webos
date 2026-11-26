@@ -7,3 +7,5 @@ assert.ok(s.indexOf("route==='POST /api/key'")>=0);assert.ok(s.indexOf("route===
 assert.ok(ctx.validKey('abcdefgh'));assert.ok(!ctx.validKey('abcdefg'));assert.ok(ctx.keyMatches('abcdefgh','abcdefgh'));
 
 for(var i=0;i<5;i++)assert.equal(ctx.keyFailure('ip:test',1000),false);assert.equal(ctx.keyFailure('ip:test',1000),true);assert.equal(ctx.keyFailure('ip:test',61000),false);
+
+assert.equal(ctx.keyBlocked('ip:test',61000),false);for(var k=0;k<4;k++)ctx.keyFailure('ip:test',61000);assert.equal(ctx.keyBlocked('ip:test',61000),true);assert.equal(ctx.keyBlocked('ip:test',121000),false);assert.ok(s.indexOf('keyBlocked(ip,now)')<s.indexOf('var authenticated=keyMatches(q.k,KEY)'));

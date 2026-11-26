@@ -79,7 +79,7 @@ assert.equal(p.getAppearance().idleEffect,'rain');
 assert.equal(p.saveAppearance({idleEffect:'bad'}).idleEffect,'rain');
 ["rain","snow","petals","stars","fireflies","bubbles","mist"].forEach(function(e){assert.equal(p.saveAppearance({idleEffect:e,idleRain:true,reduceMotion:false}).idleEffect,e);assert.equal(p.resolveIdleEffect(p.getAppearance(),.5),e);});
 assert.equal(p.resolveIdleEffect({idleRain:true,idleEffect:'random'},0),'rain');
-assert.equal(p.resolveIdleEffect({idleRain:true,idleEffect:'random'},.999),'mist');
+assert.equal(p.resolveIdleEffect({idleRain:true,idleEffect:'random'},.999),'hearts');
 assert.equal(p.resolveIdleEffect({idleRain:false,idleEffect:'stars'},.5),'');
 assert.equal(p.resolveIdleEffect({idleRain:true,reduceMotion:true,idleEffect:'snow'},.5),'');
 console.log('Idle effect preferences and random choice passed.');

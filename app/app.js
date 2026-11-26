@@ -531,6 +531,7 @@
       hero.style.transform = 'translateX(-24px)';
       clearTimeout(hero.swap);
       hero.swap = setTimeout(function () {
+        if(zone!=='grid'||!heroShown)return;
         hero.textContent = label;
         hero.style.transition = 'none';
         hero.style.transform = 'translateX(24px)';
@@ -544,6 +545,7 @@
   }
 
   function hideHero() {
+    clearTimeout(hero.swap);
     if (!heroShown) return;
     heroShown = false;
     hero.style.opacity = '0';
@@ -578,7 +580,7 @@
     if (zone === 'pen') pen.classList.remove('focused');
     if (zone === 'grid') {
       if (items[focused]) items[focused].el.classList.remove('focused');
-      hideGlass();
+      hideGlass();hideHero();
     }
     zone = z;
   }

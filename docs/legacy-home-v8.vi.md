@@ -75,3 +75,5 @@ Log TV ngày 26/11/2026 xác nhận readiness 10,2s, render 1,5s/17 tile, watche
 - Kiểm thử bổ sung: album lưu/đọc lại/xóa ảnh, giữ hiệu ứng khi thêm/xóa, từ chối tham số sai, đồng bộ web xác minh khóa lại khi hoàn tất tải. Sau 5 lần nhập sai trong một phút, khóa theo IP trước khi so sánh mật khẩu cho đến hết cửa sổ 60s. HTTP vẫn không mã hóa; chỉ dùng LAN tin cậy.
 
 - Tùy chỉnh v1.6.3: 8 chuyên mục TV, riêng Màn hình chờ và Album (trạng thái + QR/web), 14 hiệu ứng idle và 14 chuyển cảnh album, ngẫu nhiên. 6 chuyển động ảnh. TV chọn hiệu ứng trực tiếp bằng 15 nút gồm Ngẫu nhiên, vẫn hỗ trợ D-pad. Web có thanh điều hướng và nhóm giao diện/idle/lịch; mật khẩu riêng cuối trang. Ảnh và lịch album quản lý qua web, không giả lập ghi từ TV. Chưa kiểm thử kích thước thực tế trên TV.
+
+- Home: ẩn mọi nhãn dưới icon, chỉ hiện tên app được chọn tại hero; hủy chuyển tên khi rời hàng app. Web: có thể gửi từng trường ngay cả khi ACK chưa về; trường chưa biết để trống, không báo áp dụng thành công. ACK loopback dùng POST text/plain với token trong JSON để tránh preflight, vẫn kiểm tra loopback/token và Origin. Chưa xác minh thực tế chính sách file:// trên webOS.

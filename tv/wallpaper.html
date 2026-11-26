@@ -403,23 +403,23 @@
   function remoteMsg(s){$('remoteStatus').textContent=s;}
   function option(el,v,t){var o=document.createElement('option');o.value=String(v);o.textContent=t;el.appendChild(o);}
   function touched(k,v){pending[k]=v;$('remoteSave').disabled=remoteBusy||!Object.keys(pending).length;}
-  Object.keys(defs).forEach(function(k){var d=defs[k],l=document.createElement('label'),el=document.createElement(d[1]?'select':'input');l.className='remoteRow';l.appendChild(document.createTextNode(d[0]));if(d[1])d[1].forEach(function(v,i){option(el,v,d[2][i]);});else el.type='checkbox';el.onchange=function(){touched(k,d[1]?(k==='idleSeconds'?Number(el.value):el.value):el.checked);};l.appendChild(el);$(k.indexOf('idle')===0?'remoteIdleFields':['showSolar','showLunar','showWeek'].indexOf(k)>=0?'remoteCalendarFields':'remoteFields').appendChild(l);fields[k]=el;});
+  Object.keys(defs).forEach(function(k){var d=defs[k],l=document.createElement('label'),el=document.createElement(d[1]?'select':'input');l.className='remoteRow';l.appendChild(document.createTextNode(d[0]));if(d[1]){option(el,'','— Chưa biết —');d[1].forEach(function(v,i){option(el,v,d[2][i]);});}else el.type='checkbox';el.onchange=function(){if(d[1]&&el.value==='')return;el.indeterminate=false;touched(k,d[1]?(k==='idleSeconds'?Number(el.value):el.value):el.checked);};l.appendChild(el);$(k.indexOf('idle')===0?'remoteIdleFields':['showSolar','showLunar','showWeek'].indexOf(k)>=0?'remoteCalendarFields':'remoteFields').appendChild(l);fields[k]=el;});
   function appKey(k){return 'app:'+$('remoteApp').value+':'+k;}
   function effective(k){return Object.prototype.hasOwnProperty.call(pending,k)?pending[k]:values[k];}
   function appFields(){var id=$('remoteApp').value;$('remoteAppFields').hidden=!id;if(!id)return;
-    $('remoteTitle').value=effective(appKey('title'))||'';$('remoteIcon').value=effective(appKey('icon'))||'';$('remoteVisible').checked=effective(appKey('visible'))===true;
+    $('remoteTitle').value=effective(appKey('title'))||'';$('remoteIcon').value=effective(appKey('icon'))||'';$('remoteVisible').checked=effective(appKey('visible'))===true;$('remoteVisible').indeterminate=effective(appKey('visible'))===undefined;
   }
   option($('remoteIcon'),'','Giữ bộ icon chung');option($('remoteIcon'),'original','Icon gốc');
   ['minimal','neon','glass','pastel','gold'].forEach(function(p){['video','music','web','tv','game','settings','home','photo','apps','youtube','netflix','prime','disney','tiktok','jellyfin','spotify','radio','hdmi','store','files','network'].forEach(function(g){option($('remoteIcon'),'pack:'+p+':'+g,p+' / '+g);});});
-  $('remoteApp').onchange=appFields;$('remoteTitle').onchange=function(){touched(appKey('title'),this.value);};$('remoteIcon').onchange=function(){touched(appKey('icon'),this.value);};$('remoteVisible').onchange=function(){touched(appKey('visible'),this.checked);};
+  $('remoteApp').onchange=appFields;$('remoteTitle').onchange=function(){touched(appKey('title'),this.value);};$('remoteIcon').onchange=function(){touched(appKey('icon'),this.value);};$('remoteVisible').onchange=function(){this.indeterminate=false;touched(appKey('visible'),this.checked);};
   function remoteRead(){return api('GET','api/remote-state').then(function(s){
     var d=s.idle;$('idleDiagnostic').textContent=!s.online||!d?'Chưa có phản hồi màn hình chờ. Mở Home trên TV.':('Màn hình chờ: '+(d.active?'Đang chạy':'Chưa kích hoạt')+' · '+(d.actualEffect||d.effect)+' · '+(d.engine==='fallback'?'JavaScript 10 FPS':d.engine==='css'?'CSS':'Chưa chạy hiệu ứng')+(d.reduceMotion?' · Giảm chuyển động đang bật':'')+(!d.enabled?' · Hiệu ứng đang tắt':'')+(!d.eligible?' · Chưa đủ điều kiện idle':''));
-    if(waiting!==null){if(s.applied!==null&&s.applied>=waiting){waiting=null;remoteMsg('TV đã xác nhận áp dụng.');}else{remoteMsg('Đã gửi. Chờ TV nhận thay đổi; mở Home và đóng Tùy chỉnh.');return s;}}
-    if(!s.online){$('remoteControls').disabled=true;remoteMsg('Chưa đọc được cài đặt TV. Mở Home và đóng Tùy chỉnh, sau đó bấm Đọc từ TV.');return s;}
-    values=s.values||{};$('remoteControls').disabled=false;
-    Object.keys(defs).forEach(function(k){var v=effective(k);if(defs[k][1])fields[k].value=String(v);else fields[k].checked=v===true;});
+    if(waiting!==null){if(s.applied!==null&&s.applied>=waiting){waiting=null;remoteMsg('TV đã xác nhận áp dụng.');}else{remoteMsg('Đã gửi. Chờ TV nhận thay đổi; mở Home và đóng Tùy chỉnh.');$('remoteControls').disabled=false;}}
+    values=s.values||{};Object.keys(s.queuedValues||{}).forEach(function(k){values[k]=s.queuedValues[k];});$('remoteControls').disabled=false;
+    if(!s.online&&waiting===null)remoteMsg('TV chưa xác nhận. Có thể gửi từng thay đổi; mở Home để TV áp dụng. Các trường trống là chưa biết.');
+    Object.keys(defs).forEach(function(k){var v=effective(k);if(defs[k][1])fields[k].value=v===undefined?'':String(v);else {fields[k].checked=v===true;fields[k].indeterminate=v===undefined;}});
     var id=$('remoteApp').value;$('remoteApp').textContent='';option($('remoteApp'),'','Chọn ứng dụng');(s.apps||[]).forEach(function(a){option($('remoteApp'),a.id,a.title);});$('remoteApp').value=id;if(!$('remoteApp').value)$('remoteApp').value='';appFields();
-    if(!Object.keys(pending).length&&s.pending.length===0)remoteMsg('Đã kết nối TV.');return s;
+    if(s.online&&!Object.keys(pending).length&&s.pending.length===0)remoteMsg('Đã kết nối TV.');return s;
   });}
   $('remoteRefresh').onclick=function(){if(remoteBusy)return;remoteRead().catch(function(){remoteMsg('Không kết nối được TV.');});};
   $('remoteSave').onclick=function(){if(remoteBusy||!Object.keys(pending).length)return;remoteBusy=true;$('remoteSave').disabled=true;$('remoteControls').disabled=true;var sent=pending;

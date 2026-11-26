@@ -131,3 +131,5 @@ assert.ok(css.indexOf('visibility 0s 420ms')>=0,'Idle exit delays visibility');
 assert.ok(css.indexOf('translateY(120px) scale(.92)')>=0,'Dock retracts');
 assert.ok(css.indexOf('translateY(-20px) scale(.94)')>=0,'Forecast retracts');
 assert.ok(css.indexOf('body.idle-home:not(.motion-reduced):not(.launcher-covered):not(.customize-open) #viewport')>=0,'Transition respects lifecycle and reduced motion');
+
+assert.ok(css.indexOf('.item.dock.focused .name {visibility:hidden;opacity:0;}')>=0);assert.ok(app.indexOf('hideGlass();hideHero();')>=0);assert.ok(app.indexOf("if(zone!=='grid'||!heroShown)return;")>=0);

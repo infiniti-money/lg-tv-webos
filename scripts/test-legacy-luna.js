@@ -17,3 +17,15 @@ helper.luna('fake',{},function(e,r){
     },bin,2000);
   },bin,2000);
 },bin,2000);
+
+var sequence=[false,true,false,true,true],samples=0;
+helper.waitReady(function(){return 'ready';},function(cb){samples++;cb(sequence.shift(),'test');},function(e){
+  assert.ifError(e);assert.strictEqual(samples,5,'two consecutive successful samples required');
+  helper.waitReady(function(){return 'cancel';},function(){throw Error('sample after cancel');},function(e){
+    assert.ok(e);assert.ok(/canceled/.test(e.message));
+    helper.waitReady(function(){return 'pending';},function(){throw Error('sample during failsafe');},function(e){
+      assert.ok(e);assert.ok(/timeout/.test(e.message));
+      console.log('Adaptive boot readiness: consecutive samples, cancel and timeout passed.');
+    },{seconds:0.02,interval:2});
+  },{interval:0});
+},{interval:0});

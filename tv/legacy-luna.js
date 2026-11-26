@@ -44,9 +44,81 @@ function allowed(mode) {
   if(mode==='trial') return exists(DATA+'/legacy-v8-trial') && !exists(DATA+'/legacy-v8-enabled');
   return mode==='enabled' && exists(DATA+'/legacy-v8-enabled');
 }
+// Read-only boot readiness: wait for Homebrew to finish, active TV power,
+// and a meaningful application-manager foreground response twice in succession.
+function bootGuard(mode) {
+  if (exists('/var/lib/webosbrew/init.d/97-homekey') || exists(DATA+'/home-enabled')) return 'cancel';
+  if (mode==='trial' && (!exists(DATA+'/legacy-v8-trial') || exists(DATA+'/legacy-v8-enabled'))) return 'cancel';
+  if (mode==='enabled' && !exists(DATA+'/legacy-v8-enabled')) return 'cancel';
+  return allowed(mode) ? 'ready' : 'pending';
+}
+function sampleReady(callback) {
+  luna('luna://com.webos.service.tvpower/power/getPowerState',{},function(e,r){
+    if(e || r.state!=='Active') return callback(false,'power '+(e?e.message:r.state));
+    luna(M+'getForegroundAppInfo',{},function(e,r){
+      if(e || typeof r.appId!=='string' || !r.appId.trim()) return callback(false,'foreground unavailable');
+      callback(true,r.appId);
+    },null,2000);
+  },null,2000);
+}
+function waitReady(guard,sample,callback,options) {
+  options=options||{};
+  var deadline=process.uptime()+(options.seconds||90), consecutive=0, previous='';
+  var interval=typeof options.interval==='number'?options.interval:1000;
+  function report(message){
+    if(message!==previous){previous=message;if(options.log)options.log(message);}
+  }
+  function again(){setTimeout(step,interval);}
+  function step(){
+    if(process.uptime()>=deadline) return callback(new Error('boot readiness timeout; no launch'));
+    var state=guard();
+    if(state==='cancel') return callback(new Error('boot canceled; no launch'));
+    if(state!=='ready'){consecutive=0;report('waiting: Homebrew guard or app path');return again();}
+    sample(function(ok,detail){
+      if(process.uptime()>=deadline) return callback(new Error('boot readiness timeout; no launch'));
+      var current=guard();
+      if(current==='cancel') return callback(new Error('boot canceled; no launch'));
+      if(!ok || current!=='ready'){
+        consecutive=0;report('waiting: '+detail);return again();
+      }
+      consecutive++;
+      report('Luna ready sample '+consecutive+'/2: '+detail);
+      if(consecutive>=2) return callback(null,detail);
+      again();
+    });
+  }
+  step();
+}
+function boot(mode) {
+  var start=process.uptime();
+  console.log('BOOT: adaptive Luna readiness (90s limit)');
+  waitReady(function(){return bootGuard(mode);},sampleReady,function(e,foreground){
+    if(e) return fail(e);
+    if(!allowed(mode)) return fail('boot canceled before launch');
+    console.log('BOOT READY after '+(process.uptime()-start).toFixed(1)+'s');
+    function verify(){
+      setTimeout(function(){
+        if(!allowed(mode)) return fail('boot canceled before foreground check');
+        luna(M+'getForegroundAppInfo',{},function(e,r){
+          if(e) return fail(e);
+          console.log('foreground: '+r.appId);
+          if(r.appId!==APP) fail('foreground mismatch; no retry');
+        });
+      },2000);
+    }
+    // On boot do not close an already-running application or steal focus twice.
+    if(foreground===APP) return verify();
+    luna(M+'launch',{id:APP},function(e){
+      if(e) return fail(e);
+      verify();
+    });
+  },{log:function(s){console.log(s);}});
+}
 function fail(e){console.error(String(e));process.exitCode=1;}
 function run(action) {
-  if(action==='probe' || action==='catalog'){
+  if(/^boot-(trial|enabled)$/.test(action)){
+    boot(action.slice(5));
+  } else if(action==='probe' || action==='catalog'){
     luna(M+(action==='probe'?'getForegroundAppInfo':'listApps'),{},function(e,r){
       if(e) return fail(e);
       if(action==='catalog' && !Array.isArray(r.apps)) return fail('listApps missing apps array');
@@ -82,4 +154,4 @@ function run(action) {
   } else { fail('Unknown V8 helper action'); }
 }
 if(require.main===module) run(process.argv[2]||'');
-module.exports={luna:luna};
+module.exports={luna:luna,waitReady:waitReady};

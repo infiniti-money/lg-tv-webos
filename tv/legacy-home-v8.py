@@ -182,13 +182,14 @@ def main():
         os.rmdir(lock)
 
 def run_mode(mode):
-    if mode != 'watch':
-        time.sleep(45)  # Homebrew's own failsafe marker must be cleared first.
-    if not allowed(mode):
+    if mode == 'watch' and not allowed(mode):
         log('disabled, missing app, or conflicting Home configuration')
         return 1
     if mode != 'watch':
-        if not redirect(mode):
+        # Node polls read-only readiness and respects Homebrew failsafe.
+        # A cold boot never closes the app and attempts at most one launch.
+        log('adaptive boot readiness started')
+        if helper('boot-' + mode) != 0 or not allowed(mode):
             log('boot launch not confirmed; no retry')
             if mode == 'enabled':
                 disarm_enabled()
@@ -201,4 +202,8 @@ def run_mode(mode):
     return watch(mode)
 
 if __name__ == '__main__':
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        log('watch stopped by user')
+        sys.exit(130)

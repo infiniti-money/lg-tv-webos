@@ -17,6 +17,9 @@ Nhấn Home, kiểm tra log foreground phải là com.infinitimoney.tvhome và q
 
 Nếu thử thành công và đã kiểm tra ít nhất hai chu kỳ bật/tắt bình thường, chạy `sh legacy-home.sh arm`, reboot thủ công để thử một lần. Sau khi nhìn thấy Launcher và kiểm tra hoạt động bình thường, chạy `sh legacy-home.sh confirm`. Lần cold boot kế tiếp mới chạy watcher lâu dài. Tùy chọn `sh legacy-home.sh wake-on` (thử nghiệm): chỉ kích hoạt sau trạng thái standby quan sát được chuyển sang Active; Quick Start có thể không phát sinh trạng thái này. Không bật mặc định.
 
+## V8.3 — Khởi động thích ứng
+Bỏ thời gian chờ cố định 45 giây. Từ khi Homebrew chạy hook, kiểm tra guard (không tự xóa failsafe), TV power Active và getForegroundAppInfo có appId hai lần liên tiếp cách nhau 1 giây. Giới hạn chờ 90 giây, chỉ thử launch một lần, không close khi boot; nếu Infiniti đã foreground thì chỉ xác minh lại. Sau launch kiểm tra foreground sau 2 giây. Timeout hoặc xung đột thì dừng, không mở lại liên tục. Không đảm bảo compositor đã render; phải quan sát màn hình thật. Thời gian tính từ hook, không phải nút nguồn. Standby giữ cơ chế riêng. Thử lại bằng disable, arm, reboot, quan sát log và xác nhận thủ công.
+ 
 ## Khôi phục
 ```sh
 sh /home/root/lg-tv-vibehack/legacy-home.sh disable

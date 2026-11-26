@@ -25,5 +25,10 @@ class LegacyTests(unittest.TestCase):
             self.assertNotIn('import ' + name, source)
         self.assertIn("helper('redirect-' + mode)", source)
 
+    def test_boot_uses_readiness(self):
+        source = pathlib.Path("tv/legacy-home-v8.py").read_text()
+        self.assertNotIn('time.sleep(45)', source)
+        self.assertIn("helper('boot-' + mode)", source)
+
 if __name__ == '__main__':
     unittest.main()

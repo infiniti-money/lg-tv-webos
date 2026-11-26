@@ -2,7 +2,7 @@
 (function(root){
 'use strict';
 var timer=null,fallback=null,serial=0,mode='off',sheet=document.querySelector('#idleRain .rainSheet');
-var layer=document.querySelector('#idleRain'),duration={rain:1350,snow:12000,petals:17000,stars:45000,fireflies:24000,bubbles:19000,mist:36000};
+var layer=document.querySelector('#idleRain'),duration={rain:1350,snow:12000,petals:17000,stars:45000,fireflies:24000,bubbles:19000,mist:36000,leaves:19000,sparkles:21000,meteor:6500,aurora:45000,embers:14500,waves:30000,hearts:22000};
 function permitted(){return document.body.classList.contains('idle-home')&&!document.body.classList.contains('launcher-covered')&&!document.body.classList.contains('motion-reduced')&&!document.hidden;}
 function clear(){
  serial++;if(timer!==null){clearTimeout(timer);timer=null;}if(fallback!==null){clearInterval(fallback);fallback=null;}
@@ -20,8 +20,8 @@ function paintJS(effect,id){
  sheet.style.webkitAnimation='none';sheet.style.animation='none';sheet.style.webkitTransform='none';sheet.style.transform='none';
  var begin=Date.now();function paint(){
   if(id!==serial||!permitted()){clear();return;}
-  var fraction=((Date.now()-begin)%duration[effect])/duration[effect],reverse=effect==='fireflies'||effect==='bubbles';
-  sheet.style.backgroundPosition=effect==='mist'?Math.round(fraction*480)+'px 0px':'0px '+Math.round((reverse?-1:1)*fraction*270)+'px';
+  var fraction=((Date.now()-begin)%duration[effect])/duration[effect],reverse=['fireflies','bubbles','embers','hearts'].indexOf(effect)>=0;
+  var x=['mist','aurora','waves','leaves','meteor'].indexOf(effect)>=0?Math.round(fraction*480):0,y=['mist','aurora','waves'].indexOf(effect)>=0?0:Math.round((reverse?-1:1)*fraction*270);sheet.style.backgroundPosition=x+'px '+y+'px';
  }
  paint();if(mode==='fallback')fallback=setInterval(paint,100);
 }

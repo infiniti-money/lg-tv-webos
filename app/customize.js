@@ -74,8 +74,8 @@
   }
   function resetVisible() { safeWrite(VISIBILITY_KEY, {}); }
   var IDLE_CHOICES=[0,30,60,120,300];
-  var IDLE_EFFECTS=["rain","snow","petals","stars","fireflies","bubbles","mist","random"];
-  var IDLE_LABELS=["Mưa rơi","Tuyết rơi","Cánh hoa","Bầu trời sao","Đom đóm","Bong bóng","Sương mờ","Ngẫu nhiên"];
+  var IDLE_EFFECTS=["rain","snow","petals","stars","fireflies","bubbles","mist","leaves","sparkles","meteor","aurora","embers","waves","hearts","random"];
+  var IDLE_LABELS=["Mưa rơi","Tuyết rơi","Cánh hoa","Bầu trời sao","Đom đóm","Bong bóng","Sương mờ","Lá bay","Ánh kim","Sao băng","Cực quang","Tàn lửa","Sóng ánh sáng","Trái tim","Ngẫu nhiên"];
   function idleEffectValue(v){return IDLE_EFFECTS.indexOf(v)>=0?v:defaults.idleEffect;}
   function resolveIdleEffect(p,random){
     if(!p.idleRain||p.reduceMotion)return '';
@@ -273,12 +273,12 @@
   var tabs = {
     apps:$('customizeAppsTab'), style:$('customizeStyleTab'),
     weather:$('customizeWeatherTab'), calendar:$('customizeCalendarTab'),
-    privacy:$('customizePrivacyTab'), wallpaper:$('customizeWallpaperTab')
+    privacy:$('customizePrivacyTab'), wallpaper:$('customizeWallpaperTab'), idle:$('customizeIdleTab'), album:$('customizeAlbumTab')
   };
   var views = {
     apps:$('customizeAppsView'), style:$('customizeStyleView'),
     weather:$('customizeWeatherView'), calendar:$('customizeCalendarView'),
-    privacy:$('customizePrivacyView'), wallpaper:$('customizeWallpaperView')
+    privacy:$('customizePrivacyView'), wallpaper:$('customizeWallpaperView'), idle:$('customizeIdleView'), album:$('customizeAlbumView')
   };
   var appsList = $('customizeAppList'), themeBox = $('customizeThemes');
   var fontBox = $('customizeFonts'), status = $('customizeStatus');
@@ -558,6 +558,10 @@
     var list = parent.querySelectorAll('button');
     for (var i=0; i<list.length; i++) list[i].className = list[i] === selected ? 'selected' : '';
   }
+  function renderIdle(){var a=getAppearance(),box=$('customizeIdleChoices');box.innerHTML='';IDLE_EFFECTS.forEach(function(e,i){var b=addButton(box,IDLE_LABELS[i],function(){saveAppearance({idleEffect:e});applyAppearance();refreshToggles();markChoice(box,b);},a.idleEffect===e);});refreshToggles();}
+  var albumReadSeq=0;
+  function renderAlbumState(){var target=$('customizeAlbumState'),n=++albumReadSeq,sc=document.createElement('script'),done=false,timer;target.textContent='Đang đọc album…';function finish(ok){if(done)return;done=true;clearTimeout(timer);if(sc.parentNode)sc.parentNode.removeChild(sc);if(n!==albumReadSeq||!opened||activeTab!=='album')return;var p=ok?root.INFINITI_IDLE_ALBUM:null;if(!p||!Array.isArray(p.photos)){target.textContent='Chưa có album đồng bộ. Bật dịch vụ web và tải ảnh.';return;}target.textContent=(p.enabled?'Đang bật':'Đang tắt')+' · '+p.photos.length+' ảnh · '+(p.seconds===0?'Mỗi lần bật TV':p.seconds>=86400?(p.seconds/86400)+' ngày':p.seconds>=3600?(p.seconds/3600)+' giờ':p.seconds+' giây')+' · '+(p.random?'Ngẫu nhiên':'Tuần tự');}
+    sc.onload=function(){finish(true);};sc.onerror=function(){finish(false);};sc.src='idle-album.js?t='+Date.now();timer=setTimeout(function(){finish(false);},4000);document.body.appendChild(sc);}
   function refreshToggles() {
     var a = getAppearance();
     $('customizeIdleTime').textContent='Tự ẩn: '+(a.idleSeconds?a.idleSeconds+' giây':'Tắt');
@@ -650,6 +654,8 @@
     }
     if (name === 'apps') {appPage=0;appFilter=0;appSort=0;renderGlobalPacks();renderApps();}
     else if (name === 'style') renderStyle();
+    else if (name === 'idle') renderIdle();
+    else if (name === 'album') renderAlbumState();
     else if (name === 'weather') renderWeather();
     else if (name === 'calendar') renderCalendar();
     else if (name === 'wallpaper') renderWallpaperQR();
@@ -681,7 +687,7 @@
   }
   // Directional focus based on actual visible button geometry; no CSS spatial-navigation dependency.
   function moveFocus(buttons,i,code){
-    var active=buttons[i], menu=['style','wallpaper','weather','calendar','apps','privacy'];
+    var active=buttons[i], menu=['style','idle','wallpaper','album','weather','calendar','apps','privacy'];
     var selected=menu.filter(function(k){return tabs[k]===active;})[0];
     if(selected && (code===38||code===40)){
       var index=menu.indexOf(selected)+(code===38?-1:1);
@@ -800,8 +806,11 @@
   appearanceToggle('customizeShowWeek','showWeek');
   appearanceToggle('customizeMotion','reduceMotion');
   appearanceToggle('customizeIdleRain','idleRain');
+  $('customizeAlbumRefresh').addEventListener('click',renderAlbumState);
+  $('customizeAlbumWeb').addEventListener('click',function(){activateTab('wallpaper');tabs.wallpaper.focus();});
+  $('customizeAlbumPreview').addEventListener('click',function(){hide();if(root.INFINITI_IDLE_PREVIEW)root.INFINITI_IDLE_PREVIEW();});
   $('customizeIdlePreview').addEventListener('click',function(){var a=getAppearance();if(!a.idleRain||a.reduceMotion){message('Bật hiệu ứng và tắt Giảm chuyển động để thử chuyển động.');return;}hide();if(root.INFINITI_IDLE_PREVIEW)root.INFINITI_IDLE_PREVIEW();});
-  $('customizeIdleEffect').addEventListener('click',function(){var a=getAppearance();saveAppearance({idleEffect:IDLE_EFFECTS[(IDLE_EFFECTS.indexOf(a.idleEffect)+1)%IDLE_EFFECTS.length]});applyAppearance();refreshToggles();});
+  $('customizeIdleEffect').addEventListener('click',function(){var a=getAppearance();saveAppearance({idleEffect:IDLE_EFFECTS[(IDLE_EFFECTS.indexOf(a.idleEffect)+1)%IDLE_EFFECTS.length]});applyAppearance();refreshToggles();renderIdle();});
   $('customizeIdleTime').addEventListener('click',function(){var a=getAppearance();saveAppearance({idleSeconds:IDLE_CHOICES[(IDLE_CHOICES.indexOf(a.idleSeconds)+1)%IDLE_CHOICES.length]});applyAppearance();refreshToggles();});
   appearanceToggle('customizeSolar','showSolar');
   appearanceToggle('customizeLunar','showLunar');

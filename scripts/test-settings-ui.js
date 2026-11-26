@@ -53,12 +53,14 @@ var document = {
   addEventListener:function (type,cb) { docEvents[type]=cb; }
 };
 var panel=node('customizePanel'); panel.className='hidden';
-['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizePrivacyTab','customizeWallpaperTab'].forEach(function (id) {
+['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizePrivacyTab','customizeWallpaperTab','customizeIdleTab','customizeAlbumTab'].forEach(function (id) {
   panel.appendChild(node(id,'button'));
 });
 var groups = {
   customizeStyleView:['customizeThemes','customizeFonts','customizeLargeText',
-    'customizeShowWeek','customizeMotion','customizeIdleTime','customizeIdleRain','customizeIdleEffect','customizeIdlePreview','customizeResetStyle'],
+    'customizeShowWeek','customizeMotion','customizeResetStyle'],
+  customizeIdleView:['customizeIdleTime','customizeIdleRain','customizeIdleEffect','customizeIdlePreview','customizeIdleChoices'],
+  customizeAlbumView:['customizeAlbumState','customizeAlbumRefresh','customizeAlbumWeb','customizeAlbumPreview'],
   customizeWallpaperView:['customizeWallpaper','customizeWallQr','customizeWallState','customizeWallHost'],
   customizeWeatherView:['customizeWeatherChoice',
     'customizeWeatherSearch','customizeWeatherSearchBtn','customizeWeatherResults',
@@ -71,7 +73,7 @@ Object.keys(groups).forEach(function (name) {
   var view=node(name); view.className='hidden'; panel.appendChild(view);
   groups[name].forEach(function (id) {
     view.appendChild(node(id,id==='customizeWeatherSearch'?'input':
-      /Btn$|customizeShowAllApps|customizeAppFilter|customizeAppSort|customizeIdleTime|customizeIdleRain|customizeIdleEffect|customizeIdlePreview|customizeCheckUpdate|customizeUpdateHelp$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
+      /Btn$|customizeAlbumRefresh|customizeAlbumWeb|customizeAlbumPreview|customizeShowAllApps|customizeAppFilter|customizeAppSort|customizeIdleTime|customizeIdleRain|customizeIdleEffect|customizeIdlePreview|customizeCheckUpdate|customizeUpdateHelp$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
   });
 });
 var browse=node('customizeAppBrowse');node('customizeAppsView').appendChild(browse);browse.appendChild(node('customizeAppList'));node('customizeAppsView').appendChild(node('customizeAppOptions'));
@@ -194,15 +196,16 @@ assert.equal(window.INFINITI_PREFS.getAppearance().showSolar,false);
 assert.equal(document.body.hasClass('solar-hidden'),true);
 node('customizeLunar').click();
 assert.equal(window.INFINITI_PREFS.getAppearance().showLunar,false);
-node('customizeStyleTab').click();
+node('customizeIdleTab').click();
+assert.equal(node('customizeIdleView').hasClass('hidden'),false);assert.equal(node('customizeIdleChoices').querySelectorAll('button').length,15);
 node('customizeIdleTime').click();assert.equal(window.INFINITI_PREFS.getAppearance().idleSeconds,120);
 node('customizeIdleRain').click();assert.equal(window.INFINITI_PREFS.getAppearance().idleRain,false);
 node('customizeIdleEffect').click();assert.equal(window.INFINITI_PREFS.getAppearance().idleEffect,'snow');
 assert.ok(node('customizeIdleEffect').textContent.indexOf('Tuyết')>=0);
-for(var e=0;e<6;e++)node('customizeIdleEffect').click();
+for(var e=0;e<13;e++)node('customizeIdleEffect').click();
 assert.equal(window.INFINITI_PREFS.getAppearance().idleEffect,'random');
 node('customizeIdleEffect').click();assert.equal(window.INFINITI_PREFS.getAppearance().idleEffect,'rain');
-node('customizeMotion').click();
+node('customizeStyleTab').click();node('customizeMotion').click();
 assert.equal(window.INFINITI_PREFS.getAppearance().reduceMotion,true);
 assert.equal(document.body.hasClass('motion-reduced'),true);
 var back={type:'keydown',keyCode:461,preventDefault:function(){},

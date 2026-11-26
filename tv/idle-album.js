@@ -2,7 +2,7 @@
 'use strict';
 var fs=require('fs'),path=require('path'),crypto=require('crypto');
 var TIMES=[0,15,30,60,120,300,600,1800,3600,7200,21600,43200,86400,172800,604800],MAX=20,LIMIT=1500000,ID=/^[a-f0-9]{24}$/;
-var STYLES=["fade","slide-left","slide-right","slide-up","zoom-in","zoom-out","dissolve","cinema","random","none"],MOTIONS=['still','zoom','pan','random'];
+var STYLES=["fade","slide-left","slide-right","slide-up","zoom-in","zoom-out","dissolve","cinema","slide-down","diagonal","soft-rotate","sweep","lift","focus","random","none"],MOTIONS=['still','zoom','pan','random'];
 function settings(v){return {enabled:!!(v&&v.enabled===true),seconds:v&&TIMES.indexOf(v.seconds)>=0?v.seconds:60,random:!!(v&&v.random===true),transition:v&&STYLES.indexOf(v.transition)>=0?v.transition:'random',motion:v&&MOTIONS.indexOf(v.motion)>=0?v.motion:'random'};}
 function jpeg(b){return b.length>=4&&b.length<=LIMIT&&b[0]===255&&b[1]===216&&b[b.length-2]===255&&b[b.length-1]===217;}
 function create(data,appDir,allowed,log){

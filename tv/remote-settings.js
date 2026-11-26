@@ -1,7 +1,7 @@
 /* Typed LAN settings mailbox. No shell, arbitrary paths or executable input. */
 'use strict';
 var fs=require('fs'),path=require('path'),crypto=require('crypto'),own=Object.prototype.hasOwnProperty;
-var fields={theme:['midnight','ocean','amber'],font:['lexend','sans','serif'],idleSeconds:[0,30,60,120,300],idleEffect:['rain','snow','petals','stars','fireflies','bubbles','mist','random'],pack:['original','minimal','neon','glass','pastel','gold'],largeText:true,showWeek:true,reduceMotion:true,showSolar:true,showLunar:true,idleRain:true};
+var fields={theme:['midnight','ocean','amber'],font:['lexend','sans','serif'],idleSeconds:[0,30,60,120,300],idleEffect:["rain","snow","petals","stars","fireflies","bubbles","mist","leaves","sparkles","meteor","aurora","embers","waves","hearts","random"],pack:['original','minimal','neon','glass','pastel','gold'],largeText:true,showWeek:true,reduceMotion:true,showSolar:true,showLunar:true,idleRain:true};
 var packs=['minimal','neon','glass','pastel','gold'],glyphs=['video','music','web','tv','game','settings','home','photo','apps','youtube','netflix','prime','disney','tiktok','jellyfin','spotify','radio','hdmi','store','files','network'];
 function idOK(id){return typeof id==='string'&&/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}$/.test(id)&&id!=='constructor'&&id!=='prototype'&&id!=='com.infinitimoney.tvhome'&&id!=='com.webos.app.livetv'&&!/^com\.webos\.app\.hdmi[0-9]+$/.test(id);}
 function iconOK(v){if(v===''||v==='original')return true;var a=typeof v==='string'?v.split(':'):[];return a.length===3&&a[0]==='pack'&&packs.indexOf(a[1])>=0&&glyphs.indexOf(a[2])>=0;}

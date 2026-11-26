@@ -73,13 +73,15 @@
   <div id="customizePanel" class="hidden" role="dialog" aria-modal="true" aria-label="Cài đặt Designed by Tân Dev">
     <div class="customizeDialog">
       <div class="customizeHead">
-        <div><div class="customizeEyebrow">Designed by Tân Dev</div><strong>Cài đặt giao diện</strong></div>
+        <div><div class="customizeEyebrow">Designed by Tân Dev</div><strong>Trung tâm tùy chỉnh</strong></div>
         <button id="customizeClose" type="button">Đóng ×</button>
       </div>
       <div class="customizeMain">
       <div class="customizeTabs" role="navigation" aria-label="Chuyên mục cài đặt">
         <button type="button" id="customizeStyleTab">Giao diện</button>
-        <button type="button" id="customizeWallpaperTab">Hình nền</button>
+        <button type="button" id="customizeIdleTab">Màn hình chờ</button>
+        <button type="button" id="customizeWallpaperTab">Ảnh &amp; kết nối web</button>
+        <button type="button" id="customizeAlbumTab">Album trình chiếu</button>
         <button type="button" id="customizeWeatherTab">Thời tiết</button>
         <button type="button" id="customizeCalendarTab">Âm · dương lịch</button>
         <button type="button" id="customizeAppsTab">Ứng dụng</button>
@@ -97,9 +99,20 @@
             <button type="button" id="customizeShowWeek">Thời tiết 3 ngày</button>
             <button type="button" id="customizeResetStyle">Khôi phục giao diện</button>
           </div>
-          <h3>Chế độ chờ · hình nền</h3>
-          <div class="customizeChoice"><button id="customizeIdleTime" type="button">Tự ẩn: 60 giây</button><button id="customizeIdleRain" type="button">Hiệu ứng: Bật</button><button id="customizeIdleEffect" type="button">Kiểu: Mưa rơi</button><button id="customizeIdlePreview" type="button">Thử màn hình chờ</button></div>
-          <p class="customizeHint">Khi chờ: giữ đồng hồ, lịch và thời tiết hiện tại; ẩn ứng dụng, nút chức năng và dự báo 3 ngày. Bấm OK trên nút Kiểu để đổi hiệu ứng. Bấm phím hoặc di chuyển remote để trở về.</p>
+        </div>
+        <div id="customizeIdleView" class="hidden">
+          <h3>Màn hình chờ</h3><p>Giữ đồng hồ, lịch và thời tiết hiện tại; ẩn dock và dự báo 3 ngày.</p>
+          <div class="customizeChoice"><button id="customizeIdleTime" type="button">Tự ẩn: 60 giây</button><button id="customizeIdleRain" type="button">Hiệu ứng: Bật</button><button id="customizeIdlePreview" type="button">Thử màn hình chờ</button></div>
+          <h3>Chọn phong cách</h3><div id="customizeIdleChoices" class="customizeChoice idleEffectGrid"></div>
+          <button id="customizeIdleEffect" type="button">Kiểu: Mưa rơi</button>
+          <p class="customizeHint">Chọn trực tiếp hoặc bấm Kiểu để chuyển lần lượt. Nếu đang giảm chuyển động, vào Giao diện để bật lại.</p>
+        </div>
+        <div id="customizeAlbumView" class="hidden">
+          <h3>Album trình chiếu</h3><p>20 ảnh Full HD · 14 chuyển cảnh · Zoom và lướt ảnh chậm.</p>
+          <div id="customizeAlbumState" class="customizeSelectedCity">Đang đọc cấu hình album…</div>
+          <h3>Quản lý ảnh và lịch chuyển</h3><p>Trên điện thoại hoặc máy tính, mở địa chỉ IP TV:8090, đăng nhập bằng mật khẩu riêng. Chọn ảnh, chu kỳ theo phút/giờ/ngày/lần bật, thứ tự và chuyển cảnh ngẫu nhiên.</p>
+          <div class="customizeChoice"><button id="customizeAlbumRefresh" type="button">Đọc lại album</button><button id="customizeAlbumWeb" type="button">Mở QR &amp; địa chỉ web</button><button id="customizeAlbumPreview" type="button">Thử trình chiếu</button></div>
+          <p class="customizeHint">Cài đặt album được lưu từ trang web; TV hiển thị trạng thái đã đồng bộ. Không cần cập nhật hay root lại khi đổi ảnh.</p>
         </div>
         <div id="customizeWallpaperView" class="hidden">
           <h3>Hình nền · Tùy chỉnh qua web</h3>

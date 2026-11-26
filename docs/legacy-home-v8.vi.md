@@ -73,3 +73,5 @@ Log TV ngày 26/11/2026 xác nhận readiness 10,2s, render 1,5s/17 tile, watche
 - Rà soát v1.6.3: mật khẩu 8–64 ký tự (chữ cái đơn thuần được), giới hạn phản hồi khi thử sai quá 5 lần/phút theo IP, xác minh khóa lại trước khi ghi hình nền. Đây chỉ là giảm phản hồi cho thử sai, không thay thế HTTPS hay khóa mạnh. Album native legacy dùng transform/opacity cập nhật 10 FPS, dừng khi covered/thoát chờ; bỏ làm mới danh mục UI lúc idle. Cần nghiệm thu trên thiết bị thật.
 
 - Kiểm thử bổ sung: album lưu/đọc lại/xóa ảnh, giữ hiệu ứng khi thêm/xóa, từ chối tham số sai, đồng bộ web xác minh khóa lại khi hoàn tất tải. Sau 5 lần nhập sai trong một phút, khóa theo IP trước khi so sánh mật khẩu cho đến hết cửa sổ 60s. HTTP vẫn không mã hóa; chỉ dùng LAN tin cậy.
+
+- Tùy chỉnh v1.6.3: 8 chuyên mục TV, riêng Màn hình chờ và Album (trạng thái + QR/web), 14 hiệu ứng idle và 14 chuyển cảnh album, ngẫu nhiên. 6 chuyển động ảnh. TV chọn hiệu ứng trực tiếp bằng 15 nút gồm Ngẫu nhiên, vẫn hỗ trợ D-pad. Web có thanh điều hướng và nhóm giao diện/idle/lịch; mật khẩu riêng cuối trang. Ảnh và lịch album quản lý qua web, không giả lập ghi từ TV. Chưa kiểm thử kích thước thực tế trên TV.

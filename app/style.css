@@ -888,3 +888,57 @@ body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .mot
 @-webkit-keyframes album-motion-pan-down {from{-webkit-transform:scale(1.11) translateY(-2.5%);}to{-webkit-transform:scale(1.11) translateY(2.5%);}}
 @keyframes album-motion-pan-down {from{transform:scale(1.11) translateY(-2.5%);}to{transform:scale(1.11) translateY(2.5%);}}
 body.motion-reduced .idlePhoto,body.motion-reduced .idlePhotoImage,body.launcher-covered .idlePhoto,body.launcher-covered .idlePhotoImage { -webkit-animation:none!important; animation:none!important; -webkit-transform:none!important; transform:none!important; }
+
+body.idle-home.idle-leaves:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-leaves:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-leaves.svg');opacity:.8;-webkit-animation:idleRainFall 19s linear infinite;animation:idleRainFall 19s linear infinite;}
+
+body.idle-home.idle-sparkles:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-sparkles:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-sparkles.svg');opacity:.8;-webkit-animation:idleRainFall 21s linear infinite;animation:idleRainFall 21s linear infinite;}
+
+body.idle-home.idle-meteor:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-meteor:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-meteor.svg');opacity:.8;-webkit-animation:idleRainFall 6.5s linear infinite;animation:idleRainFall 6.5s linear infinite;}
+
+body.idle-home.idle-aurora:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-aurora:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-aurora.svg');opacity:.8;-webkit-animation:idleMistDrift 45s linear infinite;animation:idleMistDrift 45s linear infinite;left:-480px;}
+
+body.idle-home.idle-embers:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-embers:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-embers.svg');opacity:.8;-webkit-animation:idleRise 14.5s linear infinite;animation:idleRise 14.5s linear infinite;}
+
+body.idle-home.idle-waves:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-waves:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-waves.svg');opacity:.8;-webkit-animation:idleMistDrift 30s linear infinite;animation:idleMistDrift 30s linear infinite;left:-480px;}
+
+body.idle-home.idle-hearts:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-hearts:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-hearts.svg');opacity:.8;-webkit-animation:idleRise 22s linear infinite;animation:idleRise 22s linear infinite;}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-slide-down{-webkit-animation:album-slide-down 1100ms ease both;animation:album-slide-down 1100ms ease both;}
+@-webkit-keyframes album-slide-down{from{opacity:0;-webkit-transform:translateY(-12%);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-slide-down{from{opacity:0;transform:translateY(-12%);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-diagonal{-webkit-animation:album-diagonal 1100ms ease both;animation:album-diagonal 1100ms ease both;}
+@-webkit-keyframes album-diagonal{from{opacity:0;-webkit-transform:translate(9%,9%);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-diagonal{from{opacity:0;transform:translate(9%,9%);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-soft-rotate{-webkit-animation:album-soft-rotate 1100ms ease both;animation:album-soft-rotate 1100ms ease both;}
+@-webkit-keyframes album-soft-rotate{from{opacity:0;-webkit-transform:rotate(-3deg) scale(1.1);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-soft-rotate{from{opacity:0;transform:rotate(-3deg) scale(1.1);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-sweep{-webkit-animation:album-sweep 1100ms ease both;animation:album-sweep 1100ms ease both;}
+@-webkit-keyframes album-sweep{from{opacity:0;-webkit-transform:translateX(-18%) scale(1.04);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-sweep{from{opacity:0;transform:translateX(-18%) scale(1.04);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-lift{-webkit-animation:album-lift 1100ms ease both;animation:album-lift 1100ms ease both;}
+@-webkit-keyframes album-lift{from{opacity:0;-webkit-transform:translateY(7%) scale(.96);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-lift{from{opacity:0;transform:translateY(7%) scale(.96);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-focus{-webkit-animation:album-focus 1100ms ease both;animation:album-focus 1100ms ease both;}
+@-webkit-keyframes album-focus{from{opacity:0;-webkit-transform:scale(1.20);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-focus{from{opacity:0;transform:scale(1.20);}to{opacity:1;transform:none;}}
+
+/* Settings center: eight fixed-height pages, large D-pad targets, no scroll on TV. */
+.customizeMain .customizeTabs{width:302px;padding-top:4px;}
+.customizeMain .customizeTabs button{min-height:60px;margin-bottom:8px;font-size:23px;padding:11px 14px;}
+.customizeMain .customizeContent{padding:10px 18px 8px;}
+.customizeContent .idleEffectGrid{display:flex;flex-wrap:wrap;align-items:stretch;margin:8px 0 12px;}
+.customizeContent .idleEffectGrid button{width:30%;min-height:64px;margin:4px 1.5% 4px 0;text-align:center;font-size:23px;}
+#customizeIdleEffect{font-size:19px;padding:10px 14px;}
+#customizeAlbumState{margin:20px 0;line-height:1.45;}

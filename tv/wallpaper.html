@@ -63,12 +63,14 @@
   #albumPhotos img { width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:8px;display:block; }
   #albumPhotos button { width:100%; margin-top:4px;padding:7px;background:#34313e;color:white;border:0;border-radius:6px; }
   #albumStatus,#remoteStatus { color:#b3dbea;min-height:24px; }
+#settingsNav{display:flex;flex-wrap:wrap;gap:7px;padding:10px 0;background:#101820;position:sticky;top:0;z-index:8;border-bottom:1px solid #354656}#settingsNav a{color:#d9edff;text-decoration:none;padding:9px 12px;border-radius:9px;background:#263745;font-weight:600;font-size:14px}#settingsNav a:focus,#settingsNav a:hover{background:#d4e6f5;color:#14232f}section{scroll-margin-top:110px}#viewMode,#weatherSection,#usbSection{padding:16px;border:1px solid #353a46;border-radius:16px;margin-top:22px;background:#171b24}#albumSection .remoteGrid,#remoteSection .remoteGrid{margin:10px 0 18px}#t-title{font-size:clamp(22px,4vw,34px);letter-spacing:-.03em;margin:8px 0 18px}#remoteSection h3{color:#b9d4e5;font-size:17px;margin:20px 0 8px}
 </style>
 </head>
 <body>
 <main>
   <h1 id="t-title"></h1>
-  <section class="remotePanel"><h2>Khóa truy cập riêng</h2><p class="hint">8–64 ký tự, chỉ dùng chữ cái cũng được; không bắt buộc số hoặc ký tự đặc biệt. Dùng khóa dài, khó đoán. Khi đổi khóa, liên kết QR cũ hết hiệu lực.</p><form id="keyForm"><label class="remoteRow">Khóa mới <input id="newKey" type="password" minlength="8" maxlength="64" autocomplete="new-password" required></label><label class="remoteRow">Nhập lại <input id="confirmKey" type="password" minlength="8" maxlength="64" autocomplete="new-password" required></label><button type="submit" class="btn" id="keySave">Đổi khóa riêng</button></form><p id="keyStatus" role="status"></p><a href="/" style="color:#b8d9ef">Về trang đăng nhập</a></section>
+  <nav id="settingsNav" aria-label="Chuyên mục"><a href="#viewMode">Hình nền</a><a href="#albumSection">Album &amp; chuyển cảnh</a><a href="#remoteSection">Giao diện &amp; ứng dụng</a><a href="#weatherSection">Thời tiết</a><a href="#usbSection">USB</a><a href="#keySection">Mật khẩu</a></nav>
+
 
   <!-- Normal view: the current wallpaper -->
   <section id="viewMode">
@@ -104,13 +106,13 @@
   <div id="status"></div>
 
   <section id="albumSection" class="remotePanel">
-    <h2>Album màn hình chờ</h2>
+    <h2>Album &amp; chuyển cảnh</h2><p class="hint">14 kiểu chuyển ảnh, 6 chuyển động ảnh, ngẫu nhiên độc lập. Chọn hiệu ứng màn hình chờ ở mục Giao diện.</p>
     <p class="hint">Tối đa 20 ảnh. Ảnh được căn giữa và thu về 1920×1080 trước khi gửi. Hình nền chính không bị thay thế.</p>
     <div class="remoteGrid">
       <label class="remoteRow">Trình chiếu <input type="checkbox" id="albumEnabled"></label>
       <label class="remoteRow">Đổi ảnh sau <select id="albumSeconds"><option value="15">15 giây</option><option value="30">30 giây</option><option value="60" selected>1 phút</option><option value="120">2 phút</option><option value="300">5 phút</option><option value="600">10 phút</option><option value="1800">30 phút</option><option value="3600">1 giờ</option><option value="7200">2 giờ</option><option value="21600">6 giờ</option><option value="43200">12 giờ</option><option value="86400">1 ngày (24 giờ)</option><option value="172800">2 ngày</option><option value="604800">7 ngày</option><option value="0">Mỗi lần bật TV</option></select></label>
       <label class="remoteRow">Thứ tự ảnh ngẫu nhiên <input type="checkbox" id="albumRandom"></label>
-      <label class="remoteRow">Chuyển cảnh <select id="albumTransition"><option value="random">Ngẫu nhiên nhiều kiểu</option><option value="fade">Mờ dần</option><option value="slide-left">Trượt trái</option><option value="slide-right">Trượt phải</option><option value="slide-up">Trượt lên</option><option value="zoom-in">Zoom vào</option><option value="zoom-out">Zoom ra</option><option value="dissolve">Hòa tan</option><option value="cinema">Điện ảnh</option><option value="none">Không hiệu ứng</option></select></label>
+      <label class="remoteRow">Chuyển cảnh <select id="albumTransition"><option value="random">Ngẫu nhiên nhiều kiểu</option><option value="fade">Mờ dần</option><option value="slide-left">Trượt trái</option><option value="slide-right">Trượt phải</option><option value="slide-up">Trượt lên</option><option value="zoom-in">Zoom vào</option><option value="zoom-out">Zoom ra</option><option value="dissolve">Hòa tan</option><option value="cinema">Điện ảnh</option><option value="slide-down">Trượt xuống</option><option value="diagonal">Trượt chéo</option><option value="soft-rotate">Xoay nhẹ</option><option value="sweep">Quét ngang</option><option value="lift">Nâng ảnh</option><option value="focus">Lấy nét zoom</option><option value="none">Không hiệu ứng</option></select></label>
       <label class="remoteRow">Chuyển động ảnh <select id="albumMotion"><option value="random">Ngẫu nhiên</option><option value="zoom">Zoom chậm</option><option value="pan">Lướt ảnh</option><option value="still">Ảnh tĩnh</option></select></label>
     </div>
     <button class="btn" id="albumSave" type="button">Lưu chế độ trình chiếu</button>
@@ -123,7 +125,7 @@
     <div class="pair"><button class="btn ghost" id="remoteRefresh" type="button">Đọc từ TV</button><button class="btn" id="remoteSave" type="button" disabled>Lưu thay đổi</button></div>
     <p id="remoteStatus" role="status" aria-live="polite"></p><p id="idleDiagnostic" class="hint">Chưa có trạng thái màn hình chờ từ TV.</p>
     <fieldset id="remoteControls" disabled>
-      <legend>Giao diện</legend><div id="remoteFields" class="remoteGrid"></div>
+      <legend>Giao diện</legend><div id="remoteFields" class="remoteGrid"></div><h3>Màn hình chờ</h3><div id="remoteIdleFields" class="remoteGrid"></div><h3>Lịch và thời tiết</h3><div id="remoteCalendarFields" class="remoteGrid"></div>
       <h3>Ứng dụng</h3>
       <label class="remoteRow">Ứng dụng <select id="remoteApp"></select></label>
       <div id="remoteAppFields" class="remoteGrid" hidden>
@@ -150,6 +152,7 @@
     <div id="usb"></div>
     <p class="hint" id="usbHint"></p>
   </section>
+  <section id="keySection" class="remotePanel"><h2>Khóa truy cập riêng</h2><p class="hint">8–64 ký tự, chỉ dùng chữ cái cũng được; không bắt buộc số hoặc ký tự đặc biệt. Dùng khóa dài, khó đoán. Khi đổi khóa, liên kết QR cũ hết hiệu lực.</p><form id="keyForm"><label class="remoteRow">Khóa mới <input id="newKey" type="password" minlength="8" maxlength="64" autocomplete="new-password" required></label><label class="remoteRow">Nhập lại <input id="confirmKey" type="password" minlength="8" maxlength="64" autocomplete="new-password" required></label><button type="submit" class="btn" id="keySave">Đổi khóa riêng</button></form><p id="keyStatus" role="status"></p><a href="/" style="color:#b8d9ef">Về trang đăng nhập</a></section>
 </main>
 <script>
 (function () {
@@ -395,12 +398,12 @@
   $('albumSave').onclick=function(){if(albumBusy)return;albumLock(true);api('POST','api/album/settings?enabled='+($('albumEnabled').checked?1:0)+'&seconds='+$('albumSeconds').value+'&random='+($('albumRandom').checked?1:0)+'&transition='+encodeURIComponent($('albumTransition').value)+'&motion='+encodeURIComponent($('albumMotion').value)).then(function(r){albumMessage(r.published?'Đã lưu. TV sẽ đọc album khi vào chế độ chờ hoặc đến lượt đổi ảnh.':'Đã lưu; đang chờ đồng bộ tệp lên Launcher.');return albumRead();}).catch(function(){albumMessage('Không lưu được album.');}).then(function(){albumLock(false);});};
   albumRead().catch(function(){albumMessage('Album chưa sẵn sàng. Cập nhật Root Tools.');});
   // Remote settings: edit only touched fields, never overwrite unseen local changes.
-  var defs={theme:['Chủ đề',['midnight','ocean','amber'],['Midnight','Ocean','Amber']],font:['Phông chữ',['lexend','sans','serif'],['Lexend','Sans','Serif']],idleSeconds:['Tự ẩn',[0,30,60,120,300],['Tắt','30 giây','1 phút','2 phút','5 phút']],idleEffect:['Hiệu ứng chờ',['rain','snow','petals','stars','fireflies','bubbles','mist','random'],['Mưa','Tuyết','Cánh hoa','Sao','Đom đóm','Bong bóng','Sương','Ngẫu nhiên']],pack:['Bộ icon',['original','minimal','neon','glass','pastel','gold'],['Gốc','Minimal','Neon','Glass','Pastel','Gold']],largeText:['Chữ lớn'],showWeek:['Dự báo 3 ngày'],reduceMotion:['Giảm chuyển động'],showSolar:['Dương lịch'],showLunar:['Âm lịch'],idleRain:['Bật hiệu ứng']};
+  var defs={theme:['Chủ đề',['midnight','ocean','amber'],['Midnight','Ocean','Amber']],font:['Phông chữ',['lexend','sans','serif'],['Lexend','Sans','Serif']],idleSeconds:['Tự ẩn',[0,30,60,120,300],['Tắt','30 giây','1 phút','2 phút','5 phút']],idleEffect:['Hiệu ứng chờ',["rain","snow","petals","stars","fireflies","bubbles","mist","leaves","sparkles","meteor","aurora","embers","waves","hearts","random"],["Mưa rơi","Tuyết rơi","Cánh hoa","Bầu trời sao","Đom đóm","Bong bóng","Sương mờ","Lá bay","Ánh kim","Sao băng","Cực quang","Tàn lửa","Sóng ánh sáng","Trái tim","Ngẫu nhiên"]],pack:['Bộ icon',['original','minimal','neon','glass','pastel','gold'],['Gốc','Minimal','Neon','Glass','Pastel','Gold']],largeText:['Chữ lớn'],showWeek:['Dự báo 3 ngày'],reduceMotion:['Giảm chuyển động'],showSolar:['Dương lịch'],showLunar:['Âm lịch'],idleRain:['Bật hiệu ứng']};
   var fields={},pending={},values={},remoteBusy=false,remoteApps=[],waiting=null,watch=null;
   function remoteMsg(s){$('remoteStatus').textContent=s;}
   function option(el,v,t){var o=document.createElement('option');o.value=String(v);o.textContent=t;el.appendChild(o);}
   function touched(k,v){pending[k]=v;$('remoteSave').disabled=remoteBusy||!Object.keys(pending).length;}
-  Object.keys(defs).forEach(function(k){var d=defs[k],l=document.createElement('label'),el=document.createElement(d[1]?'select':'input');l.className='remoteRow';l.appendChild(document.createTextNode(d[0]));if(d[1])d[1].forEach(function(v,i){option(el,v,d[2][i]);});else el.type='checkbox';el.onchange=function(){touched(k,d[1]?(k==='idleSeconds'?Number(el.value):el.value):el.checked);};l.appendChild(el);$('remoteFields').appendChild(l);fields[k]=el;});
+  Object.keys(defs).forEach(function(k){var d=defs[k],l=document.createElement('label'),el=document.createElement(d[1]?'select':'input');l.className='remoteRow';l.appendChild(document.createTextNode(d[0]));if(d[1])d[1].forEach(function(v,i){option(el,v,d[2][i]);});else el.type='checkbox';el.onchange=function(){touched(k,d[1]?(k==='idleSeconds'?Number(el.value):el.value):el.checked);};l.appendChild(el);$(k.indexOf('idle')===0?'remoteIdleFields':['showSolar','showLunar','showWeek'].indexOf(k)>=0?'remoteCalendarFields':'remoteFields').appendChild(l);fields[k]=el;});
   function appKey(k){return 'app:'+$('remoteApp').value+':'+k;}
   function effective(k){return Object.prototype.hasOwnProperty.call(pending,k)?pending[k]:values[k];}
   function appFields(){var id=$('remoteApp').value;$('remoteAppFields').hidden=!id;if(!id)return;

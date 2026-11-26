@@ -53,31 +53,30 @@ var document = {
   addEventListener:function (type,cb) { docEvents[type]=cb; }
 };
 var panel=node('customizePanel'); panel.className='hidden';
-['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizePrivacyTab','customizeWallpaperTab','customizeUpdateTab'].forEach(function (id) {
+['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizePrivacyTab','customizeWallpaperTab'].forEach(function (id) {
   panel.appendChild(node(id,'button'));
 });
 var groups = {
   customizeStyleView:['customizeThemes','customizeFonts','customizeLargeText',
     'customizeShowWeek','customizeMotion','customizeIdleTime','customizeIdleRain','customizeIdleEffect','customizeResetStyle'],
   customizeWallpaperView:['customizeWallpaper','customizeWallQr','customizeWallState','customizeWallHost'],
-  customizeUpdateView:['customizeUpdateState','customizeVersion','customizeReleaseResult','customizeCheckUpdate','customizeUpdateHelp','customizeUpdateHelpText'],
   customizeWeatherView:['customizeWeatherChoice',
     'customizeWeatherSearch','customizeWeatherSearchBtn','customizeWeatherResults',
     'customizeWeatherEnable','customizeWeatherUnit'],
   customizeCalendarView:['customizeSolar','customizeLunar','customizeCalendarNote'],
-  customizeAppsView:['customizeAppList','customizeHideLGApps','customizeResetApps'],
+  customizeAppsView:['customizeAppList','customizeHideLGApps','customizeResetApps','customizeShowAllApps','customizeAppFilter','customizeAppSort','customizeAppSummary'],
   customizePrivacyView:[]
 };
 Object.keys(groups).forEach(function (name) {
   var view=node(name); view.className='hidden'; panel.appendChild(view);
   groups[name].forEach(function (id) {
     view.appendChild(node(id,id==='customizeWeatherSearch'?'input':
-      /Btn$|customizeIdleTime|customizeIdleRain|customizeIdleEffect|customizeCheckUpdate|customizeUpdateHelp$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
+      /Btn$|customizeShowAllApps|customizeAppFilter|customizeAppSort|customizeIdleTime|customizeIdleRain|customizeIdleEffect|customizeCheckUpdate|customizeUpdateHelp$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
   });
 });
 var browse=node('customizeAppBrowse');node('customizeAppsView').appendChild(browse);browse.appendChild(node('customizeAppList'));node('customizeAppsView').appendChild(node('customizeAppOptions'));
 ['customizeAppPrev','customizeAppNext'].forEach(function(id){browse.appendChild(node(id,'button'));});browse.appendChild(node('customizeAppPage'));
-var editor=node('customizeAppEditor');editor.className='hidden';node('customizeAppsView').appendChild(editor);
+var editor=node('customizeAppEditor');['customizeAppPin','customizeAppLaunch'].forEach(function(id){editor.appendChild(node(id,'button'));});editor.className='hidden';node('customizeAppsView').appendChild(editor);
 node('customizeAppsView').appendChild(node('customizeGlobalPacks'));
 ['customizeAppEditorTitle','customizeAppPreview','customizeAppPackChoices','customizeAppGlyphChoices'].forEach(function(id){editor.appendChild(node(id));});
 ['customizeAppName','customizeAppFile'].forEach(function(id){editor.appendChild(node(id,'input'));});
@@ -128,10 +127,6 @@ assert.equal(node('customizeWallState').textContent,
 node('customizeWallpaper').click();
 assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true,
   'Wallpaper QR refresh must keep settings open, not return to Home');
-node('customizeUpdateTab').click();node('customizeCheckUpdate').click();assert.ok(node('customizeReleaseResult').textContent.indexOf('v1.6.1')>=0);
-assert.ok(document.body.children.some(function(el) {
-  return el.id==='updateStatusJs' && el.src.indexOf('update-status.js?ts=')===0;
-}), 'Settings should load current automatic-update status from TV');
 // Privacy page is informational: never silently changes DNS or root.
 node('customizePrivacyTab').click();
 assert.equal(node('customizePrivacyView').hasClass('hidden'),false);

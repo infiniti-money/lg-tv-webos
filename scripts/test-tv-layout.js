@@ -62,8 +62,7 @@ assert.ok(/border-radius:24px!important/.test(css) &&
 assert.ok(html.indexOf('id="customizeWallQr"')>=0 &&
   html.indexOf('id="btnWall"')<0 && html.indexOf('id="customizeWallpaper"')>=0,
   'Wallpaper QR setup must be inside Customize rather than on the top bar');
-assert.ok(html.indexOf('id="customizeUpdateState"')>=0,
-  'Settings should explain automatic update availability');
+assert.ok(html.indexOf('id="customizeUpdateState"')<0,'Update UI removed');
 assert.ok(app.indexOf("var pills = [")>=0 && app.indexOf("'btnWall'")<0,
   'Remote focus must not navigate to a removed wallpaper top button');
 assert.ok(/var DOCK_TOP = 1030 - TILE_H - 46;/.test(app),
@@ -113,7 +112,7 @@ assert.ok(/width:100%; height:100%/.test(block('.item .card.icon-landscape img')
 console.log('Icon aspect ratio and solid-edge background tests passed.');
 
 assert.ok(/flex-direction:column/.test(block('.customizeMain .customizeTabs')));
-assert.ok(html.indexOf('id="customizeCheckUpdate"')>=0 && html.indexOf('id="customizeAppNext"')>=0);
+assert.ok(html.indexOf('id="customizeCheckUpdate"')<0 && html.indexOf('id="customizeAppNext"')>=0);
 
 // Idle rules hide only dock, controls and three-day forecast, never current weather or dates.
 var idleHide=css.match(/body\.idle-home #topButtons,[^{}]+\{\s*visibility:hidden;\s*\}/);

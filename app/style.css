@@ -835,3 +835,5 @@ body.idle-home:not(.launcher-covered) #idleSignature { opacity:1; visibility:vis
 body.motion-reduced #idleSignature { transition:none; }
 
 #customizeWallHost { overflow-wrap:break-word; word-break:break-all; max-width:100%; font-size:18px; }
+
+#customizeAppOptions .customizeChoice button { padding:8px 12px; font-size:19px; }

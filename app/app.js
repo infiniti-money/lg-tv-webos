@@ -162,6 +162,7 @@
 
   // ---- apps ----------------------------------------------------------------------------------
 
+  window.INFINITI_OPEN_APP=function(id,title){if(!launcherCovered())launch(id,title);};
   function orderedApps() {
     var all = (window.TV_APPS && TV_APPS.apps) || [];
     if(window.INFINITI_PREFS && INFINITI_PREFS.styledApp) all=all.map(INFINITI_PREFS.styledApp);
@@ -178,6 +179,7 @@
     }
     var byTitle = function (a, b) { return a.title.toLowerCase() < b.title.toLowerCase() ? -1 : 1; };
 
+    var pinned=[];if(window.INFINITI_PREFS&&INFINITI_PREFS.getPinned)INFINITI_PREFS.getPinned().forEach(function(id){if(byId[id]&&!hidden[id]){pinned.push(byId[id]);hidden[id]=true;}});
     // An order arranged on the TV wins, until dockApps in config.js changes.
     var saved = loadOrder();
     if (saved) {
@@ -185,7 +187,7 @@
       saved.forEach(function (id) {
         if (byId[id] && !hidden[id]) { placed.push(byId[id]); hidden[id] = true; }
       });
-      return placed.concat(all.filter(function (a) { return !hidden[a.id]; }).sort(byTitle));
+      return pinned.concat(placed,all.filter(function (a) { return !hidden[a.id]; }).sort(byTitle));
     }
 
     var dock = [];
@@ -194,7 +196,7 @@
     });
     var rest = all.filter(function (a) { return !hidden[a.id]; });
     rest.sort(byTitle);
-    return dock.concat(rest);
+    return pinned.concat(dock,rest);
   }
 
   var ORDER_KEY = 'tvhome.order';

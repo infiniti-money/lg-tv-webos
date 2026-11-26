@@ -227,6 +227,8 @@
     cache[APP_STYLE_KEY]=map;
     return true;
   }
+  function getPinned(){var v=safeRead('tvhome.pinned.v1').ids;return Array.isArray(v)?v.filter(validAppId).slice(0,250):[];}
+  function setPinned(id,on){if(!validAppId(id))return false;var list=getPinned().filter(function(x){return x!==id;});if(on)list.unshift(id);return safeWrite('tvhome.pinned.v1',{ids:list});}
   function styledApp(app) {
     var style = getAppStyle(app.id), out = {};
     Object.keys(app).forEach(function(k){out[k]=app[k];});
@@ -254,7 +256,7 @@
   }
   var api = {
     directionalIndex:directionalIndex,
-    getAppStyle:getAppStyle, saveAppStyle:saveAppStyle, styledApp:styledApp,
+    getAppStyle:getAppStyle, saveAppStyle:saveAppStyle, styledApp:styledApp,getPinned:getPinned,setPinned:setPinned,
     iconCategory:iconCategory,packIcon:packIcon,iconSource:iconSource,getIconPack:getIconPack,setIconPack:setIconPack,
     isVisible:isVisible, setVisible:setVisible, resetVisible:resetVisible,
     getAppearance:getAppearance, saveAppearance:saveAppearance, resolveIdleEffect:resolveIdleEffect,
@@ -272,18 +274,18 @@
   var tabs = {
     apps:$('customizeAppsTab'), style:$('customizeStyleTab'),
     weather:$('customizeWeatherTab'), calendar:$('customizeCalendarTab'),
-    privacy:$('customizePrivacyTab'), wallpaper:$('customizeWallpaperTab'), update:$('customizeUpdateTab')
+    privacy:$('customizePrivacyTab'), wallpaper:$('customizeWallpaperTab')
   };
   var views = {
     apps:$('customizeAppsView'), style:$('customizeStyleView'),
     weather:$('customizeWeatherView'), calendar:$('customizeCalendarView'),
-    privacy:$('customizePrivacyView'), wallpaper:$('customizeWallpaperView'), update:$('customizeUpdateView')
+    privacy:$('customizePrivacyView'), wallpaper:$('customizeWallpaperView')
   };
   var appsList = $('customizeAppList'), themeBox = $('customizeThemes');
   var fontBox = $('customizeFonts'), status = $('customizeStatus');
   var opened = false, activeTab = 'style', searchRequest = null;
   var appPage=0, glyphPage=0, currentGlyphPack='minimal', APP_PAGE_SIZE=5, GLYPH_PAGE_SIZE=6;
-  var releaseRequest=null, installedVersion='1.6.1';
+  var appFilter=0,appSort=0;
 
   function applyAppearance() {
     var a = getAppearance(), body = document.body;
@@ -335,6 +337,7 @@
     var style=getAppStyle(app.id);
     uploadSequence++; iconBusy=false; editingApp=app; pendingIcon=style.icon;
     glyphPage=0;
+    $('customizeAppPin').textContent=getPinned().indexOf(app.id)>=0?'Bỏ ghim':'Ghim đầu Home';
     $('customizeAppEditorTitle').textContent='Tùy chỉnh: '+(app.title || app.id);
     $('customizeAppName').value=style.title || app.title || app.id;
     $('customizeAppFile').value='';
@@ -451,10 +454,16 @@
     all.forEach(function (app) {
       if (app && app.id && !isProtected(app.id)) installed.push(app);
     });
+    var pins=getPinned(),shown=installed.filter(function(app){return isVisible(app.id,(root.CONFIG||{}).hiddenApps);}).length;
+    $('customizeAppSummary').textContent=installed.length+' ứng dụng · '+shown+' hiện · '+(installed.length-shown)+' ẩn';
+    $('customizeAppFilter').textContent='Lọc: '+['Tất cả','Đang hiện','Đang ẩn','Đã ghim'][appFilter];
+    $('customizeAppSort').textContent='Sắp xếp: '+['A–Z','Z–A','Đã ghim trước'][appSort];
+    installed=installed.filter(function(app){var v=isVisible(app.id,(root.CONFIG||{}).hiddenApps);return appFilter===0||(appFilter===1&&v)||(appFilter===2&&!v)||(appFilter===3&&pins.indexOf(app.id)>=0);});
     installed.sort(function (a, b) {
+      if(appSort===2){var pa=pins.indexOf(a.id),pb=pins.indexOf(b.id);if(pa!==pb){if(pa<0)return 1;if(pb<0)return -1;return pa-pb;}}
       var aa = String(a.title || a.id).toLowerCase();
       var bb = String(b.title || b.id).toLowerCase();
-      return aa < bb ? -1 : aa > bb ? 1 : 0;
+      return (aa < bb ? -1 : aa > bb ? 1 : 0)*(appSort===1?-1:1);
     });
     var pages=Math.max(1,Math.ceil(installed.length/APP_PAGE_SIZE));
     appPage=Math.max(0,Math.min(appPage,pages-1));
@@ -519,53 +528,6 @@
         state.textContent = 'Không tạo được mã QR. Hãy kiểm tra bộ cài và thử lại.';
       }
     });
-  }
-  function checkRelease(){
-    var out=$('customizeReleaseResult');
-    if(releaseRequest)return;
-    var x=new XMLHttpRequest();
-    releaseRequest=x;
-    out.textContent='Đang kiểm tra bản chính thức…';
-    x.open('GET','https://api.github.com/repos/infiniti-money/lg-tv-webos/releases/latest',true);
-    x.timeout=12000;
-    x.onload=function(){
-      if(releaseRequest!==x)return;
-      releaseRequest=null;
-      try{
-        var v=JSON.parse(x.responseText);
-        if(x.status!==200||v.draft||v.prerelease||!/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(v.tag_name))throw Error('bad release');
-        var latest=v.tag_name.slice(1), a=installedVersion.split('.').map(Number), b=latest.split('.').map(Number), cmp=0;
-        if(a.length===3)for(var i=0;i<3;i++){if(b[i]!==a[i]){cmp=b[i]>a[i]?1:-1;break;}}
-        out.textContent='Bản chính thức mới nhất: '+v.tag_name+'. '+(a.length!==3?'Hãy so sánh phiên bản.':cmp>0?'Có bản mới. Dùng hướng dẫn cài đặt.':'Không có bản mới hơn.');
-      }catch(e){out.textContent='Không đọc được thông tin phát hành. Kiểm tra mạng hoặc GitHub.';}
-    };
-    x.onerror=x.ontimeout=function(){if(releaseRequest===x){releaseRequest=null;out.textContent='Không kết nối được GitHub. Kiểm tra mạng hoặc mở trang phát hành trên điện thoại.';}};
-    try{x.send();}catch(e){x.onerror();}
-  }
-  function renderUpdateStatus() {
-    var output = $('customizeUpdateState');
-    if (!output) return;
-    var old = $('updateStatusJs');
-    if (old && old.parentNode) old.parentNode.removeChild(old);
-    root.INFINITI_UPDATE_STATUS = null;
-    var sc = document.createElement('script');
-    sc.id = 'updateStatusJs';
-    sc.src = 'update-status.js?ts=' + Date.now();
-    sc.onload = function () {
-      var status = root.INFINITI_UPDATE_STATUS;
-      if(status && status.version){installedVersion=status.version;$('customizeVersion').textContent='Phiên bản hiện tại: '+status.version;}
-      if (!status || !status.enabled) {
-        output.textContent = 'Tự cập nhật chưa bật. Dùng --auto-update khi chạy bộ cài root để kích hoạt.';
-      } else {
-        output.textContent = 'Tự cập nhật: đã bật. ' +
-          (status.version ? 'Phiên bản đã cập nhật: ' + status.version + '. ' : '') +
-          'Sẽ chỉ cài khi Infiniti Home không đang hiển thị và đã qua thời gian bảo vệ sau khi bật TV.';
-      }
-    };
-    sc.onerror = function () {
-      output.textContent = 'Tự cập nhật chưa bật hoặc chưa có trạng thái. Cần gói root và tùy chọn --auto-update.';
-    };
-    document.body.appendChild(sc);
   }
   function renderStyle() {
     var a = getAppearance();
@@ -679,7 +641,6 @@
   function activateTab(name) {
     closeAppEditor();
     if(searchRequest){var oldSearch=searchRequest;searchRequest=null;oldSearch.abort();}
-    if(releaseRequest){var oldRelease=releaseRequest;releaseRequest=null;oldRelease.abort();}
     activeTab = name;
     var key;
     for (key in tabs) {
@@ -688,12 +649,11 @@
       if (key === name) views[key].classList.remove('hidden');
       else views[key].classList.add('hidden');
     }
-    if (name === 'apps') {appPage=0;renderGlobalPacks();renderApps();}
+    if (name === 'apps') {appPage=0;appFilter=0;appSort=0;renderGlobalPacks();renderApps();}
     else if (name === 'style') renderStyle();
     else if (name === 'weather') renderWeather();
     else if (name === 'calendar') renderCalendar();
     else if (name === 'wallpaper') renderWallpaperQR();
-    else if (name === 'update') renderUpdateStatus();
     message('');
   }
   function show() {
@@ -707,7 +667,6 @@
   function hide() {
     closeAppEditor();
     if (searchRequest) { searchRequest.abort(); searchRequest = null; }
-    if(releaseRequest){var req=releaseRequest;releaseRequest=null;req.abort();}
     opened = false;
     panel.classList.add('hidden');
     document.body.classList.remove('customize-open');
@@ -723,7 +682,7 @@
   }
   // Directional focus based on actual visible button geometry; no CSS spatial-navigation dependency.
   function moveFocus(buttons,i,code){
-    var active=buttons[i], menu=['style','wallpaper','weather','calendar','apps','privacy','update'];
+    var active=buttons[i], menu=['style','wallpaper','weather','calendar','apps','privacy'];
     var selected=menu.filter(function(k){return tabs[k]===active;})[0];
     if(selected && (code===38||code===40)){
       var index=menu.indexOf(selected)+(code===38?-1:1);
@@ -807,8 +766,6 @@
   $('customizeAppNext').addEventListener('click',function(){pageApps(1);});
   $('customizeGlyphPrev').addEventListener('click',function(){pageGlyphs(-1);});
   $('customizeGlyphNext').addEventListener('click',function(){pageGlyphs(1);});
-  $('customizeCheckUpdate').addEventListener('click',checkRelease);
-  $('customizeUpdateHelp').addEventListener('click',function(){$('customizeUpdateHelpText').classList.remove('hidden');});
   $('customizeAppSave').addEventListener('click',function(){applyAppEditor(false);});
   $('customizeAppRestore').addEventListener('click',function(){applyAppEditor(true);});
   $('customizeAppCancel').addEventListener('click',function(){closeAppEditor();renderApps();tabs.apps.focus();});
@@ -825,6 +782,11 @@
     message(count ? 'Đã ẩn ' + count + ' biểu tượng ứng dụng LG trong Infiniti.' :
       'Không còn biểu tượng LG mặc định nào cần ẩn.');
   });
+  $('customizeAppFilter').addEventListener('click',function(){appFilter=(appFilter+1)%4;appPage=0;renderApps();});
+  $('customizeAppSort').addEventListener('click',function(){appSort=(appSort+1)%3;appPage=0;renderApps();});
+  $('customizeShowAllApps').addEventListener('click',function(){((root.TV_APPS||{}).apps||[]).forEach(function(a){if(a&&validAppId(a.id))setVisible(a.id,true);});refreshLauncher();renderApps();message('Đã hiện các ứng dụng có thể chỉnh sửa.');});
+  $('customizeAppPin').addEventListener('click',function(){if(!editingApp)return;var on=getPinned().indexOf(editingApp.id)<0;if(setPinned(editingApp.id,on)){if(on)setVisible(editingApp.id,true);refreshLauncher();$('customizeAppPin').textContent=on?'Bỏ ghim':'Ghim đầu Home';message(on?'Đã ghim':'Đã bỏ ghim');}});
+  $('customizeAppLaunch').addEventListener('click',function(){if(!editingApp||!root.INFINITI_OPEN_APP)return;var id=editingApp.id,title=styledApp(editingApp).title;hide();root.INFINITI_OPEN_APP(id,title);});
   $('customizeResetApps').addEventListener('click', function () {
     resetVisible(); refreshLauncher(); renderApps();
     message('Đã khôi phục danh sách ứng dụng mặc định.');

@@ -84,7 +84,6 @@
         <button type="button" id="customizeCalendarTab">Âm · dương lịch</button>
         <button type="button" id="customizeAppsTab">Ứng dụng</button>
         <button type="button" id="customizePrivacyTab">Chặn quảng cáo</button>
-        <button type="button" id="customizeUpdateTab">Cập nhật</button>
       </div>
       <div class="customizeContent">
         <div id="customizeStyleView">
@@ -114,14 +113,6 @@
             </div>
           </div>
         </div>
-        <div id="customizeUpdateView" class="hidden">
-          <h3>Cập nhật ứng dụng</h3>
-          <p id="customizeVersion">Phiên bản hiện tại: 1.6.1</p>
-          <p id="customizeReleaseResult">Kiểm tra bản chính thức mới nhất.</p>
-          <div class="customizeChoice"><button id="customizeCheckUpdate" type="button">Kiểm tra cập nhật</button><button id="customizeUpdateHelp" type="button">Hướng dẫn cài đặt</button></div>
-          <p id="customizeUpdateHelpText" class="hidden">Cài IPK và Root Tools cùng phiên bản qua SSH. Tải tại github.com/infiniti-money/lg-tv-webos/releases/latest. Kiểm tra SHA-256, tắt watcher trước khi thay tệp. Không gỡ app cũ.</p>
-          <p id="customizeUpdateState">Tự cập nhật: chưa cấu hình. Chạy trình cài đặt root với --auto-update để kích hoạt.</p>
-        </div>
         <div id="customizeWeatherView" class="hidden">
           <p>Chọn khu vực trên TV, không cần chỉnh sửa mã nguồn hoặc SSH. Lựa chọn sẽ được lưu trên TV.</p>
           <div class="customizeSelectedCity" id="customizeWeatherChoice">Chưa chọn khu vực</div>
@@ -149,9 +140,9 @@
         <div id="customizeAppsView" class="hidden">
           <div id="customizeAppOptions"><p>Thêm hoặc ẩn biểu tượng trên Designed by Tân Dev. Không gỡ ứng dụng khỏi TV.</p>
           <div class="customizeChoice">
-            <button id="customizeHideLGApps" type="button">Ẩn nhanh ứng dụng LG mặc định</button>
+            <button id="customizeHideLGApps" type="button">Ẩn app LG</button><button id="customizeShowAllApps" type="button">Hiện tất cả</button><button id="customizeAppFilter" type="button">Lọc: Tất cả</button><button id="customizeAppSort" type="button">Sắp xếp: A–Z</button>
           </div>
-          <p class="customizeHint">Chỉ ẩn biểu tượng trong Infiniti. Không xóa hoặc vô hiệu hóa các ứng dụng LG, Input Hook, Homebrew, HDMI và Live TV.</p>
+          <p id="customizeAppSummary" class="customizeHint">Chỉ thay đổi biểu tượng trên Home, không gỡ ứng dụng.</p>
           <h3>Bộ icon toàn bộ ứng dụng</h3><div id="customizeGlobalPacks" class="customizeChoice"></div>
           </div><div id="customizeAppBrowse"><div id="customizeAppList"></div><div class="customizePager"><button id="customizeAppPrev" type="button">‹ Trước</button><span id="customizeAppPage"></span><button id="customizeAppNext" type="button">Sau ›</button></div></div>
           <div id="customizeAppEditor" class="hidden">
@@ -180,7 +171,7 @@
             <div class="customizeChoice">
               <button id="customizeAppSave" type="button">Lưu</button>
               <button id="customizeAppRestore" type="button">Khôi phục tên và icon gốc</button>
-              <button id="customizeAppCancel" type="button">Hủy</button>
+              <button id="customizeAppCancel" type="button">Hủy</button><button id="customizeAppPin" type="button">Ghim đầu Home</button><button id="customizeAppLaunch" type="button">Mở ứng dụng</button>
             </div>
           </div>
           <button id="customizeResetApps" type="button">Khôi phục ứng dụng mặc định</button>

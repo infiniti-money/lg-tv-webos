@@ -81,34 +81,55 @@
   function launcherCovered() {
     return lifecycle ? lifecycle.isCovered() : !!document.hidden;
   }
-  var idleTimer=null, idleActive=false, idleWakeKey=0, idleClickUntil=0, idleMouseX=null,idleMouseY=null,idleEffectClass='',idleMouseAt=0;
+  var idleTimer=null, idleActive=false, idleWakeKey=0, idleClickUntil=0, idleMouseX=null,idleMouseY=null,idleEffectClass='',idleMouseAt=0,idlePreviewTimer=null,idleWakeUntil=0,idleLastInput=Date.now();
   function idlePrefs(){return window.INFINITI_PREFS?window.INFINITI_PREFS.getAppearance():{idleSeconds:60,idleRain:true};}
-  function idleEligible(){return !launcherCovered()&&!editing&&!arranging&&!okDown&&!pressTimer&&(zone==='grid'||zone==='top'||zone==='pen')&&!(window.INFINITI_CUSTOMIZE_IS_OPEN&&window.INFINITI_CUSTOMIZE_IS_OPEN());}
-  function idleClear(){if(idleTimer!==null){clearTimeout(idleTimer);idleTimer=null;}}
-  function idleShow(){if(idleActive&&window.INFINITI_IDLE_ALBUM_STOP)window.INFINITI_IDLE_ALBUM_STOP();idleActive=false;document.body.classList.remove('idle-home');if(idleEffectClass)document.body.classList.remove(idleEffectClass);idleEffectClass='';}
+  function idleEligible(){return !launcherCovered()&&!editing&&!arranging&&(zone==='grid'||zone==='top'||zone==='pen'||zone==='none')&&!(window.INFINITI_CUSTOMIZE_IS_OPEN&&window.INFINITI_CUSTOMIZE_IS_OPEN());}
+  function idleClear(){if(idleTimer!==null){clearTimeout(idleTimer);idleTimer=null;}if(idlePreviewTimer!==null){clearTimeout(idlePreviewTimer);idlePreviewTimer=null;}}
+  function idleShow(){if(window.INFINITI_IDLE_EFFECT_STOP)window.INFINITI_IDLE_EFFECT_STOP();if(idleActive&&window.INFINITI_IDLE_ALBUM_STOP)window.INFINITI_IDLE_ALBUM_STOP();idleActive=false;document.body.classList.remove('idle-home');if(idleEffectClass)document.body.classList.remove(idleEffectClass);idleEffectClass='';}
+  function idleEnter(preview){
+    if(!idleEligible()||idleActive)return false;
+    idleClear();
+    // A lost key-up must not block idle forever or launch an app on return.
+    resetDialogOk();
+    if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
+    var p=idlePrefs(),effect=window.INFINITI_PREFS&&window.INFINITI_PREFS.resolveIdleEffect?window.INFINITI_PREFS.resolveIdleEffect(p,Math.random()):(p.idleRain&&!p.reduceMotion?'rain':'');
+    idleActive=true;idleWakeUntil=Date.now()+(preview?700:200);
+    document.body.classList.add('idle-home');
+    if(window.INFINITI_IDLE_ALBUM_START)window.INFINITI_IDLE_ALBUM_START();
+    if(effect){idleEffectClass='idle-'+effect;document.body.classList.add(idleEffectClass);if(window.INFINITI_IDLE_EFFECT_START)window.INFINITI_IDLE_EFFECT_START(effect);}
+    return true;
+  }
   function idleSchedule(){
     idleClear();var p=idlePrefs();if(!p.idleSeconds||launcherCovered()||idleActive)return;
-    idleTimer=setTimeout(function(){idleTimer=null;if(!idleEligible()){idleSchedule();return;}idleActive=true;document.body.classList.add('idle-home');if(window.INFINITI_IDLE_ALBUM_START)window.INFINITI_IDLE_ALBUM_START();var effect=window.INFINITI_PREFS&&window.INFINITI_PREFS.resolveIdleEffect?window.INFINITI_PREFS.resolveIdleEffect(p,Math.random()):(p.idleRain&&!p.reduceMotion?'rain':'');if(effect){idleEffectClass='idle-'+effect;document.body.classList.add(idleEffectClass);}},p.idleSeconds*1000);
+    var remaining=Math.max(0,p.idleSeconds*1000-(Date.now()-idleLastInput));
+    idleTimer=setTimeout(function(){idleTimer=null;if(!idleEligible()){idleLastInput=Date.now();idleSchedule();return;}idleEnter(false);},remaining);
   }
-  function idleReset(){idleShow();idleSchedule();}
+  function idleReset(){idleLastInput=Date.now();idleShow();idleSchedule();}
+  window.INFINITI_IDLE_PREVIEW=function(){
+    if(launcherCovered())return false;
+    idleClear();idlePreviewTimer=setTimeout(function(){idlePreviewTimer=null;if(!idleEnter(true))idleReset();},450);return true;
+  };
+  window.INFINITI_IDLE_STATUS=function(){var p=idlePrefs();return {active:idleActive,covered:launcherCovered(),eligible:idleEligible(),seconds:p.idleSeconds,enabled:p.idleRain,effect:p.idleEffect,reduceMotion:p.reduceMotion,lastInputMs:Date.now()-idleLastInput};};
   function idleStopEvent(e){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();}
   function idleInput(e){
     if(launcherCovered())return;
+    if(e.type==='keydown'&&idleWakeKey&&Date.now()>idleWakeUntil+10000)idleWakeKey=0;
     if(e.type==='keyup'&&idleWakeKey&&e.keyCode===idleWakeKey){idleWakeKey=0;idleStopEvent(e);return;}
     if(e.type==='keydown'&&idleWakeKey&&e.keyCode===idleWakeKey){idleStopEvent(e);return;}
     if(e.type==='mousemove'){
       var moved=idleMouseX===null||Math.abs(e.clientX-idleMouseX)+Math.abs(e.clientY-idleMouseY)>=4;
       if(!moved)return;idleMouseX=e.clientX;idleMouseY=e.clientY;
+      if(idleActive&&Date.now()<idleWakeUntil)return;
     }
     if(e.type==='click'&&Date.now()<idleClickUntil){idleStopEvent(e);return;}
     if(idleActive){
       idleReset();
-      if(e.type==='keydown'){idleWakeKey=e.keyCode;idleStopEvent(e);}
+      if(e.type==='keydown'){idleWakeKey=e.keyCode;idleWakeUntil=Date.now();idleStopEvent(e);}
       else if(e.type==='mousedown'||e.type==='touchstart'||e.type==='wheel'){idleClickUntil=Date.now()+700;idleStopEvent(e);}
       else if(e.type==='click')idleStopEvent(e);
     }else if(e.type!=='keyup'){
       if(e.type==='mousemove'){var now=Date.now();if(now-idleMouseAt<500)return;idleMouseAt=now;}
-      idleSchedule();
+      idleLastInput=Date.now();idleSchedule();
     }
   }
   ['keydown','keyup','mousemove','mousedown','click','touchstart','wheel'].forEach(function(type){document.addEventListener(type,idleInput,true);});
@@ -1041,6 +1062,7 @@
     if (!p.reload && window.PalmSystem) { try { p = JSON.parse(PalmSystem.launchParams || '{}'); } catch (x) { p = {}; } }
     if (p.reload) { location.reload(); return; }
     idleReset();resume();
+    if(p.infinitiIdlePreview===true&&window.INFINITI_IDLE_PREVIEW)window.INFINITI_IDLE_PREVIEW();
     acknowledgeRender(p.infinitiRenderToken?p:readLaunchParams());
   });
   // Glasshouse owns Home and wake; this app never launches itself on resume.
@@ -1123,5 +1145,6 @@
   zone = 'none';
   if (items.length) focusTile(0);
   else focusPill(pills.length - 1);
-  acknowledgeRender(readLaunchParams());
+  var initialParams=readLaunchParams();acknowledgeRender(initialParams);
+  if(initialParams.infinitiIdlePreview===true&&window.INFINITI_IDLE_PREVIEW)window.INFINITI_IDLE_PREVIEW();
 })();

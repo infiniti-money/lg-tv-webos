@@ -58,7 +58,7 @@ var panel=node('customizePanel'); panel.className='hidden';
 });
 var groups = {
   customizeStyleView:['customizeThemes','customizeFonts','customizeLargeText',
-    'customizeShowWeek','customizeMotion','customizeIdleTime','customizeIdleRain','customizeIdleEffect','customizeResetStyle'],
+    'customizeShowWeek','customizeMotion','customizeIdleTime','customizeIdleRain','customizeIdleEffect','customizeIdlePreview','customizeResetStyle'],
   customizeWallpaperView:['customizeWallpaper','customizeWallQr','customizeWallState','customizeWallHost'],
   customizeWeatherView:['customizeWeatherChoice',
     'customizeWeatherSearch','customizeWeatherSearchBtn','customizeWeatherResults',
@@ -71,7 +71,7 @@ Object.keys(groups).forEach(function (name) {
   var view=node(name); view.className='hidden'; panel.appendChild(view);
   groups[name].forEach(function (id) {
     view.appendChild(node(id,id==='customizeWeatherSearch'?'input':
-      /Btn$|customizeShowAllApps|customizeAppFilter|customizeAppSort|customizeIdleTime|customizeIdleRain|customizeIdleEffect|customizeCheckUpdate|customizeUpdateHelp$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
+      /Btn$|customizeShowAllApps|customizeAppFilter|customizeAppSort|customizeIdleTime|customizeIdleRain|customizeIdleEffect|customizeIdlePreview|customizeCheckUpdate|customizeUpdateHelp$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
   });
 });
 var browse=node('customizeAppBrowse');node('customizeAppsView').appendChild(browse);browse.appendChild(node('customizeAppList'));node('customizeAppsView').appendChild(node('customizeAppOptions'));

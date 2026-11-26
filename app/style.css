@@ -837,3 +837,6 @@ body.motion-reduced #idleSignature { transition:none; }
 #customizeWallHost { overflow-wrap:break-word; word-break:break-all; max-width:100%; font-size:18px; }
 
 #customizeAppOptions .customizeChoice button { padding:8px 12px; font-size:19px; }
+
+/* Keep idle effects visibly above the album and below the header/signature. */
+#idleRain { z-index:2; } #idleRain .rainSheet { opacity:.75; }

@@ -688,3 +688,16 @@ body.launcher-covered #hero {
 body.font-large .item.dock .name { font-size:28px; }
 body.motion-reduced .item.focused .card { transform:none; }
 body.motion-reduced #glass { box-shadow:none; }
+
+/* V8.7: fit all five forecast lines inside the 159px card on legacy fonts.
+   Fixed line heights leave room for Vietnamese accents and fallback glyphs. */
+#weekWeather .weekDay { height:159px; padding:10px 16px; overflow:hidden; }
+#weekWeather .weekDay > div { display:block; max-width:100%; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis; margin:0; }
+#weekWeather .weekDay .weekLabel { font-size:22px; line-height:27px; }
+#weekWeather .weekDay .weekDate { font-size:16px; line-height:21px; }
+#weekWeather .weekDay .weekCondition { font-size:18px; line-height:24px; margin-top:3px; }
+#weekWeather .weekDay .weekTemperature { font-size:23px; line-height:29px; margin-top:2px; }
+#weekWeather .weekDay .weekRain { font-size:16px; line-height:21px; margin-top:1px; }
+body.font-large #weekWeather .weekDay .weekLabel { font-size:23px; }
+body.font-large #weekWeather .weekDay .weekTemperature { font-size:24px; }

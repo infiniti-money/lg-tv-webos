@@ -129,11 +129,11 @@ jobs:
       # Future ordinary main pushes cannot trigger the release gate.
       - name: Create verified RC tag
         if: >-
-          ${{ github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.3') }}
+          ${{ github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.4') }}
         shell: bash
         run: |
           set -euo pipefail
-          TAG=v1.6.0-rc.3
+          TAG=v1.6.0-rc.4
           test "$(node -p "require('./app/appinfo.json').version")" = "1.6.0"
           existing=$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')
           if [ -n "$existing" ]; then
@@ -144,11 +144,11 @@ jobs:
           fi
       - name: Publish release candidate
         if: >-
-          ${{ (github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.3')) || github.ref == 'refs/tags/v1.6.0-rc.3' }}
+          ${{ (github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.4')) || github.ref == 'refs/tags/v1.6.0-rc.4' }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.6.0-rc.3
-          name: Designed by Tân Dev v1.6.0 RC3 — V8.6
+          tag_name: v1.6.0-rc.4
+          name: Designed by Tân Dev v1.6.0 RC4 — V8.7
           prerelease: true
           make_latest: false
           files: |

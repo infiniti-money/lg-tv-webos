@@ -77,3 +77,16 @@ assert.ok(/#dockBand, body.theme-ocean #dockBand, body.theme-amber #dockBand/.te
 assert.ok(/\.item\.dock \.name \{[\s\S]*?display:block/.test(css),
   'Compact dock must still show readable app labels');
 console.log('LG TV 1080p/720p: larger rounded single-row dock, Customize wallpaper QR and updater status passed.');
+
+var weatherRules=['weekLabel','weekDate','weekCondition','weekTemperature','weekRain'];
+var weatherHeight=20+2;
+weatherRules.forEach(function(name){
+  var sel='#weekWeather .weekDay .'+name, rule=block(sel);
+  weatherHeight+=px(sel,'line-height');
+  if(/margin-top:/.test(rule))weatherHeight+=px(sel,'margin-top');
+  assert.ok(px(sel,'font-size')<px(sel,'line-height'),'Weather line must fit '+name);
+});
+assert.ok(weatherHeight<=159,'Five forecast lines and padding must fit: '+weatherHeight);
+assert.ok(/overflow:hidden/.test(block('#weekWeather .weekDay')),'No overflowing forecast text');
+assert.ok(/text-overflow:ellipsis/.test(block('#weekWeather .weekDay > div')),'Long forecast labels stay contained');
+console.log('Three-day forecast text height '+weatherHeight+'/159px: fits.');

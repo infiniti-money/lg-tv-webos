@@ -1,4 +1,4 @@
-/* Infiniti TV Home settings: ES5 for LG webOS 3.x / Chromium 38.
+/* Designed by Tân Dev settings: ES5 for LG webOS 3.x / Chromium 38.
  * Local changes affect only launcher appearance and weather, not TV system settings.
  */
 (function (root) {

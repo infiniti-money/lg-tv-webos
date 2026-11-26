@@ -1,5 +1,5 @@
 #!/bin/sh
-# Infiniti TV Home - one-command installer for ROOTED LG webOS TVs.
+# Designed by Tân Dev - one-command installer for ROOTED LG webOS TVs.
 # Run it ON the TV as root (over SSH):
 #
 #   curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh | sh
@@ -25,7 +25,7 @@
 #   --auto-update           Enable delayed, SHA-256-verified app updates + wallpaper server
 #   --wallpaper-service     Enable wallpaper QR phone server only (no app update)
 #   --no-auto-update        Disable auto updates; safe mode also stops background services by default
-#   --uninstall             Remove Infiniti TV Home after safe recovery
+#   --uninstall             Remove Designed by Tân Dev after safe recovery
 #   --app-only              Only install IPK; no root sidecar/boot/keymap changes
 #   --diagnose-root         Read-only Homebrew/Failsafe status, even without root
 #   --recover-home          Explicitly archive/disarm custom Home hooks and exit
@@ -154,7 +154,7 @@ fi
 
 # ---------------------------------------------------------------- uninstall
 if [ -n "$UNINSTALL" ]; then
-  say "Removing Infiniti TV Home"
+  say "Removing Designed by Tân Dev"
   [ ! -f "$DATA/legacy-home.sh" ] || sh "$DATA/legacy-home.sh" disable || die "V8 recovery failed"
   if [ -f "$DATA/home-control.sh" ]; then
     sh "$DATA/home-control.sh" disable || die "Could not safely restore the previous Home key binding. Check $DATA/home-key-backup.json"

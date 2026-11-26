@@ -1,3 +1,5 @@
+> Tài liệu kỹ thuật/tham chiếu lịch sử — Designed by Tân Dev. Hướng dẫn cài đặt hiện hành: [Owner guide](owner-guide.vi.md). Không áp dụng hook thử nghiệm cũ đồng thời với Legacy Home.
+
 # Autostart webOS 3.4 — Chuyển giao màn hình an toàn (thử nghiệm)
 
 **Phạm vi:** Ứng dụng phụ \`org.webosbrew.autostart\` được build từ mã nguồn upstream speed47 (ISC). Không thay Homebrew Channel v0.7.3 chính thức, không đụng LG Home hay phân vùng hệ thống.

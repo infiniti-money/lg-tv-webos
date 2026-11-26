@@ -1,3 +1,5 @@
+> Tài liệu kỹ thuật/tham chiếu lịch sử — Designed by Tân Dev. Hướng dẫn cài đặt hiện hành: [Owner guide](owner-guide.vi.md). Không áp dụng hook thử nghiệm cũ đồng thời với Legacy Home.
+
 # Tương thích các launcher LG với Infiniti TV Home (webOS 3.4)
 
 Tài liệu đối chiếu các dự án tham khảo, không sao chép toàn bộ launcher

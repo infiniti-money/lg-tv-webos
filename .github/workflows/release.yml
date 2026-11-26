@@ -1,5 +1,5 @@
-# Package Infiniti TV Home for legacy LG webOS 3.4.0 (Chromium 38).
-name: Build Infiniti TV Home
+# Package Designed by Tân Dev for legacy LG webOS 3.4.0 (Chromium 38).
+name: Build Designed by Tân Dev
 on:
   push:
     # Test feature branches even when pull_request events from app-authored

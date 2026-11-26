@@ -1,3 +1,5 @@
+> Tài liệu kỹ thuật/tham chiếu lịch sử — Designed by Tân Dev. Hướng dẫn cài đặt hiện hành: [Owner guide](owner-guide.vi.md). Không áp dụng hook thử nghiệm cũ đồng thời với Legacy Home.
+
 # Infiniti TV Home + Glasshouse: tránh màn hình đen sau standby trên webOS 3.x
 
 Áp dụng cho LG webOS 3.4.0 đã root, Glasshouse Custom Launcher. Đây là hướng dẫn **nghiệm thu trên TV thật**, không phải bảo đảm đã sửa được mọi lỗi đèn nền/compositor.

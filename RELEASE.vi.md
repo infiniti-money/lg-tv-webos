@@ -1,3 +1,7 @@
+# v1.6.2 — Designed by Tân Dev
+
+Xem RELEASE_NOTES_v1.6.2.md. Cài IPK và Root Tools đồng bộ qua SSH; không có mục Cập nhật trên TV.
+
 # v1.6.1 — Designed by Tân Dev
 
 Xem RELEASE_NOTES_v1.6.1.md để cài đặt và biết giới hạn kiểm thử.

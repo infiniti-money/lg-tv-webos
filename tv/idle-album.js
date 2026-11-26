@@ -11,17 +11,19 @@ function create(data,appDir,allowed,log){
  try{var old=JSON.parse(fs.readFileSync(file,'utf8'));st=settings(old);st.photos=(old.photos||[]).filter(function(id,i,a){return typeof id==='string'&&ID.test(id)&&a.indexOf(id)===i&&fs.existsSync(path.join(dir,id+'.jpg'));}).slice(0,MAX);}catch(e){}
  function atomic(f,s,mode){var t=f+'.album-'+process.pid;fs.writeFileSync(t,s,{mode:mode});fs.renameSync(t,f);}
  function powerEpoch(){try{var boot=fs.readFileSync('/proc/sys/kernel/random/boot_id','utf8').trim(),wake='';try{wake=fs.readFileSync('/tmp/infiniti-idle-wake','utf8').trim();}catch(e){}return /^[a-f0-9-]{36}$/.test(boot)?boot+':'+wake:'';}catch(e){return '';}}
- function publish(){if(!allowed())return false;try{
-   var dest=appDir();if(!fs.existsSync(dest))return false;
+ var lastPublish=0,lastDest='',lastEpoch='';
+ function publish(force){if(!allowed())return false;try{
+   var dest=appDir(),epoch=powerEpoch(),now=Date.now();if(!fs.existsSync(dest))return false;
+   if(!force&&dest===lastDest&&epoch===lastEpoch&&now-lastPublish<30000&&fs.existsSync(path.join(dest,'idle-album.js')))return true;
    var valid=[];
    st.photos.forEach(function(id){var n='idle-photo-'+id+'.jpg',target=path.join(dest,n),src=path.join(dir,id+'.jpg');try{if(!fs.existsSync(target)||fs.statSync(target).size!==fs.statSync(src).size)atomic(target,fs.readFileSync(src),420);valid.push(id);}catch(e){log('album copy: '+e.message);}});
-   var script='window.INFINITI_IDLE_ALBUM = '+JSON.stringify({enabled:st.enabled,seconds:st.seconds,random:st.random,powerEpoch:powerEpoch(),photos:valid})+';\n',f=path.join(dest,'idle-album.js'),same=false;
+   var script='window.INFINITI_IDLE_ALBUM = '+JSON.stringify({enabled:st.enabled,seconds:st.seconds,random:st.random,powerEpoch:epoch,photos:valid})+';\n',f=path.join(dest,'idle-album.js'),same=false;
    try{same=fs.readFileSync(f,'utf8')===script;}catch(e){}
    if(!same)atomic(f,script,420);
    fs.readdirSync(dest).forEach(function(n){var m=/^idle-photo-([a-f0-9]{24})\.jpg$/.exec(n);if(m&&st.photos.indexOf(m[1])<0)try{fs.unlinkSync(path.join(dest,n));}catch(e){}});
-   return valid.length===st.photos.length;
+   if(valid.length===st.photos.length){lastDest=dest;lastEpoch=epoch;lastPublish=now;return true;}return false;
  }catch(e){log('album publish: '+e.message);return false;}}
- function save(next){if(!allowed())throw Error('disabled');atomic(file,JSON.stringify(next),384);st=next;return publish();}
+ function save(next){if(!allowed())throw Error('disabled');atomic(file,JSON.stringify(next),384);st=next;return publish(true);}
  function route(req,res,u,json,send){
   var p=u.pathname,m=req.method,q=u.query;
   if(p.indexOf('/api/album')!==0)return false;

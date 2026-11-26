@@ -81,7 +81,7 @@
   function launcherCovered() {
     return lifecycle ? lifecycle.isCovered() : !!document.hidden;
   }
-  var idleTimer=null, idleActive=false, idleWakeKey=0, idleClickUntil=0, idleMouseX=null,idleMouseY=null,idleEffectClass='';
+  var idleTimer=null, idleActive=false, idleWakeKey=0, idleClickUntil=0, idleMouseX=null,idleMouseY=null,idleEffectClass='',idleMouseAt=0;
   function idlePrefs(){return window.INFINITI_PREFS?window.INFINITI_PREFS.getAppearance():{idleSeconds:60,idleRain:true};}
   function idleEligible(){return !launcherCovered()&&!editing&&!arranging&&!okDown&&!pressTimer&&(zone==='grid'||zone==='top'||zone==='pen')&&!(window.INFINITI_CUSTOMIZE_IS_OPEN&&window.INFINITI_CUSTOMIZE_IS_OPEN());}
   function idleClear(){if(idleTimer!==null){clearTimeout(idleTimer);idleTimer=null;}}
@@ -106,7 +106,10 @@
       if(e.type==='keydown'){idleWakeKey=e.keyCode;idleStopEvent(e);}
       else if(e.type==='mousedown'||e.type==='touchstart'||e.type==='wheel'){idleClickUntil=Date.now()+700;idleStopEvent(e);}
       else if(e.type==='click')idleStopEvent(e);
-    }else if(e.type!=='keyup')idleSchedule();
+    }else if(e.type!=='keyup'){
+      if(e.type==='mousemove'){var now=Date.now();if(now-idleMouseAt<500)return;idleMouseAt=now;}
+      idleSchedule();
+    }
   }
   ['keydown','keyup','mousemove','mousedown','click','touchstart','wheel'].forEach(function(type){document.addEventListener(type,idleInput,true);});
   window.INFINITI_IDLE_REFRESH=idleReset;
@@ -192,7 +195,7 @@
 
     var dock = [];
     (CONFIG.dockApps || []).forEach(function (id) {
-      if (byId[id] && !hidden[id] && dock.length < COLUMNS) { dock.push(byId[id]); hidden[id] = true; }
+      if (byId[id] && !hidden[id] && dock.length + pinned.length < COLUMNS) { dock.push(byId[id]); hidden[id] = true; }
     });
     var rest = all.filter(function (a) { return !hidden[a.id]; });
     rest.sort(byTitle);

@@ -24,9 +24,9 @@
     return obj && typeof obj === 'object' && !Array.isArray(obj) ? obj : {};
   }
   function safeWrite(key, data) {
-    cache[key] = data;
     try { if (typeof localStorage !== 'undefined') localStorage.setItem(key, JSON.stringify(data)); }
     catch (e) { return false; }
+    cache[key]=data;
     return true;
   }
   function validCoords(lat, lon) {
@@ -70,8 +70,7 @@
           typeof map[k] === 'boolean' && count < 250) { clean[k] = map[k]; count++; }
     }
     clean[id] = !!visible;
-    safeWrite(VISIBILITY_KEY, clean);
-    return true;
+    return safeWrite(VISIBILITY_KEY, clean);
   }
   function resetVisible() { safeWrite(VISIBILITY_KEY, {}); }
   var IDLE_CHOICES=[0,30,60,120,300];

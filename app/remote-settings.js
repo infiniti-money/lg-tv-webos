@@ -1,7 +1,7 @@
 /* Poll the authenticated local mailbox while the Launcher is visible. ES5. */
 (function(root){
 'use strict';
-var p=root.INFINITI_PREFS,life=root.INFINITI_LIFECYCLE,timer=null,busy=false,serial=0;
+var p=root.INFINITI_PREFS,life=root.INFINITI_LIFECYCLE,timer=null,busy=false,serial=0,lastAck=0,lastPayload='';
 if(!p)return;
 var applied=0;
 try{applied=Number(localStorage.getItem('tvhome.remote.revision'))||0;}catch(e){}
@@ -22,14 +22,15 @@ function apply(inbox){
  var id=m[1];if(m[2]==='visible'){if(!p.setVisible(id,e.value))throw Error('visibility');changed=true;}
  else {var s=apps[id]||p.getAppStyle(id);s[m[2]]=e.value;apps[id]=s;}}
  }
- if(style)p.saveAppearance(delta);
+ if(style){p.saveAppearance(delta);var check=p.getAppearance();Object.keys(delta).forEach(function(k){if(check[k]!==delta[k])throw Error('appearance save');});}
  Object.keys(apps).forEach(function(id){var s=apps[id];if(!p.saveAppStyle(id,s.title,s.icon))throw Error('app style');changed=true;});
  if(style||changed){if(root.INFINITI_REMOTE_REFRESH)root.INFINITI_REMOTE_REFRESH(style,changed);}
  localStorage.setItem('tvhome.remote.revision',String(inbox.revision));applied=inbox.revision;
 }
 function ack(inbox){
  if(covered())return;
- var x=new XMLHttpRequest();try{x.open('POST','http://127.0.0.1:8090/api/remote-ack',true);x.timeout=4000;x.setRequestHeader('X-Infiniti-Remote',inbox.token);x.setRequestHeader('Content-Type','application/json');x.send(JSON.stringify({revision:applied,values:snapshot()}));}catch(e){}
+ var payload=JSON.stringify({revision:applied,values:snapshot()});if(payload===lastPayload&&Date.now()-lastAck<15000)return;
+ var x=new XMLHttpRequest();try{x.open('POST','http://127.0.0.1:8090/api/remote-ack',true);x.timeout=4000;x.setRequestHeader('X-Infiniti-Remote',inbox.token);x.setRequestHeader('Content-Type','application/json');x.onload=function(){if(x.status===200){lastAck=Date.now();lastPayload=payload;}};x.send(payload);}catch(e){}
 }
 function poll(){
  if(document.body.classList.contains('launcher-covered')||covered()||busy||(root.INFINITI_CUSTOMIZE_IS_OPEN&&root.INFINITI_CUSTOMIZE_IS_OPEN())||(root.INFINITI_REMOTE_CAN_APPLY&&!root.INFINITI_REMOTE_CAN_APPLY()))return;

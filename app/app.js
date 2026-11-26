@@ -81,14 +81,14 @@
   function launcherCovered() {
     return lifecycle ? lifecycle.isCovered() : !!document.hidden;
   }
-  var idleTimer=null, idleActive=false, idleWakeKey=0, idleClickUntil=0, idleMouseX=null,idleMouseY=null;
+  var idleTimer=null, idleActive=false, idleWakeKey=0, idleClickUntil=0, idleMouseX=null,idleMouseY=null,idleEffectClass='';
   function idlePrefs(){return window.INFINITI_PREFS?window.INFINITI_PREFS.getAppearance():{idleSeconds:60,idleRain:true};}
   function idleEligible(){return !launcherCovered()&&!editing&&!arranging&&!okDown&&!pressTimer&&(zone==='grid'||zone==='top'||zone==='pen')&&!(window.INFINITI_CUSTOMIZE_IS_OPEN&&window.INFINITI_CUSTOMIZE_IS_OPEN());}
   function idleClear(){if(idleTimer!==null){clearTimeout(idleTimer);idleTimer=null;}}
-  function idleShow(){idleActive=false;document.body.classList.remove('idle-home');document.body.classList.remove('idle-rain');}
+  function idleShow(){idleActive=false;document.body.classList.remove('idle-home');if(idleEffectClass)document.body.classList.remove(idleEffectClass);idleEffectClass='';}
   function idleSchedule(){
     idleClear();var p=idlePrefs();if(!p.idleSeconds||launcherCovered()||idleActive)return;
-    idleTimer=setTimeout(function(){idleTimer=null;if(!idleEligible()){idleSchedule();return;}idleActive=true;document.body.classList.add('idle-home');if(p.idleRain&&!p.reduceMotion)document.body.classList.add('idle-rain');},p.idleSeconds*1000);
+    idleTimer=setTimeout(function(){idleTimer=null;if(!idleEligible()){idleSchedule();return;}idleActive=true;document.body.classList.add('idle-home');var effect=window.INFINITI_PREFS&&window.INFINITI_PREFS.resolveIdleEffect?window.INFINITI_PREFS.resolveIdleEffect(p,Math.random()):(p.idleRain&&!p.reduceMotion?'rain':'');if(effect){idleEffectClass='idle-'+effect;document.body.classList.add(idleEffectClass);}},p.idleSeconds*1000);
   }
   function idleReset(){idleShow();idleSchedule();}
   function idleStopEvent(e){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();}

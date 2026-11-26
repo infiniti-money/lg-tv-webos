@@ -11,7 +11,7 @@
   var MAX_ICON = 48000, MAX_STYLE = 900000;
   var defaults = {
     theme:'midnight', font:'lexend', largeText:false, showWeek:true,
-    reduceMotion:false, showSolar:true, showLunar:true, idleSeconds:60, idleRain:true
+    reduceMotion:false, showSolar:true, showLunar:true, idleSeconds:60, idleRain:true, idleEffect:'rain'
   };
   var THEMES = ['midnight','ocean','amber'];
   var FONTS = ['lexend','sans','serif'];
@@ -75,6 +75,17 @@
   }
   function resetVisible() { safeWrite(VISIBILITY_KEY, {}); }
   var IDLE_CHOICES=[0,30,60,120,300];
+  var IDLE_EFFECTS=["rain","snow","petals","stars","fireflies","bubbles","mist","random"];
+  var IDLE_LABELS=["Mưa rơi","Tuyết rơi","Cánh hoa","Bầu trời sao","Đom đóm","Bong bóng","Sương mờ","Ngẫu nhiên"];
+  function idleEffectValue(v){return IDLE_EFFECTS.indexOf(v)>=0?v:defaults.idleEffect;}
+  function resolveIdleEffect(p,random){
+    if(!p.idleRain||p.reduceMotion)return '';
+    var effect=idleEffectValue(p.idleEffect);
+    if(effect!=='random')return effect;
+    var n=Number(random);
+    if(!isFinite(n)||n<0||n>=1)n=0;
+    return IDLE_EFFECTS[Math.floor(n*(IDLE_EFFECTS.length-1))];
+  }
   function idleValue(v){return IDLE_CHOICES.indexOf(v)>=0?v:defaults.idleSeconds;}
   function getAppearance() {
     var data = safeRead(APPEARANCE_KEY);
@@ -86,7 +97,7 @@
       reduceMotion: data.reduceMotion === true,
       showSolar: data.showSolar !== false,
       showLunar: data.showLunar !== false,
-      idleSeconds:idleValue(data.idleSeconds), idleRain:data.idleRain!==false
+      idleSeconds:idleValue(data.idleSeconds), idleRain:data.idleRain!==false, idleEffect:idleEffectValue(data.idleEffect)
     };
   }
   function saveAppearance(newData) {
@@ -101,7 +112,7 @@
     current.reduceMotion = current.reduceMotion === true;
     current.showSolar = current.showSolar !== false;
     current.showLunar = current.showLunar !== false;
-    current.idleSeconds=idleValue(current.idleSeconds);current.idleRain=current.idleRain!==false;
+    current.idleSeconds=idleValue(current.idleSeconds);current.idleRain=current.idleRain!==false;current.idleEffect=idleEffectValue(current.idleEffect);
     safeWrite(APPEARANCE_KEY, current);
     return current;
   }
@@ -246,7 +257,7 @@
     getAppStyle:getAppStyle, saveAppStyle:saveAppStyle, styledApp:styledApp,
     iconCategory:iconCategory,packIcon:packIcon,iconSource:iconSource,getIconPack:getIconPack,setIconPack:setIconPack,
     isVisible:isVisible, setVisible:setVisible, resetVisible:resetVisible,
-    getAppearance:getAppearance, saveAppearance:saveAppearance,
+    getAppearance:getAppearance, saveAppearance:saveAppearance, resolveIdleEffect:resolveIdleEffect,
     getWeather:getWeather, saveWeather:saveWeather,
     validCoords:validCoords, isProtected:isProtected,
     isLGDefaultApp:isLGDefaultApp, hideLGDefaultApps:hideLGDefaultApps
@@ -589,7 +600,8 @@
   function refreshToggles() {
     var a = getAppearance();
     $('customizeIdleTime').textContent='Tự ẩn: '+(a.idleSeconds?a.idleSeconds+' giây':'Tắt');
-    $('customizeIdleRain').textContent='Mưa khi chờ: '+(a.idleRain?'Bật':'Tắt');
+    $('customizeIdleRain').textContent='Hiệu ứng: '+(a.idleRain?'Bật':'Tắt');
+    $('customizeIdleEffect').textContent='Kiểu: '+IDLE_LABELS[IDLE_EFFECTS.indexOf(a.idleEffect)];
     $('customizeLargeText').textContent = 'Cỡ chữ lớn: ' + (a.largeText ? 'Bật' : 'Tắt');
     $('customizeShowWeek').textContent = 'Thời tiết 3 ngày: ' + (a.showWeek ? 'Hiện' : 'Ẩn');
     $('customizeMotion').textContent = 'Hiệu ứng chuyển động: ' + (a.reduceMotion ? 'Giảm' : 'Mượt');
@@ -827,6 +839,7 @@
   appearanceToggle('customizeShowWeek','showWeek');
   appearanceToggle('customizeMotion','reduceMotion');
   appearanceToggle('customizeIdleRain','idleRain');
+  $('customizeIdleEffect').addEventListener('click',function(){var a=getAppearance();saveAppearance({idleEffect:IDLE_EFFECTS[(IDLE_EFFECTS.indexOf(a.idleEffect)+1)%IDLE_EFFECTS.length]});applyAppearance();refreshToggles();});
   $('customizeIdleTime').addEventListener('click',function(){var a=getAppearance();saveAppearance({idleSeconds:IDLE_CHOICES[(IDLE_CHOICES.indexOf(a.idleSeconds)+1)%IDLE_CHOICES.length]});applyAppearance();refreshToggles();});
   appearanceToggle('customizeSolar','showSolar');
   appearanceToggle('customizeLunar','showLunar');

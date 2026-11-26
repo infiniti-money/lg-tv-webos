@@ -74,3 +74,12 @@ assert.equal(p.saveAppearance({idleSeconds:0}).idleSeconds,0);
 var extra=["youtube","netflix","prime","disney","tiktok","jellyfin","spotify","radio","hdmi","store","files","network"];
 ['minimal','neon','glass','pastel','gold'].forEach(function(pack){var seen={};extra.forEach(function(g){var f='app/'+p.iconSource(p.packIcon(pack,g),'');assert.ok(fs.existsSync(f));var s=fs.readFileSync(f,'utf8');assert.ok(!seen[s]);seen[s]=true;});});
 assert.equal(p.iconCategory({id:'netflix'}),'netflix');assert.equal(p.iconCategory({id:'youtube.leanback.v4'}),'youtube');assert.equal(p.iconCategory({id:'amazon'}),'prime');assert.equal(p.iconCategory({id:'spotify'}),'spotify');
+
+assert.equal(p.getAppearance().idleEffect,'rain');
+assert.equal(p.saveAppearance({idleEffect:'bad'}).idleEffect,'rain');
+["rain","snow","petals","stars","fireflies","bubbles","mist"].forEach(function(e){assert.equal(p.saveAppearance({idleEffect:e,idleRain:true,reduceMotion:false}).idleEffect,e);assert.equal(p.resolveIdleEffect(p.getAppearance(),.5),e);});
+assert.equal(p.resolveIdleEffect({idleRain:true,idleEffect:'random'},0),'rain');
+assert.equal(p.resolveIdleEffect({idleRain:true,idleEffect:'random'},.999),'mist');
+assert.equal(p.resolveIdleEffect({idleRain:false,idleEffect:'stars'},.5),'');
+assert.equal(p.resolveIdleEffect({idleRain:true,reduceMotion:true,idleEffect:'snow'},.5),'');
+console.log('Idle effect preferences and random choice passed.');

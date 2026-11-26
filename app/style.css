@@ -780,3 +780,21 @@ body.idle-home.idle-rain:not(.launcher-covered):not(.motion-reduced) #idleRain {
 body.idle-home.idle-rain:not(.launcher-covered):not(.motion-reduced) .rainSheet { -webkit-animation:idleRainFall 1.35s linear infinite; animation:idleRainFall 1.35s linear infinite; }
 @-webkit-keyframes idleRainFall { from { -webkit-transform:translateY(0); } to { -webkit-transform:translateY(270px); } }
 @keyframes idleRainFall { from { transform:translateY(0); } to { transform:translateY(270px); } }
+
+/* v1.6.2: one tiled effect layer; no canvas, per-particle DOM, audio or network. */
+body.idle-home.idle-snow:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-snow:not(.launcher-covered):not(.motion-reduced) .rainSheet { background-image:url('icons/idle-snow.svg'); opacity:.72; -webkit-animation:idleRainFall 12s linear infinite; animation:idleRainFall 12s linear infinite; }
+body.idle-home.idle-petals:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-petals:not(.launcher-covered):not(.motion-reduced) .rainSheet { background-image:url('icons/idle-petals.svg'); opacity:.7; -webkit-animation:idleRainFall 17s linear infinite; animation:idleRainFall 17s linear infinite; }
+body.idle-home.idle-stars:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-stars:not(.launcher-covered):not(.motion-reduced) .rainSheet { background-image:url('icons/idle-stars.svg'); opacity:.6; -webkit-animation:idleRainFall 45s linear infinite; animation:idleRainFall 45s linear infinite; }
+body.idle-home.idle-fireflies:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-fireflies:not(.launcher-covered):not(.motion-reduced) .rainSheet { background-image:url('icons/idle-fireflies.svg'); opacity:.7; -webkit-animation:idleRise 24s linear infinite; animation:idleRise 24s linear infinite; }
+body.idle-home.idle-bubbles:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-bubbles:not(.launcher-covered):not(.motion-reduced) .rainSheet { background-image:url('icons/idle-bubbles.svg'); opacity:.68; -webkit-animation:idleRise 19s linear infinite; animation:idleRise 19s linear infinite; }
+body.idle-home.idle-mist:not(.launcher-covered):not(.motion-reduced) #idleRain { display:block; }
+body.idle-home.idle-mist:not(.launcher-covered):not(.motion-reduced) .rainSheet { background-image:url('icons/idle-mist.svg'); opacity:.7; -webkit-animation:idleMistDrift 36s linear infinite; animation:idleMistDrift 36s linear infinite; left:-480px; top:0; }
+@-webkit-keyframes idleRise { from { -webkit-transform:translateY(270px); } to { -webkit-transform:translateY(0); } }
+@keyframes idleRise { from { transform:translateY(270px); } to { transform:translateY(0); } }
+@-webkit-keyframes idleMistDrift { from { -webkit-transform:translateX(0); } to { -webkit-transform:translateX(480px); } }
+@keyframes idleMistDrift { from { transform:translateX(0); } to { transform:translateX(480px); } }

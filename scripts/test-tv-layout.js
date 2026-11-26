@@ -122,3 +122,8 @@ assert.ok(idleHide,'Idle rule exists');
 ['header','#leftBlock','#clock','#date','#lunarDate','#weather'].forEach(function(id){assert.ok(idleHide[0].indexOf('body.idle-home '+id)<0,id+' stays visible');});
 assert.ok(/body\.idle-home\.idle-rain:not\(\.launcher-covered\):not\(\.motion-reduced\)/.test(css));
 console.log('Idle Home retains clock/calendar/current weather, hides forecast and dock.');
+
+["snow","petals","stars","fireflies","bubbles","mist"].forEach(function(e){assert.ok(fs.existsSync('app/icons/idle-'+e+'.svg'));assert.ok(css.indexOf('body.idle-home.idle-'+e+':not(.launcher-covered):not(.motion-reduced)')>=0);});
+assert.ok(app.indexOf('document.body.classList.remove(idleEffectClass)')>=0);
+assert.ok(html.indexOf('id="customizeIdleEffect"')>=0);
+console.log('Idle effect assets, lifecycle CSS guards and controls checked.');

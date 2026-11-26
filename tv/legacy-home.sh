@@ -65,30 +65,7 @@ HOOK
     check
     [ -f "$D/legacy-v8-trial" ] && [ -f "$PROOF" ] && [ -f "$I" ] ||
       { echo "No successful trial recorded on this boot"; exit 1; }
-    grep -q '^foreground and render confirmed
-    rm -f "$D/legacy-v8-trial" "$PROOF"
-    echo "Confirmed. Persistent boot + Home observer starts on next cold boot."
-    ;;
-  wake-on)
-    check
-    [ -f "$D/legacy-v8-enabled" ] || { echo "Confirm boot trial first"; exit 1; }
-    touch "$D/legacy-v8-wake"
-    echo "Experimental wake trigger enabled. Some standby states may not be observable."
-    ;;
-  wake-off)
-    rm -f "$D/legacy-v8-wake"
-    ;;
-  disable)
-    rm -f "$D/legacy-v8-session" "$D/legacy-v8-armed" "$D/legacy-v8-trial" \
-      "$D/legacy-v8-enabled" "$D/legacy-v8-wake" "$PROOF"
-    if [ -f "$I" ] && grep -q '^# Infiniti Legacy V8 hook$' "$I"; then
-      rm -f "$I"
-    fi
-    echo "V8 disarmed; observer exits after current bounded operation. Native Home untouched."
-    ;;
-  *) echo "Usage: $0 status|watch|arm|confirm|wake-on|wake-off|disable"; exit 2 ;;
-esac
- "$PROOF" || { echo 'Render proof missing; re-arm and test V8.4'; exit 1; }
+    grep -qx 'foreground and render confirmed' "$PROOF" || { echo 'Render proof missing; re-arm and test V8.4'; exit 1; }
     touch "$D/legacy-v8-enabled"
     rm -f "$D/legacy-v8-trial" "$PROOF"
     echo "Confirmed. Persistent boot + Home observer starts on next cold boot."

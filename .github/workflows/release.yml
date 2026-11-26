@@ -126,6 +126,36 @@ jobs:
       # exact prefix below. All checks, packaging and artifact upload run first.
       # Manual workflow_dispatch publishing is retained as the fallback.
       # Future ordinary main pushes cannot trigger the release gate.
+      - name: Create verified RC tag
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.1') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG=v1.6.0-rc.1
+          test "$(node -p "require('./app/appinfo.json').version")" = "1.6.0"
+          existing=$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')
+          if [ -n "$existing" ]; then
+            test "$existing" = "$GITHUB_SHA"
+          else
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$TAG"
+          fi
+      - name: Publish release candidate
+        if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/legacy/home-v8' && startsWith(github.event.head_commit.message, 'release: publish v1.6.0-rc.1')) || github.ref == 'refs/tags/v1.6.0-rc.1' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.6.0-rc.1
+          name: Infiniti TV Home v1.6.0 RC1 — V8.4
+          prerelease: true
+          make_latest: false
+          files: |
+            build/infiniti-tv-home.ipk
+            build/infiniti-tv-home.ipk.sha256
+            build/infiniti-tv-home-root-tools-v1.6.0.zip
+            build/infiniti-tv-home-root-tools-v1.6.0.zip.sha256
+          fail_on_unmatched_files: true
+          body_path: RELEASE_NOTES_v1.6.0.md
+
       - name: Create verified version tag
         if: >-
           ${{ (github.event_name == 'workflow_dispatch' && inputs.publish_release) ||
@@ -156,7 +186,7 @@ jobs:
 
       - name: Publish tagged release
         if: >-
-          ${{ startsWith(github.ref, 'refs/tags/v') ||
+          ${{ (startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-rc.')) ||
               (github.event_name == 'workflow_dispatch' && inputs.publish_release) ||
               (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
                startsWith(github.event.head_commit.message, 'release: publish verified v1.6.0')) }}

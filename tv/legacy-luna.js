@@ -125,6 +125,7 @@ function renderSession(mode, closeFirst, callback) {
     complete();
   });
   server.on('error',finish);
+  server.on('connection',function(socket){socket.setTimeout(2500,function(){socket.destroy();});});
   timer=setTimeout(function(){finish(new Error('render/foreground timeout; no automatic retry'));},18000);
   server.listen(0,'127.0.0.1',function(){
     if(done)return;

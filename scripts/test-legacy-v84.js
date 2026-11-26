@@ -10,7 +10,7 @@ assert.ok(/match\[1\]!==token/.test(helper));
 assert.ok(/rendered && foreground && launchOK/.test(helper));
 assert.ok(/frame\(function\(\)\{frame\(function/.test(app));
 assert.ok(/launcherCovered\(\)/.test(app));
-assert.ok(/acknowledgeRender\(readLaunchParams\(\)\)/.test(app));
+assert.ok(/initialParams=readLaunchParams\(\);acknowledgeRender\(initialParams\)/.test(app));
 assert.ok(/foreground and render confirmed/.test(sh));
 assert.ok(/catalogOnly && !found.authoritative/.test(sync));
 console.log('V8.4 render challenge wiring, recovery proof and non-destructive sync checks passed (static).');

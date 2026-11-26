@@ -155,6 +155,7 @@ fi
 # ---------------------------------------------------------------- uninstall
 if [ -n "$UNINSTALL" ]; then
   say "Removing Infiniti TV Home"
+  [ ! -f "$DATA/legacy-home.sh" ] || sh "$DATA/legacy-home.sh" disable || die "V8 recovery failed"
   if [ -f "$DATA/home-control.sh" ]; then
     sh "$DATA/home-control.sh" disable || die "Could not safely restore the previous Home key binding. Check $DATA/home-key-backup.json"
   else
@@ -175,8 +176,10 @@ fi
 
 # ---------------------------------------------------------------- files
 say "Downloading scripts"
+# Disarm V8 before replacing root sidecars; activation is always explicit.
+if [ -f "$DATA/legacy-home.sh" ]; then sh "$DATA/legacy-home.sh" disable || die "V8 disarm failed"; fi
 mkdir -p "$DATA/icons"
-for f in autostart-rollback.sh sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh boot-home-once.sh home-control.sh safe-recovery.sh root-safety-check.sh auto-update.sh install-ipk-update.js diagnose-home.sh integration-diagnostics.sh compat-check.sh; do
+for f in legacy-home-v8.py legacy-home.sh autostart-rollback.sh sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js wallpaper.html golauncher.sh boot.sh boot-home-once.sh home-control.sh safe-recovery.sh root-safety-check.sh auto-update.sh install-ipk-update.js diagnose-home.sh integration-diagnostics.sh compat-check.sh; do
   curl -fsSL "$RAW/tv/$f" -o "$DATA/$f" || die "Could not download $f. Is the TV online?"
 done
 chmod +x "$DATA"/*.sh "$DATA"/*.js
@@ -321,4 +324,5 @@ ok "Installation complete. LG native Home is preserved as rollback."
 [ -z "$START_BOOT" ] || warn "Boot trial is not permanent until boot-confirm after seeing Infiniti on the TV."
 ok "To start Infiniti manually, select it from the TV app list."
 ok "Emergency rollback: sh $DATA/safe-recovery.sh"
+ok "Legacy V8 interactive test: sh $DATA/legacy-home.sh watch"
 [ -z "$AUTO_UPDATE" ] || ok "Auto update status: sh $DATA/auto-update.sh --status"

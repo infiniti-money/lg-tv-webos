@@ -1,3 +1,5 @@
+> **Legacy Home V8 (v1.6.0 thử nghiệm):** Xem [hướng dẫn dành cho 49UH850T-TA](docs/legacy-home-v8.vi.md). Tích hợp phím Home và khởi động mặc định tắt; kiểm thử thủ công trước.
+
 <div align="center">
 
 # Infiniti TV Home

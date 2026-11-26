@@ -28,7 +28,7 @@ done
 
 # First disarm *all* known activators, even if Input Hook has an unknown
 # binding or the older home-control.sh refuses its keymap rollback.
-for item in "$D/home-enabled" "$D/home-event-device" "$D/boot-services-enabled" \
+for item in "$D/legacy-v8-session" "$D/legacy-v8-armed" "$D/legacy-v8-trial" "$D/legacy-v8-enabled" "$D/legacy-v8-wake" "$D/home-enabled" "$D/home-event-device" "$D/boot-services-enabled" \
   "$D/auto-update-enabled" "$D/boot-home-armed" "$D/boot-home-trial" "$D/boot-home-enabled"; do
   if [ -f "$item" ]; then
     mv "$item" "$R/" || {
@@ -41,7 +41,7 @@ done
 # Homebrew executes every executable file in init.d on boot.
 # 97-homekey is the user's experimental 25s physical-key loop.
 # Moving, rather than deleting, both startup scripts is fully reversible.
-for item in "$I/lg-tv-vibehack" "$I/97-homekey"; do
+for item in "$I/lg-tv-vibehack" "$I/97-homekey" "$I/infiniti-legacy-v8"; do
   if [ -e "$item" ]; then
     mv "$item" "$R/" || {
       echo "ERROR: Could not disable startup hook $item" >&2

@@ -1,0 +1,29 @@
+# Infiniti LG Home Legacy — LG 49UH850T-TA
+
+Mục tiêu: webOS 3.4.3, firmware 05.70.45, ARMv7, Python 2.7.3, root UID 0. Home key 773 đã được đo trên LGE M-RCU Builtin [0] event4. V8 tương tác đã xác nhận close/launch/getForegroundAppInfo với Homebrew Channel; chưa thử với IPK Infiniti hoặc daemon mới.
+
+## Cài và thử nghiệm (SSH root, trên TV)
+Cài IPK và root tools theo README; không chọn --enable-home (LG Input Hook) đồng thời với V8. Nếu đã có hook cũ, dùng recovery hiện có, kiểm tra lại và xác nhận Home gốc trước khi tiếp tục. Không sửa firmware.
+
+```sh
+cd /home/root/lg-tv-vibehack
+sh legacy-home.sh status
+sh legacy-home.sh watch
+```
+
+Nhấn Home, kiểm tra log foreground phải là com.infinitimoney.tvhome và quan sát màn hình. Ctrl+C để dừng. Đây là quan sát phím không độc quyền, có thể lóe LG Home gốc; không phải thay thế compositor.
+
+Nếu thử thành công và đã kiểm tra ít nhất hai chu kỳ bật/tắt bình thường, chạy `sh legacy-home.sh arm`, reboot thủ công để thử một lần. Sau khi nhìn thấy Launcher và kiểm tra hoạt động bình thường, chạy `sh legacy-home.sh confirm`. Lần cold boot kế tiếp mới chạy watcher lâu dài. Tùy chọn `sh legacy-home.sh wake-on` (thử nghiệm): chỉ kích hoạt sau trạng thái standby quan sát được chuyển sang Active; Quick Start có thể không phát sinh trạng thái này. Không bật mặc định.
+
+## Khôi phục
+```sh
+sh /home/root/lg-tv-vibehack/legacy-home.sh disable
+sh /home/root/lg-tv-vibehack/safe-recovery.sh
+```
+Lệnh đầu gỡ cờ và hook V8 do dự án tạo. Lệnh thứ hai xử lý các hook và mapping cũ. Không khởi động lại trước khi đọc kết quả recovery. Không ghi rootfs, kernel, EIM hoặc grab thiết bị điều khiển.
+
+## Quảng cáo và quyền riêng tư
+Launcher không có quảng cáo. Customize > Privacy đã hỗ trợ ẩn biểu tượng và hướng dẫn DNS AdGuard thủ công, khôi phục DNS tự động. Homebrew startup có hạn chế telemetry riêng. Tắt Live Plus/ACR trong cài đặt TV nếu có. Không vô hiệu hóa/mount chồng gói hệ thống ACR khi chưa xác minh tác động HDMI và Live TV. Không cam kết chặn mọi quảng cáo trong app.
+
+## Kiểm thử
+CI kiểm tra ES5, IPK, checksum và mô phỏng Luna stdin: giữ đầu ghi pipe mở tránh EOF khi daemon không có TTY. Đây không thay thế thử nghiệm vật lý. Không phát hành bản ổn định hoặc tự bật hook khi chưa nghiệm thu TV.

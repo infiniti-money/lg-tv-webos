@@ -1,6 +1,10 @@
+# v1.6.6 — Designed by Tân Dev (ứng viên)
+
+Xem [ghi chú v1.6.6](RELEASE_NOTES_v1.6.6.md). Home đơn dùng fast relaunch; Home liên tiếp dùng đường phục hồi có giới hạn. Chưa nghiệm thu lớp LG ribbon trên TV thật.
+
 > Lịch sử phiên bản. Xem [hướng dẫn hiện hành](docs/owner-guide.vi.md); các tên và lệnh cũ chỉ mang tính tham chiếu lịch sử.
 
-# v1.6.5 — Designed by Tân Dev (ứng viên)
+# v1.6.5 — Designed by Tân Dev (prerelease)
 
 Xem [ghi chú v1.6.5](RELEASE_NOTES_v1.6.5.md). Ưu tiên relaunch không đóng ứng dụng; cần kiểm tra thời gian LG ribbon trên TV thật.
 

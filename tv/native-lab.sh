@@ -60,6 +60,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM HUP
 work=$(mktemp -d /tmp/infiniti-native-lab.XXXXXX)
 echo "Lab evidence: $work"
+printf "%s\n" "$variant" > "$work/variant"
 for f in thumb-probe ezinject libinputhookpp.so; do
   [ -f "$src/$f" ] || fail "missing $f"
   cp "$src/$f" "$work/$f"
@@ -80,7 +81,14 @@ wait_line(){
   n=0
   while [ "$n" -lt 10 ]; do
     if [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" != "$work/thumb-probe" ]; then
-      [ "$1" = READY ] && kill -0 "$child" 2>/dev/null || fail 'owned probe exited or changed'
+      if [ ! -d "/proc/$child" ] || [ "$(awk '/^State:/ {print $2}' "/proc/$child/status" 2>/dev/null || true)" = Z ]; then
+        rc=0
+        wait "$child" || rc=$?
+        printf '%s\n' "$rc" > "$work/probe-exit-code"
+        child=
+        fail "probe exited before $1 (exit=$rc); inspect probe.log"
+      fi
+      [ "$1" = READY ] && owned_child || fail 'owned probe identity changed; injection not attempted'
       n=$((n+1)); sleep 1; continue
     fi
     count=$(grep -c "^$1$" "$work/probe.log" || true)
@@ -102,7 +110,8 @@ wait_line PASS_THROUGH_OK 1
 check_config || fail 'config changed'
 # Only PID obtained from our own background child; no user PID argument.
 [ "$(readlink "/proc/$child/exe")" = "$work/thumb-probe" ] || fail 'owned probe identity changed'
-if /usr/bin/node "$D/native-inject-observe.js" "$work" "$child" "$" >"$work/inject.log" 2>&1; then rc=0; else rc=$?; fi
+printf '%s\n' 'injector-starting' > "$work/stage"
+if /usr/bin/node "$D/native-inject-observe.js" "$work" "$child" "$$" >"$work/inject.log" 2>&1; then rc=0; else rc=$?; fi
 /usr/bin/node "$D/native-diagnostics.js" "$child" "$work" >"$work/diagnostics.json" 2>&1 || true
 [ "$rc" = 0 ] || fail "injector failed; inspect inject-result.json and diagnostics.json"
 sleep 2

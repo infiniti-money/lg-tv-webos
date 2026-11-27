@@ -1,3 +1,7 @@
+# v1.7.7 — Sửa liên kết pthread trên glibc 2.19
+
+[Xem ghi chú](RELEASE_NOTES_v1.7.7.md). Chưa nghiệm thu trên LG.
+
 # v1.7.6 — Chẩn đoán Native Hook, thử nghiệm đa luồng
 
 [Quy trình](RELEASE_NOTES_v1.7.6.md). Tạm dừng inject tiến trình LG thật.

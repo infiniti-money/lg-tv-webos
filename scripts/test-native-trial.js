@@ -44,3 +44,7 @@ var log='InputHook initialized\nFrida gum initialized\nReplacing lginput_uinput_
 assert.strictEqual(classify(mapped,log,null).status,'INIT_LOGGED_NO_CALLS');
 assert.strictEqual(classify(mapped,log+'lginput_uinput_send_button called:',null).status,'CALLS_OBSERVED');
 console.log('Native diagnostic classifications passed');
+
+var lab=fs.readFileSync('tv/native-lab.sh','utf8');
+assert.ok(lab.indexOf('"$work" "$child" "$$" >')>=0,'observer must receive actual shell parent PID');
+assert.ok(lab.indexOf('probe-exit-code')>=0,'capture pre-injection probe failures');

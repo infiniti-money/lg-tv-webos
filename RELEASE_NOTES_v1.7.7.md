@@ -1,0 +1,7 @@
+# v1.7.7 — Legacy pthread provider correction
+
+On the owner's LG webOS 3.4.3 / glibc 2.19, v1.7.6 single probe printed READY and PASS_THROUGH_OK, exit 0. Multi printed READY then relocation error: pthread_create@GLIBC_2.4 not defined in libc.so.6; exit 127. No injector execution or hook log was reached. Modern glibc combined libpthread into libc; checking only GLIBC version is insufficient.
+
+Build now explicitly links the public Debian Jessie armel glibc 2.19 libpthread and libc, not modern host libc. The archived package is downloaded over HTTPS and matched against SHA256 in the official archive Packages metadata; this is not an independently pinned or signature-verified digest. No archived libraries are shipped or installed on the TV. The ELF gate requires libpthread.so.0 DT_NEEDED and verifies the version-need index for pthread_create@GLIBC_2.4 belongs to libpthread.so.0. QEMU tests use the extracted 2.19 loader and libraries, with eager symbol binding. Debian glibc is a compatibility surrogate, not identical to LG's build.
+
+Also correct native-lab observer parent PID argument and capture probe startup exit code before injector execution. Host integration test uses a fake injector (exit 7) and a sleep child, no ptrace. Physical injection remains disabled; keep v1.7.5 evidence and V9.1 fallback. On clean TV boot install updated scripts and probe/checksum; run printf tq and printf mtq directly before single/multi isolated lab. No claim that lginput2 initialization failure is solved.

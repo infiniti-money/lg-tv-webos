@@ -568,6 +568,7 @@
   function albumTime(t){return t===0?'Mỗi lần bật TV':t>=86400?(t/86400)+' ngày':t>=3600?(t/3600)+' giờ':t+' giây';}
   function albumControls(){
     var p=albumData,ids=p?p.photos:[],i=ids.indexOf(albumSelected),ready=!!(p&&/^[a-f0-9]{48}$/.test(p.localToken||''))&&!albumBusy;
+    var thumb=$('customizeAlbumSelectedPhoto');if(i>=0){var src='idle-photo-'+albumSelected+'.jpg';if(thumb.getAttribute('src')!==src)thumb.setAttribute('src',src);thumb.style.display='block';}else{thumb.removeAttribute('src');thumb.style.display='none';}
     $('customizeAlbumSelect').textContent=i<0?'Chọn ảnh':'Ảnh '+(i+1)+'/'+ids.length;
     $('customizeAlbumEnabled').textContent='Album: '+(p?(p.enabled?'Bật':'Tắt'):'—');
     $('customizeAlbumSeconds').textContent='Lịch: '+(p?albumTime(p.seconds):'—');
@@ -698,7 +699,7 @@
     tabs.style.focus();
   }
   function hide() {
-    albumDeleteId='';albumReadSeq++;
+    albumDeleteId='';albumReadSeq++;albumData=null;albumControls();
     closeAppEditor();
     if (searchRequest) { searchRequest.abort(); searchRequest = null; }
     opened = false;

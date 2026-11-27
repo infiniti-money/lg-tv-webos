@@ -20,7 +20,9 @@ def memory():
     with open('/proc/meminfo') as f:
         for line in f:
             a=line.split()
-            if len(a)>1: m[a[0].rstrip(':')]=int(a[1])
+            if len(a)>1:
+                try: m[a[0].rstrip(':')]=int(a[1])
+                except ValueError: pass
     return m.get('MemFree',-1),m.get('MemAvailable',-1)
 def rss():
     watcher=web=count=0
@@ -29,10 +31,13 @@ def rss():
         try:
             with open('/proc/'+p+'/cmdline','rb') as f: cmd=f.read()
             if not isinstance(cmd,str): cmd=cmd.decode('utf-8','replace')
-            if 'legacy-home-v8.py' not in cmd and 'com.infinitimoney.tvhome' not in cmd: continue
+            args=cmd.split('\x00')
+            iswatch=any(x.endswith('/legacy-home-v8.py') for x in args)
+            isapp=any(x=='com.infinitimoney.tvhome' or x.endswith('/com.infinitimoney.tvhome') or '/com.infinitimoney.tvhome/' in x for x in args)
+            if not iswatch and not isapp: continue
             with open('/proc/'+p+'/status') as f:
                 size=next((int(x.split()[1]) for x in f if x.startswith('VmRSS:')),0)
-            if 'legacy-home-v8.py' in cmd: watcher+=size
+            if iswatch: watcher+=size
             else: web+=size;count+=1
         except (IOError,OSError,ValueError): pass
     return watcher,web,count

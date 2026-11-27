@@ -90,7 +90,8 @@ function waitReady(guard,sample,callback,options) {
   step();
 }
 // A per-launch challenge, available only on the TV loopback interface.
-function renderSession(mode, closeFirst, callback) {
+function renderSession(mode, closeFirst, callback, options) {
+  options=options||{};
   var token=crypto.randomBytes(24).toString('hex'), server, timer, poll, done=false;
   var rendered=false, foreground=false, launchOK=false, checking=false, start=process.uptime();
   function finish(e){
@@ -126,7 +127,7 @@ function renderSession(mode, closeFirst, callback) {
   });
   server.on('error',finish);
   server.on('connection',function(socket){socket.setTimeout(2500,function(){socket.destroy();});});
-  timer=setTimeout(function(){finish(new Error('render/foreground timeout; no automatic retry'));},18000);
+  timer=setTimeout(function(){finish(new Error('render/foreground timeout; no automatic retry'));},options.deadline||18000);
   server.listen(0,'127.0.0.1',function(){
     if(done)return;
     function launch(){
@@ -136,7 +137,7 @@ function renderSession(mode, closeFirst, callback) {
         if(e)return finish(e);
         launchOK=true;check();complete();
         if(!done)poll=setInterval(check,350);
-      },null,4000);
+      },null,options.launchTimeout||4000);
     }
     if(closeFirst){
       // Keep the known-working close/relaunch on physical Home, but shorten the delay.
@@ -147,6 +148,20 @@ function renderSession(mode, closeFirst, callback) {
       },null,1500);
     }else launch();
   });
+}
+// Home: first attempt a normal foreground launch with a fresh render proof.
+ // The stock LG ribbon is not represented reliably by the foreground app ID.
+ // If a fresh proof is absent, use the existing close/relaunch once.
+function redirectHome(mode, session, guard, callback, report) {
+  report=report||function(){};
+  if(!guard(mode))return callback(new Error('launch canceled'));
+  report('Home fast relaunch: no close');
+  session(mode,false,function(e){
+    if(!e)return callback(null);
+    if(!guard(mode))return callback(new Error('launch canceled'));
+    report('Home fast relaunch fallback: '+e.message);
+    session(mode,true,callback);
+  },{deadline:2500,launchTimeout:1200});
 }
 function boot(mode) {
   var start=process.uptime();
@@ -197,11 +212,11 @@ function run(action) {
   } else if(/^redirect-(watch|trial|enabled)$/.test(action)){
     var mode=action.slice(9);
     if(!allowed(mode))return fail('V8 disabled or conflicting hook');
-    renderSession(mode,true,function(e){if(e)fail(e);});
+    redirectHome(mode,renderSession,allowed,function(e){if(e)fail(e);},function(s){console.log(s);});
   } else if(action==='wake-enabled'){
     if(!allowed('enabled') || !exists(DATA+'/legacy-v8-wake'))return fail('wake disabled');
     renderSession('enabled',false,function(e){if(e)fail(e);});
   } else { fail('Unknown V8 helper action'); }
 }
 if(require.main===module) run(process.argv[2]||'');
-module.exports={luna:luna,waitReady:waitReady};
+module.exports={luna:luna,waitReady:waitReady,redirectHome:redirectHome};

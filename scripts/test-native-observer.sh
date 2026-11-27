@@ -8,7 +8,11 @@ cleanup(){
   rm -rf "$work"
 }
 trap cleanup 0
-cp /bin/sleep "$work/thumb-probe"
+cat > "$work/probe.c" <<'C'
+#include <unistd.h>
+int main(void) { for (;;) pause(); return 0; }
+C
+cc "$work/probe.c" -o "$work/thumb-probe"
 printf '%s\n' '#!/bin/sh' 'exit 7' > "$work/ezinject"
 chmod 700 "$work/ezinject"
 "$work/thumb-probe" 30 &

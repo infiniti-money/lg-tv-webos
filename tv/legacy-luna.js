@@ -35,7 +35,11 @@ function luna(uri, payload, callback, binary, timeout) {
   timer = setTimeout(function(){finish(new Error('Luna timeout'));}, timeout || 8000);
 }
 function exists(p){return fs.existsSync(p);}
+function ribbonConflict() {
+  return exists(DATA+'/legacy-v8-ribbon') && (exists('/tmp/inputhook') || exists('/var/lib/webosbrew/init.d/inputhook'));
+}
 function allowed(mode) {
+  if(ribbonConflict()) return false;
   if (exists('/var/luna/preferences/webosbrew_failsafe') ||
       exists('/var/lib/webosbrew/init.d/97-homekey') || exists(DATA+'/home-enabled')) return false;
   if (!exists('/media/developer/apps/usr/palm/applications/'+APP) &&
@@ -47,6 +51,7 @@ function allowed(mode) {
 // Read-only boot readiness: wait for Homebrew to finish, active TV power,
 // and a meaningful application-manager foreground response twice in succession.
 function bootGuard(mode) {
+  if(ribbonConflict()) return 'cancel';
   if (exists('/var/lib/webosbrew/init.d/97-homekey') || exists(DATA+'/home-enabled')) return 'cancel';
   if (mode==='trial' && (!exists(DATA+'/legacy-v8-trial') || exists(DATA+'/legacy-v8-enabled'))) return 'cancel';
   if (mode==='enabled' && !exists(DATA+'/legacy-v8-enabled')) return 'cancel';

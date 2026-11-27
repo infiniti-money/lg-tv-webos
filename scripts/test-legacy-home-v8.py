@@ -141,6 +141,52 @@ class LegacyTests(unittest.TestCase):
             self.assertEqual(stopped, [7, 7])
             self.assertFalse(q.pending)
 
+    def test_ribbon_log_baseline_partial_rotation(self):
+        shown = b'2026 user.info surface-manager-starfish [] LSM NL_HOME_SHOWN {"foregroundId":"com.infinitimoney.tvhome"}\n'
+        hidden = b'2026 user.info surface-manager-starfish [] LSM NL_HOME_HIDDEN {}\n'
+        with tempfile.TemporaryDirectory() as tmp:
+            p = pathlib.Path(tmp) / 'messages'
+            p.write_bytes(shown)
+            reader = legacy.RibbonLog(str(p))
+            self.assertEqual(reader.read(), [])
+            with p.open('ab') as f:
+                f.write(shown[:40])
+            self.assertEqual(reader.read(), [])
+            with p.open('ab') as f:
+                f.write(shown[40:] + hidden + b'fake NL_HOME_SHOWN\n')
+            self.assertEqual(reader.read(), [('shown', True), ('hidden', False)])
+            self.assertEqual(reader.read(), [])
+            p.rename(p.with_suffix('.old'))
+            p.write_bytes(shown)
+            self.assertEqual(reader.read(), [])
+            with p.open('ab') as f:
+                f.write(shown)
+            self.assertEqual(reader.read(), [('shown', True)])
+            p.write_bytes(b'')
+            self.assertEqual(reader.read(), [])
+
+    def test_ribbon_correlation_never_launches_without_home(self):
+        from unittest.mock import patch
+        calls = []
+        q = legacy.HomeQueue('watch', lambda action: calls.append(action) or 7,
+                             lambda pid: 0, lambda pid: None)
+        with patch.object(legacy, 'log'):
+            legacy.ribbon_events(q, [('shown', True)], 10)
+            self.assertFalse(q.pending)
+            q.press(11)
+            q.due = 11.6
+            legacy.ribbon_events(q, [('hidden', False)], 11.1)
+            self.assertFalse(q.repeat)
+            legacy.ribbon_events(q, [('shown', True)], 11.2)
+            self.assertTrue(q.repeat)
+            self.assertAlmostEqual(q.due, 11.35)
+            q.start('home', 11.35)
+            q.reap(11.5)
+            q.press(15)
+            legacy.ribbon_events(q, [('shown', True)], 17)
+            self.assertFalse(q.repeat)
+        self.assertEqual(calls, ['redirect-repeat-watch'])
+
     def test_no_optional_modules(self):
         source = pathlib.Path("tv/legacy-home-v8.py").read_text()
         for name in ('json', 'fcntl', 'subprocess', 'glob'):

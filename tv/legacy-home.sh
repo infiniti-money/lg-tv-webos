@@ -17,10 +17,38 @@ check() {
 }
 case "${1:-status}" in
   status)
-    for f in session armed trial enabled wake wallpaper; do
+    for f in session armed trial enabled wake wallpaper ribbon; do
       if [ -f "$D/legacy-v8-$f" ]; then echo "$f: ON"; else echo "$f: OFF"; fi
     done
     [ ! -f /tmp/infiniti-legacy-v8.log ] || tail -n 15 /tmp/infiniti-legacy-v8.log
+    ;;
+  ribbon-probe)
+    echo "=== V9 read-only compatibility ==="
+    [ -r /var/log/messages ] && echo "system log: readable" || echo "system log: unavailable"
+    grep -E 'surface-manager-starfish.*LSM NL_HOME_(SHOWN|HIDDEN)' /var/log/messages 2>/dev/null | tail -n 20 || true
+    if [ -f /usr/palm/applications/com.webos.app.home/appinfo.json ]; then
+      echo "Home manifest exists; separate compatibility review required"
+    else
+      echo "No Home manifest: directory bind-mount unavailable"
+    fi
+    for p in /tmp/inputhook /var/lib/webosbrew/init.d/inputhook; do
+      [ ! -e "$p" ] || echo "Input Hook conflict: $p"
+    done
+    ;;
+  ribbon-on)
+    check
+    [ ! -e "$D/legacy-v8-session" ] && [ ! -e "$D/legacy-v8-enabled" ] && [ ! -e "$D/legacy-v8-armed" ] && [ ! -e "$D/legacy-v8-trial" ] && [ ! -e /tmp/infiniti-legacy-v8-lock ] ||
+      { echo "Stop existing observer and boot modes before changing engine"; exit 1; }
+    [ ! -e /tmp/inputhook ] && [ ! -e /var/lib/webosbrew/init.d/inputhook ] ||
+      { echo "Input Hook detected: uninstall and reboot cleanly before V9"; exit 1; }
+    [ -r /var/log/messages ] || { echo "System log unavailable"; exit 1; }
+    touch "$D/legacy-v8-ribbon"
+    echo "V9 ribbon correlation selected; run watch first. No boot hook created."
+    ;;
+  ribbon-off)
+    [ ! -e /tmp/infiniti-legacy-v8-lock ] && [ ! -e "$D/legacy-v8-enabled" ] && [ ! -e "$D/legacy-v8-armed" ] && [ ! -e "$D/legacy-v8-trial" ] && [ ! -e "$D/legacy-v8-session" ] ||
+      { echo "Disable existing mode before changing engine"; exit 1; }
+    rm -f "$D/legacy-v8-ribbon"
     ;;
   watch)
     check
@@ -91,11 +119,11 @@ HOOK
     ;;
   disable)
     rm -f "$D/legacy-v8-session" "$D/legacy-v8-armed" "$D/legacy-v8-trial" \
-      "$D/legacy-v8-enabled" "$D/legacy-v8-wake" "$D/legacy-v8-wallpaper" "$PROOF"
+      "$D/legacy-v8-enabled" "$D/legacy-v8-wake" "$D/legacy-v8-wallpaper" "$D/legacy-v8-ribbon" "$PROOF"
     if [ -f "$I" ] && grep -q '^# Infiniti Legacy V8 hook$' "$I"; then
       rm -f "$I"
     fi
     echo "V8 disarmed; observer exits after current bounded operation. Native Home untouched."
     ;;
-  *) echo "Usage: $0 status|watch|arm|confirm|wake-on|wake-off|wallpaper-on|wallpaper-off|disable"; exit 2 ;;
+  *) echo "Usage: $0 status|ribbon-probe|ribbon-on|ribbon-off|watch|arm|confirm|wake-on|wake-off|wallpaper-on|wallpaper-off|disable"; exit 2 ;;
 esac

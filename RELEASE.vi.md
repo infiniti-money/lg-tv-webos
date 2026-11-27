@@ -1,3 +1,7 @@
+# v1.7.0 — Infiniti Home V9 (ứng viên)
+
+[Xem ghi chú thử nghiệm](RELEASE_NOTES_v1.7.0.md). Chưa nghiệm thu TV thật.
+
 # v1.6.7 — Designed by Tân Dev (ứng viên)
 
 Xem [ghi chú v1.6.7](RELEASE_NOTES_v1.6.7.md). Home chọn cơ chế theo foreground; cần nghiệm thu trực quan trên TV thật.

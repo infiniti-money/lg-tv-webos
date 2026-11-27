@@ -58,6 +58,7 @@ function read(n){
  s.onload=function(){finish(true);};s.onerror=function(){finish(false);};loadTimer=setTimeout(function(){finish(false);},4000);document.body.appendChild(s);
 }
 root.INFINITI_IDLE_ALBUM_START=function(preview){stop();previewMode=preview===true;active=true;read(seq);};
+root.INFINITI_IDLE_ALBUM_NEXT=function(){if(!active||!previewMode||!prefs||prefs.photos.length<2||script||loaded||enterState||transitionTimer!==null)return false;if(timer!==null){clearTimeout(timer);timer=null;}read(seq);return true;};
 root.INFINITI_IDLE_ALBUM_STOP=stop;
 root.INFINITI_IDLE_NEXT_INDEX=nextIndex;
 root.INFINITI_IDLE_CHOOSE_STYLE=chooseStyle;

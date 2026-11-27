@@ -5,11 +5,11 @@ D=/home/root/lg-tv-vibehack
 CFG=/home/root/.config/lginputhook/keybinds.json
 fail(){ echo "LAB_REFUSED: $*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || fail 'root required for ptrace'
-[ "$#" = 2 ] || [ "$#" = 3 ] || fail 'usage: native-lab.sh DIRECTORY pass|ignore|cycle [multi|mixed]'
+[ "$#" = 2 ] || [ "$#" = 3 ] || fail 'usage: native-lab.sh DIRECTORY pass|ignore|cycle [multi|mixed|preloaded]'
 src=$1
 mode=$2
 variant=${3:-single}
-case "$variant" in single|multi|mixed) ;; *) fail "invalid variant";; esac
+case "$variant" in single|multi|mixed|preloaded) ;; *) fail "invalid variant";; esac
 case "$mode" in pass|ignore|cycle) ;; *) fail 'invalid mode';; esac
 for c in sha256sum timeout mktemp readlink awk; do command -v "$c" >/dev/null || fail "$c missing"; done
 if timeout -t 2 -s KILL true >/dev/null 2>&1; then
@@ -124,7 +124,18 @@ actual=$(sha256sum "$work/thumb-probe" | awk '{print $1}')
 chmod 700 "$work/thumb-probe" "$work/ezinject"
 mkfifo "$work/commands"
 exec 3<>"$work/commands"
-"$work/thumb-probe" <&3 >"$work/probe.log" 2>&1 &
+# Only the private synthetic executable gets these environment variables.
+# No LD_PRELOAD in the shell, observer, or any LG service.
+if [ "$variant" = preloaded ]; then
+  GLIB=/usr/lib/libglib-2.0.so.0.4000.0
+  CXX=/lib/libstdc++.so.6.0.19
+  printf '%s\n' \
+    "1a4314183bc80f6cf1d634ffb34802d5b9bb1d0c07c5962584ebb2d5bee74b34  $GLIB" \
+    "33c725259c618f54e2ce3e33fc30109ff12f177d0f500b4775994bd8de748e12  $CXX" | sha256sum -c - || fail 'LG runtime fingerprint mismatch'
+  LD_PRELOAD="$GLIB:$CXX" LD_DEBUG=libs,bindings LD_DEBUG_OUTPUT="$work/loader" "$work/thumb-probe" <&3 >"$work/probe.log" 2>&1 &
+else
+  "$work/thumb-probe" <&3 >"$work/probe.log" 2>&1 &
+fi
 child=$!
 wait_line(){
   n=0
@@ -143,7 +154,7 @@ wait_line(){
 wait_line READY 1
 stage ready
 if [ "$variant" != single ]; then
-  if [ "$variant" = mixed ]; then printf r >&3; else printf m >&3; fi
+  if [ "$variant" = mixed ] || [ "$variant" = preloaded ]; then printf r >&3; else printf m >&3; fi
   wait_line MULTI_READY 1
   count=$(awk '/^Threads:/ {print $2}' "/proc/$child/status")
   [ "$count" -ge 7 ] || fail "expected seven preexisting threads, observed $count"
@@ -152,6 +163,12 @@ fi
 printf t >&3
 wait_line PASS_THROUGH_OK 1
 stage baseline-pass
+cp "/proc/$child/maps" "$work/maps-before.txt"
+if [ "$variant" = preloaded ]; then
+  grep -F "$GLIB" "$work/maps-before.txt" >/dev/null || fail "GLib not mapped before injection"
+  grep -F "$CXX" "$work/maps-before.txt" >/dev/null || fail "C++ not mapped before injection"
+  stage preloaded-runtime-verified
+fi
 if [ "$mode" = cycle ]; then [ "$(cat "$CFG")" = "$last_config" ] || fail "config changed"; else check_config || fail "config changed"; fi
 # Only PID obtained from our own background child; no user PID argument.
 [ "$(readlink "/proc/$child/exe")" = "$work/thumb-probe" ] || fail 'owned probe identity changed'
@@ -159,6 +176,7 @@ printf '%s\n' 'injector-starting' > "$work/stage"
 if /usr/bin/node "$D/native-inject-observe.js" "$work" "$child" "$$" >"$work/inject.log" 2>&1; then rc=0; else rc=$?; fi
 bounded /usr/bin/node "$D/native-diagnostics.js" "$child" "$work" >"$work/diagnostics.json" 2>&1 || true
 stage "injector-observer rc=$rc"
+cp "/proc/$child/maps" "$work/maps-after-inject.txt" 2>/dev/null || true
 [ "$rc" = 0 ] || fail "injector failed; inspect inject-result.json and diagnostics.json"
 sleep 2
 [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" = "$work/thumb-probe" ] || fail 'probe died after injection'
@@ -167,6 +185,7 @@ if [ "$mode" = cycle ]; then [ "$(cat "$CFG")" = "$last_config" ] || fail 'confi
 printf t >&3
 if [ "$mode" = ignore ]; then wait_line HOME_ONLY_IGNORED 1; else wait_line PASS_THROUGH_OK 2; fi
 stage initial-hook-verified
+cp "/proc/$child/maps" "$work/maps-after-hook.txt"
 reload_config(){
   before=$(grep -c 'Keybinds reloaded' "$work/hook.log" || true)
   # Older upstream polls mtime at seconds granularity.
@@ -207,6 +226,10 @@ grep -Eq 'uinput_code=773([^0-9]|$)' "$work/hook.log" || fail 'no observed Home 
 grep -Eq 'uinput_code=115([^0-9]|$)' "$work/hook.log" || fail 'no observed other-key hook call'
 bounded /usr/bin/node "$D/native-diagnostics.js" "$child" "$work" >"$work/diagnostics.json" || fail "post-hook diagnostics failed"
 if grep -Eiq 'SIGILL|SIGSEGV|Illegal instruction|Segmentation fault' "$work/inject.log" "$work/hook.log"; then fail 'fault reported'; fi
+if [ "$variant" = preloaded ]; then
+  # Preserve raw per-process loader logs, plus a filtered summary for sharing.
+  grep -E "calling init:|calling fini:|libinputhookpp|g_malloc|g_free|g_log_default_handler|symbol lookup error" "$work"/loader.* > "$work/loader-summary.log" 2>/dev/null || true
+fi
 stage quit-request
 printf q >&3
 exec 3>&- 3<&-

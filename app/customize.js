@@ -813,6 +813,7 @@
   appearanceToggle('customizeShowWeek','showWeek');
   appearanceToggle('customizeMotion','reduceMotion');
   appearanceToggle('customizeIdleRain','idleRain');
+  $('customizeAlbumBrowse').addEventListener('click',function(){hide();if(root.INFINITI_IDLE_PREVIEW)root.INFINITI_IDLE_PREVIEW(true,{motion:'still'});});
   $('customizeAlbumRefresh').addEventListener('click',renderAlbumState);
   $('customizeAlbumWeb').addEventListener('click',function(){activateTab('wallpaper');tabs.wallpaper.focus();});
   var previewTransition='',previewMotion='';

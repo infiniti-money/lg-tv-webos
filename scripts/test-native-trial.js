@@ -56,6 +56,10 @@ assert.ok(lab.indexOf('LAB_CLEANUP_INCOMPLETE')>=0);
 assert.ok(lab.indexOf('native-lab-cycle-original.json')>=0);
 
 assert.ok(lab.indexOf('preloaded-runtime-verified')>=0);
-assert.ok(lab.indexOf('LD_PRELOAD="$GLIB:$CXX" LD_DEBUG=libs,bindings')>=0);
+assert.ok(lab.indexOf('LD_PRELOAD="$preload" LD_DEBUG=libs,bindings')>=0);
 assert.ok(lab.indexOf('maps-before.txt')>=0);
 assert.ok(lab.indexOf('loader-summary.log')>=0);
+
+['baseline-trace','glib-only','cxx-only','preloaded','cxx-first','preloaded-quiet'].forEach(function(v){assert.ok(lab.indexOf(v)>=0);});
+assert.ok(lab.indexOf('native-loader-report.js')>=0);
+assert.ok(lab.indexOf('lab-exit-code')>=0);

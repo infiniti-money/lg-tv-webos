@@ -1,3 +1,7 @@
+# v1.8.0 — Runtime Isolation (ứng viên)
+
+[Ma trận thử nghiệm và bằng chứng v1.7.9](RELEASE_NOTES_v1.8.0.md). Chưa nghiệm thu sáu bài thử trên TV.
+
 [Danh mục đầy đủ mọi phiên bản, RC và kết quả nghiệm thu](CHANGELOG.md)
 
 # v1.7.9 — Loader và symbol interposition

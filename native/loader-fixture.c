@@ -21,8 +21,13 @@ int probe_main(void) {
     void *c=dlopen("./liblab-consumer.so",RTLD_NOW|RTLD_LOCAL);
     if(!c) { SAY("CONSUMER_LOAD_FAILED\n"); return 2; }
     int (*observe)(void)=(int(*)(void))dlsym(c,"lab_observe");
+    #ifdef EXPECT_ISOLATED
+    if(!observe || observe()!=22) { SAY("ISOLATION_UNEXPECTED\n"); return 3; }
+    SAY("FUNCTION_ISOLATION_OBSERVED\n");
+#else
     if(!observe || observe()!=11) { SAY("BINDING_UNEXPECTED\n"); return 3; }
     SAY("INTERPOSITION_OBSERVED\n");
+#endif
     return 0;
 }
 #endif

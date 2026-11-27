@@ -10,6 +10,7 @@ Mỗi phiên bản mới phải có mục trong CHANGELOG.md, tệp RELEASE_NOTE
 
 | Phiên bản | Ngày UTC | Loại | Thay đổi | Ghi chú |
 |---|---|---|---|---|
+| v1.8.0 | — | Ứng viên, chưa phát hành | Runtime isolation, sáu đối chứng, báo cáo loader kể cả khi lỗi | [Chi tiết](RELEASE_NOTES_v1.8.0.md) |
 | [v1.7.9](https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.7.9) | 2026-11-27 | Prerelease | Preloaded GLib/C++, constructor interposition, IFUNC và readelf Windows | [Chi tiết](RELEASE_NOTES_v1.7.9.md) |
 | [v1.7.8](https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.7.8) | 2026-11-27 | Prerelease | Dynamic Cycle, mock exec, mixed threads, ELF collector | [Chi tiết](RELEASE_NOTES_v1.7.8.md) |
 | [v1.7.7](https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.7.7) | 2026-11-27 | Prerelease | Sửa provider pthread trên glibc 2.19 | [Chi tiết](RELEASE_NOTES_v1.7.7.md) |
@@ -48,7 +49,7 @@ Mỗi phiên bản mới phải có mục trong CHANGELOG.md, tệp RELEASE_NOTE
 
 ## Kết quả nghiệm thu bổ sung sau phát hành
 
-- **v1.7.9:** CI main và workflow phát hành thành công; chưa nghiệm thu preloaded trên TV. Không inject lginput2 thật.
+- **v1.7.9:** CI main và workflow phát hành thành công; preloaded FAIL trên TV (injector 1 / 174 ms, mapped, log 0 byte, 7 luồng). LD_DEBUG xác nhận liên kết chéo GLib/C++, dừng tại calling init. Probe 137 do cleanup SIGKILL; hệ thống sạch. Chưa xác định nguyên nhân chính xác. Không inject lginput2 thật.
 - **v1.7.8:** chủ TV gửi log PASS mixed và cycle; injector 257 ms, 20 lời gọi, mock exec một lần, QUIT_ACK, exit 0, config {}, không chứng minh Home vật lý. ELF collector hoàn tất; không đăng binary LG.
 - **v1.7.7:** probe đơn/đa luồng và Lab pass đạt; ignore xác nhận chặn Home/giữ Volume nhưng Ctrl+C trước LAB_PASS; sau đó config {} và lginput2 sạch.
 - **v1.7.6:** probe đơn luồng đạt, đa luồng lỗi pthread_create@GLIBC_2.4 provider libc, exit 127 trước injector.

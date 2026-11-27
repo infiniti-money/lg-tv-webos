@@ -139,7 +139,7 @@ class HomeQueue(object):
             log('helper spawn failed: %s' % e)
             self.pid = None
             return False
-        self.kind, self.deadline = kind, now + (4 if kind == 'power' else 22)
+        self.kind, self.deadline = kind, now + (4 if kind == 'power' else 25)
         if kind == 'home':
             self.pending = False
             self.repeat = False

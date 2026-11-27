@@ -163,6 +163,22 @@ function redirectHome(mode, session, guard, callback, report) {
     session(mode,true,callback);
   },{deadline:2500,launchTimeout:1200});
 }
+// A successful render beacon cannot distinguish LG's native ribbon overlay.
+// Prefer the known close/relaunch path when already foreground or unknown.
+function redirectFromForeground(mode, probe, session, guard, callback, report) {
+  report=report||function(){};
+  if(!guard(mode))return callback(new Error('launch canceled'));
+  probe(function(e,r){
+    if(!guard(mode))return callback(new Error('launch canceled'));
+    var appId=!e && r && typeof r.appId==='string'?r.appId.trim():'';
+    if(!appId || appId.toUpperCase()==='UNKNOWN' || appId===APP){
+      report('Home foreground recovery: close and relaunch ('+(appId===APP?'already Tân Dev':'foreground unknown')+')');
+      return session(mode,true,callback);
+    }
+    report('Home foreground: '+appId);
+    redirectHome(mode,session,guard,callback,report);
+  });
+}
 function boot(mode) {
   var start=process.uptime();
   console.log('BOOT: adaptive Luna readiness (90s limit)');
@@ -217,11 +233,12 @@ function run(action) {
   } else if(/^redirect-(watch|trial|enabled)$/.test(action)){
     var mode=action.slice(9);
     if(!allowed(mode))return fail('V8 disabled or conflicting hook');
-    redirectHome(mode,renderSession,allowed,function(e){if(e)fail(e);},function(s){console.log(s);});
+    redirectFromForeground(mode,function(cb){luna(M+'getForegroundAppInfo',{},cb,null,1000);},
+      renderSession,allowed,function(e){if(e)fail(e);},function(s){console.log(s);});
   } else if(action==='wake-enabled'){
     if(!allowed('enabled') || !exists(DATA+'/legacy-v8-wake'))return fail('wake disabled');
     renderSession('enabled',false,function(e){if(e)fail(e);});
   } else { fail('Unknown V8 helper action'); }
 }
 if(require.main===module) run(process.argv[2]||'');
-module.exports={luna:luna,waitReady:waitReady,redirectHome:redirectHome};
+module.exports={luna:luna,waitReady:waitReady,redirectHome:redirectHome,redirectFromForeground:redirectFromForeground};

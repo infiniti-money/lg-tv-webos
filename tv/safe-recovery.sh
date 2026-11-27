@@ -53,6 +53,14 @@ for item in "$I/lg-tv-vibehack" "$I/97-homekey" "$I/infiniti-legacy-v8"; do
   fi
 done
 
+# Native trial recovery also works after a power loss: persistent backup.
+if [ -f "$D/native-trial-original.json" ] || [ -d /tmp/infiniti-native-home-trial ]; then
+  if [ ! -f "$D/native-trial.sh" ] || ! sh "$D/native-trial.sh" recover; then
+    echo 'WARNING: Native trial restore incomplete' >&2
+    WARN=1
+  fi
+fi
+
 # A failed or unavailable Input Hook restore means the TV may keep an old
 # cached binding. This must be reported as PARTIAL, never complete success.
 # Disarming autostart is independent and has already happened above.

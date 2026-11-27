@@ -41,7 +41,7 @@ mkdir "$lock" || fail 'another lab active or stale lock; inspect before removal'
 work=
 child=
 owned_child(){
-  [ -n "$child" ] && [ "$(awk '/^PPid:/ {print $2}' "/proc/$child/status" 2>/dev/null || true)" = "$" ]
+  [ -n "$child" ] && [ "$(awk '/^PPid:/ {print $2}' "/proc/$child/status" 2>/dev/null || true)" = "$$" ]
 }
 cleanup(){
   # A leader may be zombie while its worker threads are still alive.

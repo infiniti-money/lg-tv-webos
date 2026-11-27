@@ -19,6 +19,27 @@ observer_stopped() {
   done
   [ ! -e /tmp/infiniti-legacy-v8-lock ]
 }
+native_abi() {
+  echo "=== Native ABI inventory (no execution or injection) ==="
+  uname -m
+  [ ! -x /usr/bin/getconf ] || /usr/bin/getconf GNU_LIBC_VERSION || true
+  for base in /media/developer/apps/usr/palm/services/org.webosbrew.inputhook.service /media/cryptofs/apps/usr/palm/services/org.webosbrew.inputhook.service "$HOOK_APP" "$HOOK_APP_ALT"; do
+    [ -d "$base" ] || continue
+    for f in "$base/inputhook/libinputhookpp.so" "$base/inputhook/ezinject"; do
+      [ -r "$f" ] || continue
+      echo "=== $f ==="
+      /usr/bin/node "$DATA/native-proof.js" elf "$f" || return 1
+      if command -v readelf >/dev/null 2>&1; then
+        readelf -A "$f" || true
+        readelf -d "$f" | grep NEEDED || true
+        readelf -V "$f" | grep -E 'GLIBC_|GLIBCXX_|CXXABI_' || true
+      else
+        echo "readelf unavailable; dependencies and ABI not verified"
+      fi
+    done
+  done
+  echo "ELF header alone cannot prove ARMv7, glibc 2.19 or hook compatibility."
+}
 native_probe() {
   echo "=== Native Home diagnostic (read only) ==="
   version=""
@@ -31,7 +52,7 @@ native_probe() {
   echo "Input Hook version: ${version:-absent}"
   loaded=0
   old=0
-  for p in $(pidof lginput2 tvservice 2>/dev/null || true); do
+  for p in $(pidof RELEASE lginput2 micomservice tvservice testapp 2>/dev/null || true); do
     echo "PID $p"
     grep -E 'libphp\.so|libinputhookpp\.so' "/proc/$p/maps" || true
     if grep -q 'libphp\.so' "/proc/$p/maps"; then old=1; fi
@@ -97,8 +118,20 @@ case "$action" in
     [ -f "$DATA/safe-recovery.sh" ] || { echo "Recovery helper missing" >&2; exit 1; }
     exec sh "$DATA/safe-recovery.sh"
     ;;
+  native-abi)
+    native_abi
+    ;;
   native-probe)
     native_probe
+    ;;
+  native-begin)
+    observer_stopped && [ -f "$FLAG" ] && native_probe || { echo "Native mapping/preflight not ready; no baseline"; exit 1; }
+    /usr/bin/node "$DATA/native-proof.js" begin
+    ;;
+  native-check)
+    observer_stopped && [ -f "$FLAG" ] && native_probe || { echo "Native mapping/preflight not ready"; exit 1; }
+    /usr/bin/node "$DATA/native-proof.js" check
+    /usr/bin/node "$DATA/legacy-luna.js" probe
     ;;
   enable)
     observer_stopped || { echo "Disable V8/V9 and let watcher exit before Native Home" >&2; exit 1; }
@@ -143,6 +176,8 @@ case "$action" in
     echo "Rollback: sh $DATA/home-control.sh disable"
     ;;
   boot-arm)
+    observer_stopped && native_probe && /usr/bin/node "$DATA/native-proof.js" check || { echo 'Native cold boot requires fresh 3-press evidence; no boot changes'; exit 1; }
+    [ "${2:-}" = --visual-confirm ] || { echo 'Verify zero LG Ribbon and healthy remote, then boot-arm --visual-confirm'; exit 1; }
     # Explicit trial request from a user who understands earlier black-screen
     # reports. Must never implicitly come from install.sh's safe default.
     [ -f "$FLAG" ] || { echo "First map remote Home 0305/773 with: sh $0 enable" >&2; exit 1; }
@@ -229,6 +264,7 @@ case "$action" in
   disable)
     # Fail-safe ordering: disarm all runtime flags BEFORE restoring a possibly
     # conflicted keymap. A malformed backup must never keep relaunch loops alive.
+    rm -f /tmp/infiniti-native-proof.json
     rm -f "$FLAG" "$DATA/home-event-device" "$DATA/boot-services-enabled" \
       "$DATA/boot-home-armed" "$DATA/boot-home-trial" "$DATA/boot-home-enabled"
     pkill -f "$DATA/homewatch.js" 2>/dev/null || true
@@ -245,5 +281,5 @@ case "$action" in
     fi
     echo "Home replacement disabled. Restart LG Input Hook if its old binding is cached."
     ;;
-  *) echo "Usage: sh $0 status|diagnose|native-probe|safe-mode|enable|rebind|boot-arm|boot-confirm|boot-disable|evdev-disable|disable" >&2; exit 2 ;;
+  *) echo "Usage: sh $0 status|diagnose|native-abi|native-probe|native-begin|native-check|safe-mode|enable|rebind|boot-arm|boot-confirm|boot-disable|evdev-disable|disable" >&2; exit 2 ;;
 esac

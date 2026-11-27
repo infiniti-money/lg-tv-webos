@@ -5,3 +5,5 @@ assert.ok(r.validate('idleEffect','snow'));assert.ok(!r.validate('idleEffect','s
 assert.ok(r.validate('app:com.netflix.app:pinned',true));assert.ok(!r.validate('app:com.netflix.app:pinned','yes'));assert.ok(r.validate('weatherUnit','fahrenheit'));
 
 assert.ok(r.validate('weatherLocation',{latitude:20,longitude:106,place:'Hưng Yên'}));assert.ok(!r.validate('weatherLocation',{latitude:91,longitude:106,place:'bad'}));assert.ok(r.validate('weatherEnabled',false));
+
+assert.ok(r.validate('appOrder',['netflix','youtube.leanback.v4']));assert.ok(!r.validate('appOrder',['netflix','netflix']));assert.ok(!r.validate('appOrder',['com.infinitimoney.tvhome']));assert.ok(!r.validate('appOrder','netflix'));

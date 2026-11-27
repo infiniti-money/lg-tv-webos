@@ -815,7 +815,7 @@
   appearanceToggle('customizeIdleRain','idleRain');
   $('customizeAlbumRefresh').addEventListener('click',renderAlbumState);
   $('customizeAlbumWeb').addEventListener('click',function(){activateTab('wallpaper');tabs.wallpaper.focus();});
-  $('customizeAlbumPreview').addEventListener('click',function(){hide();if(root.INFINITI_IDLE_PREVIEW)root.INFINITI_IDLE_PREVIEW();});
+  $('customizeAlbumPreview').addEventListener('click',function(){hide();if(root.INFINITI_IDLE_PREVIEW)root.INFINITI_IDLE_PREVIEW(true);});
   $('customizeIdlePreview').addEventListener('click',function(){var a=getAppearance();if(!a.idleRain||a.reduceMotion){message('Bật hiệu ứng và tắt Giảm chuyển động để thử chuyển động.');return;}hide();if(root.INFINITI_IDLE_PREVIEW)root.INFINITI_IDLE_PREVIEW();});
   $('customizeIdleEffect').addEventListener('click',function(){var a=getAppearance();saveAppearance({idleEffect:IDLE_EFFECTS[(IDLE_EFFECTS.indexOf(a.idleEffect)+1)%IDLE_EFFECTS.length]});applyAppearance();refreshToggles();renderIdle();});
   $('customizeIdleTime').addEventListener('click',function(){var a=getAppearance();saveAppearance({idleSeconds:IDLE_CHOICES[(IDLE_CHOICES.indexOf(a.idleSeconds)+1)%IDLE_CHOICES.length]});applyAppearance();refreshToggles();});

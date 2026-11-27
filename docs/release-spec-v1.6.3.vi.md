@@ -82,3 +82,5 @@ Bổ sung đủ 24 chuyển cảnh, 12 motion, chu kỳ 20 giây, tốc độ 60
 - Thêm tìm app theo tên/ID trong Tùy chỉnh, lọc gần đây (chỉ lượt mở được xác nhận bởi API launcher), lưu tối đa 20 ID trên TV. Web thời tiết chuyển qua mailbox có revision thay vì chỉ ghi cấu hình file; chưa nghiệm thu trên TV.
 
 - Bổ sung random-light cho idle, bảng đọc RAM trống/tải trung bình/uptime theo yêu cầu, xuất/nhập JSON tùy chọn chung có xác nhận. Không phải bản sao đầy đủ ảnh, icon riêng hoặc localStorage; chưa hỗ trợ dung lượng đĩa/đo CPU phần trăm. Import qua validator hiện có, không nhận trường lệnh hoặc mật khẩu.
+
+- Bổ sung thử album nhanh 5 giây/ảnh, không ghi mốc lịch thật, có thể xem thử khi album tắt; tạm tránh ảnh lỗi 60s. Web gửi thứ tự app đang hiển thị qua mailbox, giữ nhóm ghim ở đầu; cần TV xác nhận. Không mở chức năng launch/root từ web. Chưa nghiệm thu thiết bị.

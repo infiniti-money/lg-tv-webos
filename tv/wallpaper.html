@@ -134,7 +134,7 @@
         <label class="remoteRow">Icon <select id="remoteIcon"></select></label>
         <label class="remoteRow">Hiển thị <input id="remoteVisible" type="checkbox"></label><label class="remoteRow">Ghim lên đầu Home <input id="remotePinned" type="checkbox"></label>
       </div>
-      <p class="hint">Icon riêng đã tải trên TV được giữ nguyên trừ khi bạn chọn icon khác.</p>
+      <h3>Thứ tự trên Home</h3><p class="hint">Chọn app rồi dùng lên/xuống. App đã ghim vẫn đứng trước. Chỉ đổi danh sách đang có; bấm Lưu thay đổi để gửi.</p><select id="orderApp" size="5" style="width:100%"></select><div class="pair"><button id="orderUp" class="btn ghost" type="button">↑ Lên</button><button id="orderDown" class="btn ghost" type="button">↓ Xuống</button></div><p class="hint">Icon riêng đã tải trên TV được giữ nguyên trừ khi bạn chọn icon khác.</p>
     </fieldset>
   </section>
   <section id="weatherSection">
@@ -408,6 +408,9 @@
   Object.keys(defs).forEach(function(k){var d=defs[k],l=document.createElement('label'),el=document.createElement(d[1]?'select':'input');l.className='remoteRow';l.appendChild(document.createTextNode(d[0]));if(d[1]){option(el,'','— Chưa biết —');d[1].forEach(function(v,i){option(el,v,d[2][i]);});}else el.type='checkbox';el.onchange=function(){if(d[1]&&el.value==='')return;el.indeterminate=false;touched(k,d[1]?(k==='idleSeconds'?Number(el.value):el.value):el.checked);};l.appendChild(el);$(k.indexOf('idle')===0?'remoteIdleFields':['showSolar','showLunar','showWeek','weatherUnit'].indexOf(k)>=0?'remoteCalendarFields':'remoteFields').appendChild(l);fields[k]=el;});
   function appKey(k){return 'app:'+$('remoteApp').value+':'+k;}
   function effective(k){return Object.prototype.hasOwnProperty.call(pending,k)?pending[k]:values[k];}
+  function renderOrder(){var list=effective('appOrder'),el=$('orderApp'),selected=el.value;el.textContent='';if(!Array.isArray(list)){option(el,'','Chưa có thứ tự xác nhận');$('orderUp').disabled=$('orderDown').disabled=true;return;}var by={};remoteApps.forEach(function(a){by[a.id]=a.title;});list.forEach(function(id){if(Object.prototype.hasOwnProperty.call(by,id))option(el,id,by[id]);});el.value=selected;if(!el.value&&el.options.length)el.selectedIndex=0;$('orderUp').disabled=$('orderDown').disabled=!el.value;}
+  function moveOrder(delta){var list=effective('appOrder');if(!Array.isArray(list))return;list=list.slice();var id=$('orderApp').value,i=list.indexOf(id),j=i+delta;if(i<0||j<0||j>=list.length)return;var other=list[j];list[j]=id;list[i]=other;touched('appOrder',list);renderOrder();}
+  $('orderUp').onclick=function(){moveOrder(-1);};$('orderDown').onclick=function(){moveOrder(1);};
   function appFields(){var id=$('remoteApp').value;$('remoteAppFields').hidden=!id;if(!id)return;
     $('remoteTitle').value=effective(appKey('title'))||'';$('remoteIcon').value=effective(appKey('icon'))||'';$('remoteVisible').checked=effective(appKey('visible'))===true;$('remoteVisible').indeterminate=effective(appKey('visible'))===undefined;$('remotePinned').checked=effective(appKey('pinned'))===true;$('remotePinned').indeterminate=effective(appKey('pinned'))===undefined;
   }
@@ -421,7 +424,7 @@
     if(typeof values.weatherEnabled==='boolean')showWeather({enabled:values.weatherEnabled,place:values.weatherLocation?values.weatherLocation.place:''});
     if(!s.online&&waiting===null)remoteMsg('TV chưa xác nhận. Có thể gửi từng thay đổi; mở Home để TV áp dụng. Các trường trống là chưa biết.');
     Object.keys(defs).forEach(function(k){var v=effective(k);if(defs[k][1])fields[k].value=v===undefined?'':String(v);else {fields[k].checked=v===true;fields[k].indeterminate=v===undefined;}});
-    var id=$('remoteApp').value;$('remoteApp').textContent='';option($('remoteApp'),'','Chọn ứng dụng');(s.apps||[]).forEach(function(a){option($('remoteApp'),a.id,a.title);});$('remoteApp').value=id;if(!$('remoteApp').value)$('remoteApp').value='';appFields();
+    remoteApps=s.apps||[];renderOrder();var id=$('remoteApp').value;$('remoteApp').textContent='';option($('remoteApp'),'','Chọn ứng dụng');(s.apps||[]).forEach(function(a){option($('remoteApp'),a.id,a.title);});$('remoteApp').value=id;if(!$('remoteApp').value)$('remoteApp').value='';appFields();
     if(s.online&&!Object.keys(pending).length&&s.pending.length===0)remoteMsg('Đã kết nối TV.');return s;
   });}
   $('systemRefresh').onclick=function(){var b=$('systemRefresh');b.disabled=true;api('GET','api/diagnostics').then(function(d){$('systemStatus').textContent='RAM trống '+Math.round(d.freeMemory/1048576)+' / '+Math.round(d.totalMemory/1048576)+' MB · tải trung bình 1 phút '+Number(d.load[0]).toFixed(2)+' ('+d.cores+' lõi) · uptime '+Math.floor(d.uptime/60)+' phút · cổng '+d.port+' · '+(d.mdns==='ready'?'tan-dev.local đã quảng bá':d.mdns==='conflict'?'Tên mạng bị trùng':'Tên mạng chưa sẵn sàng')+' · IP '+(d.ip||'chưa có');}).catch(function(){$('systemStatus').textContent='Không đọc được trạng thái TV.';}).then(function(){b.disabled=false;});};

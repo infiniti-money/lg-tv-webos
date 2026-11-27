@@ -9,7 +9,7 @@ var appearance=['theme','font','idleSeconds','idleEffect','largeText','showWeek'
 function covered(){return life?life.isCovered():!!document.hidden;}
 function snapshot(){
  var v=p.getAppearance(),out={pack:p.getIconPack(),weatherUnit:p.getWeather().unit,weatherEnabled:p.getWeather().enabled,weatherLocation:{latitude:p.getWeather().latitude,longitude:p.getWeather().longitude,place:p.getWeather().place}},pins=p.getPinned();
- appearance.forEach(function(k){out[k]=v[k];});
+ appearance.forEach(function(k){out[k]=v[k];});if(root.INFINITI_GET_APP_ORDER)out.appOrder=root.INFINITI_GET_APP_ORDER();
  ((root.TV_APPS||{}).apps||[]).slice(0,250).forEach(function(a){if(!a||p.isProtected(a.id))return;var s=p.getAppStyle(a.id),k='app:'+a.id+':';out[k+'title']=s.title;out[k+'icon']=/^pack:/.test(s.icon)||s.icon==='original'?s.icon:'';out[k+'visible']=p.isVisible(a.id,(root.CONFIG||{}).hiddenApps||[]);out[k+'pinned']=pins.indexOf(a.id)>=0;});
  return out;
 }
@@ -20,6 +20,7 @@ function apply(inbox){
  else if(k==='weatherUnit'){weather.unit=e.value;weatherChanged=true;}
  else if(k==='weatherEnabled'){weather.enabled=e.value;weatherChanged=true;}
  else if(k==='weatherLocation'){weather.latitude=e.value.latitude;weather.longitude=e.value.longitude;weather.place=e.value.place;weatherChanged=true;}
+ else if(k==='appOrder'){if(!root.INFINITI_SET_APP_ORDER||!root.INFINITI_SET_APP_ORDER(e.value))throw Error('app order');changed=true;}
  else if(k==='pack'){if(!p.setIconPack(e.value))throw Error('pack');changed=true;}
  else {var m=/^app:(.+):(title|icon|visible|pinned)$/.exec(k);if(!m||p.isProtected(m[1]))continue;
  var id=m[1];if(m[2]==='pinned'){if(!p.setPinned(id,e.value))throw Error('pin');changed=true;}

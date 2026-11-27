@@ -5,7 +5,7 @@ mkdir -p "$out"
 arm-linux-gnueabi-gcc -std=c11 -O2 -march=armv7-a -mthumb -mfloat-abi=softfp -mfpu=vfpv3 \
   -fno-pie -no-pie -fno-stack-protector -fno-builtin -fno-unwind-tables -fno-asynchronous-unwind-tables \
   -nostartfiles -nodefaultlibs -Wl,-e,_start,--export-dynamic,--hash-style=sysv,--dynamic-linker=/lib/ld-linux.so.3 \
-  native/start.S native/thumb-probe.c -lc -o "$out/thumb-probe"
+  native/start.S native/thumb-probe.c -pthread -lc -o "$out/thumb-probe"
 python3 - "$out/thumb-probe" <<'PY'
 import re, subprocess, sys
 p=sys.argv[1]
@@ -20,7 +20,8 @@ assert m and int(m.group(1),16)&1, symbols
 versions=re.findall(r'Name: GLIBC_(\d+(?:\.\d+)+)',elf('-V'))
 assert versions and all(tuple(map(int,v.split('.'))) <= (2,19) for v in versions),versions
 assert 'GLIBC_PRIVATE' not in elf('-V')
-assert re.findall(r'Shared library: \[([^]]+)\]',elf('-d'))==['libc.so.6'],elf('-d')
+needed=set(re.findall(r'Shared library: \[([^]]+)\]',elf('-d')))
+assert 'libc.so.6' in needed and needed <= {'libc.so.6','libpthread.so.0'},elf('-d')
 print('ARM32 soft-float, exported Thumb target and legacy libc version gate:',versions)
 PY
 (cd "$out" && sha256sum thumb-probe > thumb-probe.sha256)

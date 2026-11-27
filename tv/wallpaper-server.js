@@ -216,17 +216,9 @@ function handle(req, res) {
   }
 
   if (route === 'POST /api/weather') {
-    if (q.off) {
-      log('weather off');
-      return saveSettings(function (st) { if (st.weather) st.weather.enabled = false; }, res);
-    }
-    var lat = parseFloat(q.lat), lon = parseFloat(q.lon), place = String(q.place || '').slice(0, 80);
-    if (!(lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180)) return json(res, 400, { error: 'bad place' });
-    log('weather city: ' + place);
-    return saveSettings(function (st) {
-      var unit = st.weather && st.weather.unit === 'fahrenheit' ? 'fahrenheit' : 'celsius';
-      st.weather = { enabled: true, latitude: lat, longitude: lon, place: place, unit: unit };
-    }, res);
+    var changes={weatherEnabled:!q.off};
+    if(!q.off){var lat=Number(q.lat),lon=Number(q.lon),place=String(q.place||'').slice(0,90);if(q.lat===undefined||q.lon===undefined)return json(res,400,{error:'bad place'});changes.weatherLocation={latitude:lat,longitude:lon,place:place};}
+    try{if(!stillAuthorized())return json(res,403,{error:'key'});return json(res,202,{queued:true,revision:remote.commit(changes)});}catch(e){return json(res,400,{error:'invalid weather'});}
   }
 
   if (route === 'GET /current.jpg') {

@@ -78,3 +78,5 @@ Hai lớp ảnh tối đa; một lớp hiệu ứng; không mạng/video cho hi�
 
 ### Tiến độ triển khai
 Bổ sung đủ 24 chuyển cảnh, 12 motion, chu kỳ 20 giây, tốc độ 600/1100/1600ms và nhóm random nhẹ/điện ảnh. Các mục khác trong đặc tả vẫn theo checklist; cần CI và kiểm thử TV.
+
+- Thêm tìm app theo tên/ID trong Tùy chỉnh, lọc gần đây (chỉ lượt mở được xác nhận bởi API launcher), lưu tối đa 20 ID trên TV. Web thời tiết chuyển qua mailbox có revision thay vì chỉ ghi cấu hình file; chưa nghiệm thu trên TV.

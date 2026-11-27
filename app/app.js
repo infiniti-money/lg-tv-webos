@@ -167,12 +167,12 @@
     var gh = window.INFINITI_GLASSHOUSE;
     if (gh && gh.enabled) {
       gh.openApp(id, function (err) {
-        if (err) toast(L.cantOpen + (title || id));
+        if (err) toast(L.cantOpen + (title || id));else if(window.INFINITI_PREFS)window.INFINITI_PREFS.recordRecent(id);
       });
       return;
     }
     luna('luna://com.webos.applicationManager/launch', { id: id, params: params || {} }, function (res) {
-      if (res.returnValue === false) toast(L.cantOpen + (title || id));
+      if (res.returnValue === false) toast(L.cantOpen + (title || id));else if(res.returnValue===true&&window.INFINITI_PREFS)window.INFINITI_PREFS.recordRecent(id);
     });
   }
 

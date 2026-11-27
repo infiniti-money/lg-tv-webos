@@ -339,7 +339,7 @@
               $('cities').innerHTML = '';
               $('city').value = '';
               showWeather({ enabled: true, place: c.name });
-              status(L.cityDone + c.name + '.');
+              status('Đã gửi khu vực '+c.name+'; chờ TV xác nhận.');remoteRead().catch(function(){});
             }).catch(function () { status(L.fail, 1); });
         };
         $('cities').appendChild(b);
@@ -347,7 +347,7 @@
     }).catch(function () { status(L.fail, 1); });
   };
   $('weatherOff').onclick = function () {
-    api('POST', 'api/weather?off=1').then(function () { showWeather({ enabled: false }); status(L.weatherOffDone); })
+    api('POST', 'api/weather?off=1').then(function () { showWeather({ enabled: false }); status('Đã gửi yêu cầu tắt thời tiết; chờ TV xác nhận.');remoteRead().catch(function(){}); })
       .catch(function () { status(L.fail, 1); });
   };
 
@@ -417,6 +417,7 @@
     var d=s.idle;$('idleDiagnostic').textContent=!s.online||!d?'Chưa có phản hồi màn hình chờ. Mở Home trên TV.':('Màn hình chờ: '+(d.active?'Đang chạy':'Chưa kích hoạt')+' · '+(d.actualEffect||d.effect)+' · '+(d.engine==='fallback'?'JavaScript 10 FPS':d.engine==='css'?'CSS':'Chưa chạy hiệu ứng')+(d.reduceMotion?' · Giảm chuyển động đang bật':'')+(!d.enabled?' · Hiệu ứng đang tắt':'')+(!d.eligible?' · Chưa đủ điều kiện idle':''));
     if(waiting!==null){if(s.applied!==null&&s.applied>=waiting){waiting=null;remoteMsg('TV đã xác nhận áp dụng.');}else{remoteMsg('Đã gửi. Chờ TV nhận thay đổi; mở Home và đóng Tùy chỉnh.');$('remoteControls').disabled=false;}}
     values=s.values||{};Object.keys(s.queuedValues||{}).forEach(function(k){values[k]=s.queuedValues[k];});$('remoteControls').disabled=false;
+    if(typeof values.weatherEnabled==='boolean')showWeather({enabled:values.weatherEnabled,place:values.weatherLocation?values.weatherLocation.place:''});
     if(!s.online&&waiting===null)remoteMsg('TV chưa xác nhận. Có thể gửi từng thay đổi; mở Home để TV áp dụng. Các trường trống là chưa biết.');
     Object.keys(defs).forEach(function(k){var v=effective(k);if(defs[k][1])fields[k].value=v===undefined?'':String(v);else {fields[k].checked=v===true;fields[k].indeterminate=v===undefined;}});
     var id=$('remoteApp').value;$('remoteApp').textContent='';option($('remoteApp'),'','Chọn ứng dụng');(s.apps||[]).forEach(function(a){option($('remoteApp'),a.id,a.title);});$('remoteApp').value=id;if(!$('remoteApp').value)$('remoteApp').value='';appFields();

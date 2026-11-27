@@ -227,6 +227,9 @@
   }
   function getPinned(){var v=safeRead('tvhome.pinned.v1').ids;return Array.isArray(v)?v.filter(validAppId).slice(0,250):[];}
   function setPinned(id,on){if(!validAppId(id))return false;var list=getPinned().filter(function(x){return x!==id;});if(on)list.unshift(id);return safeWrite('tvhome.pinned.v1',{ids:list});}
+  function getRecent(){var v=safeRead('tvhome.recent.v1').ids;return Array.isArray(v)?v.filter(validAppId).slice(0,20):[];}
+  function recordRecent(id){if(!validAppId(id))return false;var ids=getRecent().filter(function(x){return x!==id;});ids.unshift(id);return safeWrite('tvhome.recent.v1',{ids:ids.slice(0,20)});}
+  function matchesApp(app,query){var s=styledApp(app);query=String(query||'').toLowerCase().trim();return !query||String(s.title||'').toLowerCase().indexOf(query)>=0||String(app.title||'').toLowerCase().indexOf(query)>=0||String(app.id||'').toLowerCase().indexOf(query)>=0;}
   function styledApp(app) {
     var style = getAppStyle(app.id), out = {};
     Object.keys(app).forEach(function(k){out[k]=app[k];});
@@ -254,7 +257,7 @@
   }
   var api = {
     directionalIndex:directionalIndex,
-    getAppStyle:getAppStyle, saveAppStyle:saveAppStyle, styledApp:styledApp,getPinned:getPinned,setPinned:setPinned,
+    getAppStyle:getAppStyle, saveAppStyle:saveAppStyle, styledApp:styledApp,getPinned:getPinned,setPinned:setPinned,getRecent:getRecent,recordRecent:recordRecent,matchesApp:matchesApp,
     iconCategory:iconCategory,packIcon:packIcon,iconSource:iconSource,getIconPack:getIconPack,setIconPack:setIconPack,
     isVisible:isVisible, setVisible:setVisible, resetVisible:resetVisible,
     getAppearance:getAppearance, saveAppearance:saveAppearance, resolveIdleEffect:resolveIdleEffect,
@@ -282,7 +285,7 @@
   var appsList = $('customizeAppList'), themeBox = $('customizeThemes');
   var fontBox = $('customizeFonts'), status = $('customizeStatus');
   var opened = false, activeTab = 'style', searchRequest = null;
-  var appPage=0, glyphPage=0, currentGlyphPack='minimal', APP_PAGE_SIZE=5, GLYPH_PAGE_SIZE=6;
+  var appPage=0, glyphPage=0, currentGlyphPack='minimal', APP_PAGE_SIZE=4, GLYPH_PAGE_SIZE=6;
   var appFilter=0,appSort=0;
 
   function applyAppearance() {
@@ -452,12 +455,13 @@
     all.forEach(function (app) {
       if (app && app.id && !isProtected(app.id)) installed.push(app);
     });
-    var pins=getPinned(),shown=installed.filter(function(app){return isVisible(app.id,(root.CONFIG||{}).hiddenApps);}).length;
+    var pins=getPinned(),recent=getRecent(),query=$('customizeAppSearch').value,shown=installed.filter(function(app){return isVisible(app.id,(root.CONFIG||{}).hiddenApps);}).length;
     $('customizeAppSummary').textContent=installed.length+' ứng dụng · '+shown+' hiện · '+(installed.length-shown)+' ẩn';
-    $('customizeAppFilter').textContent='Lọc: '+['Tất cả','Đang hiện','Đang ẩn','Đã ghim'][appFilter];
+    $('customizeAppFilter').textContent='Lọc: '+['Tất cả','Đang hiện','Đang ẩn','Đã ghim','Gần đây'][appFilter];
     $('customizeAppSort').textContent='Sắp xếp: '+['A–Z','Z–A','Đã ghim trước'][appSort];
-    installed=installed.filter(function(app){var v=isVisible(app.id,(root.CONFIG||{}).hiddenApps);return appFilter===0||(appFilter===1&&v)||(appFilter===2&&!v)||(appFilter===3&&pins.indexOf(app.id)>=0);});
+    installed=installed.filter(function(app){var v=isVisible(app.id,(root.CONFIG||{}).hiddenApps);return matchesApp(app,query)&&(appFilter===0||(appFilter===1&&v)||(appFilter===2&&!v)||(appFilter===3&&pins.indexOf(app.id)>=0)||(appFilter===4&&recent.indexOf(app.id)>=0));});
     installed.sort(function (a, b) {
+      if(appFilter===4)return recent.indexOf(a.id)-recent.indexOf(b.id);
       if(appSort===2){var pa=pins.indexOf(a.id),pb=pins.indexOf(b.id);if(pa!==pb){if(pa<0)return 1;if(pb<0)return -1;return pa-pb;}}
       var aa = String(a.title || a.id).toLowerCase();
       var bb = String(b.title || b.id).toLowerCase();
@@ -470,7 +474,7 @@
     $('customizeAppNext').disabled=appPage>=pages-1;
     if (!installed.length) {
       var empty = document.createElement('p');
-      empty.textContent = 'Chưa có danh sách ứng dụng. Chạy đồng bộ ứng dụng trên TV.';
+      empty.textContent = query||appFilter?'Không có ứng dụng phù hợp.':'Chưa có danh sách ứng dụng. Chạy đồng bộ ứng dụng trên TV.';
       appsList.appendChild(empty);
       return;
     }
@@ -651,7 +655,7 @@
       if (key === name) views[key].classList.remove('hidden');
       else views[key].classList.add('hidden');
     }
-    if (name === 'apps') {appPage=0;appFilter=0;appSort=0;renderGlobalPacks();renderApps();}
+    if (name === 'apps') {appPage=0;appFilter=0;appSort=0;$('customizeAppSearch').value='';renderGlobalPacks();renderApps();}
     else if (name === 'style') renderStyle();
     else if (name === 'idle') renderIdle();
     else if (name === 'album') renderAlbumState();
@@ -726,6 +730,7 @@
     if (editingApp && (code === 461 || code === 27)) {
       stopKey(e);if(e.type==='keydown'){closeAppEditor();renderApps();tabs.apps.focus();}return;
     }
+    if(active===$('customizeAppSearch')){if(code===13&&e.type==='keydown'){stopKey(e);$('customizeAppSearchBtn').click();$('customizeAppSearchBtn').focus();return;}if(code!==38&&code!==40&&code!==461&&code!==27)return;}
     if (active === $('customizeAppName')) {
       if (code===13 && e.type==='keydown') {stopKey(e);$('customizeAppSave').focus();return;}
       if(code!==38 && code!==40)return;
@@ -786,7 +791,9 @@
     message(count ? 'Đã ẩn ' + count + ' biểu tượng ứng dụng LG trong Infiniti.' :
       'Không còn biểu tượng LG mặc định nào cần ẩn.');
   });
-  $('customizeAppFilter').addEventListener('click',function(){appFilter=(appFilter+1)%4;appPage=0;renderApps();});
+  $('customizeAppSearchBtn').addEventListener('click',function(){appPage=0;renderApps();});
+  $('customizeAppSearch').addEventListener('input',function(){appPage=0;renderApps();});
+  $('customizeAppFilter').addEventListener('click',function(){appFilter=(appFilter+1)%5;appPage=0;renderApps();});
   $('customizeAppSort').addEventListener('click',function(){appSort=(appSort+1)%3;appPage=0;renderApps();});
   $('customizeShowAllApps').addEventListener('click',function(){((root.TV_APPS||{}).apps||[]).forEach(function(a){if(a&&validAppId(a.id))setVisible(a.id,true);});refreshLauncher();renderApps();message('Đã hiện các ứng dụng có thể chỉnh sửa.');});
   $('customizeAppPin').addEventListener('click',function(){if(!editingApp)return;var on=getPinned().indexOf(editingApp.id)<0;if(setPinned(editingApp.id,on)){if(on)setVisible(editingApp.id,true);refreshLauncher();$('customizeAppPin').textContent=on?'Bỏ ghim':'Ghim đầu Home';message(on?'Đã ghim':'Đã bỏ ghim');}});

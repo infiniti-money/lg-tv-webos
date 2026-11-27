@@ -5,7 +5,7 @@ var fields={theme:['midnight','ocean','amber'],font:['lexend','sans','serif'],id
 var packs=['minimal','neon','glass','pastel','gold'],glyphs=['video','music','web','tv','game','settings','home','photo','apps','youtube','netflix','prime','disney','tiktok','jellyfin','spotify','radio','hdmi','store','files','network'];
 function idOK(id){return typeof id==='string'&&/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}$/.test(id)&&id!=='constructor'&&id!=='prototype'&&id!=='com.infinitimoney.tvhome'&&id!=='com.webos.app.livetv'&&!/^com\.webos\.app\.hdmi[0-9]+$/.test(id);}
 function iconOK(v){if(v===''||v==='original')return true;var a=typeof v==='string'?v.split(':'):[];return a.length===3&&a[0]==='pack'&&packs.indexOf(a[1])>=0&&glyphs.indexOf(a[2])>=0;}
-function validate(k,v){if(own.call(fields,k))return fields[k]===true?typeof v==='boolean':fields[k].indexOf(v)>=0;
+function validate(k,v){if(k==='weatherEnabled')return typeof v==='boolean';if(k==='weatherLocation')return obj(v)&&typeof v.latitude==='number'&&isFinite(v.latitude)&&v.latitude>=-90&&v.latitude<=90&&typeof v.longitude==='number'&&isFinite(v.longitude)&&v.longitude>=-180&&v.longitude<=180&&typeof v.place==='string'&&v.place.length<=90&&!/[\x00-\x1f\x7f]/.test(v.place)&&Object.keys(v).length===3;if(own.call(fields,k))return fields[k]===true?typeof v==='boolean':fields[k].indexOf(v)>=0;
  var m=/^app:(.+):(title|icon|visible|pinned)$/.exec(k);if(!m||!idOK(m[1]))return false;
  return (m[2]==='visible'||m[2]==='pinned')?typeof v==='boolean':m[2]==='title'?typeof v==='string'&&v.length<=48&&!/[\x00-\x1f\x7f]/.test(v):iconOK(v);}
 function obj(v){return v&&typeof v==='object'&&!Array.isArray(v);}
@@ -41,6 +41,6 @@ function create(dir,appDir,allowed,log){
   if(m==='POST'&&p==='/api/remote-set'){body(req,res,24000,send,function(v){if(authorized&&!authorized())return send(403,{error:'key or service changed'});send(202,{revision:commit(v),queued:true});});return true;}
   send(405,{error:'method'});return true;
  }
- return {publish:publish,route:route};
+ return {publish:publish,route:route,commit:commit};
 }
 module.exports={create:create,validate:validate,idOK:idOK};

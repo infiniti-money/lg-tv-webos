@@ -8,22 +8,25 @@ try{applied=Number(localStorage.getItem('tvhome.remote.revision'))||0;}catch(e){
 var appearance=['theme','font','idleSeconds','idleEffect','largeText','showWeek','reduceMotion','showSolar','showLunar','idleRain'];
 function covered(){return life?life.isCovered():!!document.hidden;}
 function snapshot(){
- var v=p.getAppearance(),out={pack:p.getIconPack(),weatherUnit:p.getWeather().unit},pins=p.getPinned();
+ var v=p.getAppearance(),out={pack:p.getIconPack(),weatherUnit:p.getWeather().unit,weatherEnabled:p.getWeather().enabled,weatherLocation:{latitude:p.getWeather().latitude,longitude:p.getWeather().longitude,place:p.getWeather().place}},pins=p.getPinned();
  appearance.forEach(function(k){out[k]=v[k];});
  ((root.TV_APPS||{}).apps||[]).slice(0,250).forEach(function(a){if(!a||p.isProtected(a.id))return;var s=p.getAppStyle(a.id),k='app:'+a.id+':';out[k+'title']=s.title;out[k+'icon']=/^pack:/.test(s.icon)||s.icon==='original'?s.icon:'';out[k+'visible']=p.isVisible(a.id,(root.CONFIG||{}).hiddenApps||[]);out[k+'pinned']=pins.indexOf(a.id)>=0;});
  return out;
 }
 function apply(inbox){
- var delta={},apps={},changed=false,style=false,keys=Object.keys(inbox.changes||{}).sort(function(x,y){return inbox.changes[x].rev-inbox.changes[y].rev;});
+ var delta={},weather={},weatherChanged=false,apps={},changed=false,style=false,keys=Object.keys(inbox.changes||{}).sort(function(x,y){return inbox.changes[x].rev-inbox.changes[y].rev;});
  for(var i=0;i<keys.length;i++){var k=keys[i],e=inbox.changes[k];if(e.rev<=applied)continue;
  if(appearance.indexOf(k)>=0){delta[k]=e.value;style=true;}
- else if(k==='weatherUnit'){if(!p.saveWeather({unit:e.value})||p.getWeather().unit!==e.value)throw Error('weather unit');if(root.INFINITI_WEATHER_RELOAD)root.INFINITI_WEATHER_RELOAD();}
+ else if(k==='weatherUnit'){weather.unit=e.value;weatherChanged=true;}
+ else if(k==='weatherEnabled'){weather.enabled=e.value;weatherChanged=true;}
+ else if(k==='weatherLocation'){weather.latitude=e.value.latitude;weather.longitude=e.value.longitude;weather.place=e.value.place;weatherChanged=true;}
  else if(k==='pack'){if(!p.setIconPack(e.value))throw Error('pack');changed=true;}
  else {var m=/^app:(.+):(title|icon|visible|pinned)$/.exec(k);if(!m||p.isProtected(m[1]))continue;
  var id=m[1];if(m[2]==='pinned'){if(!p.setPinned(id,e.value))throw Error('pin');changed=true;}
  else if(m[2]==='visible'){if(!p.setVisible(id,e.value))throw Error('visibility');changed=true;}
  else {var s=apps[id]||p.getAppStyle(id);s[m[2]]=e.value;apps[id]=s;}}
  }
+ if(weatherChanged){if(!p.saveWeather(weather))throw Error('weather save');if(root.INFINITI_WEATHER_RELOAD)root.INFINITI_WEATHER_RELOAD();}
  if(style){p.saveAppearance(delta);var check=p.getAppearance();Object.keys(delta).forEach(function(k){if(check[k]!==delta[k])throw Error('appearance save');});}
  Object.keys(apps).forEach(function(id){var s=apps[id];if(!p.saveAppStyle(id,s.title,s.icon))throw Error('app style');changed=true;});
  if(style||changed){if(root.INFINITI_REMOTE_REFRESH)root.INFINITI_REMOTE_REFRESH(style,changed);}

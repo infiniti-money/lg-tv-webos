@@ -66,13 +66,13 @@ var groups = {
     'customizeWeatherSearch','customizeWeatherSearchBtn','customizeWeatherResults',
     'customizeWeatherEnable','customizeWeatherUnit'],
   customizeCalendarView:['customizeSolar','customizeLunar','customizeCalendarNote'],
-  customizeAppsView:['customizeAppList','customizeHideLGApps','customizeResetApps','customizeShowAllApps','customizeAppFilter','customizeAppSort','customizeAppSummary'],
+  customizeAppsView:['customizeAppList','customizeHideLGApps','customizeResetApps','customizeShowAllApps','customizeAppFilter','customizeAppSort','customizeAppSummary','customizeAppSearch','customizeAppSearchBtn'],
   customizePrivacyView:[]
 };
 Object.keys(groups).forEach(function (name) {
   var view=node(name); view.className='hidden'; panel.appendChild(view);
   groups[name].forEach(function (id) {
-    view.appendChild(node(id,id==='customizeWeatherSearch'?'input':
+    view.appendChild(node(id,(id==='customizeWeatherSearch'||id==='customizeAppSearch')?'input':
       /Btn$|customizeAlbumRefresh|customizeAlbumWeb|customizeAlbumPreview|customizeShowAllApps|customizeAppFilter|customizeAppSort|customizeIdleTime|customizeIdleRain|customizeIdleEffect|customizeIdlePreview|customizeCheckUpdate|customizeUpdateHelp$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
   });
 });

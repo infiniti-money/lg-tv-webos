@@ -12,6 +12,7 @@ fail(){ echo "NATIVE_REFUSED: $*" >&2; exit 1; }
 [ "$#" -ge 1 ] || fail 'usage: native-trial.sh preflight|trial --confirm-05.70.45 | recover'
 empty_config(){ [ -f "$CFG" ] && [ "$(cat "$CFG")" = '{}' ]; }
 restore(){
+  [ ! -d "$STATE" ] || touch "$STATE/cancel"
   rm -f "$STATE/active"
   [ -f "$STATE/original" ] || { echo 'No saved trial config'; return 0; }
   if [ "$(cat "$CFG" 2>/dev/null || true)" = "$KEY" ]; then
@@ -25,6 +26,7 @@ restore(){
 }
 case "$1" in
   recover) restore; exit ;;
+  report) exec /usr/bin/node "$D/native-trial-proof.js" report ;;
   preflight|trial) ;;
   *) fail 'unknown operation' ;;
 esac
@@ -72,7 +74,7 @@ echo 'PREFLIGHT_PASS: exact binary fingerprint; firmware display still requires 
 [ "$#" = 2 ] && [ "$2" = --confirm-05.70.45 ] || fail 'confirm TV Settings shows firmware 05.70.45; keep second SSH open'
 umask 077
 mkdir "$STATE" || fail 'trial state exists'
-trap 'restore || true' 0
+trap 'rc=$?; trap - 0; restore || rc=1; exit "$rc"' 0
 trap 'exit 130' INT
 trap 'exit 143' TERM HUP
 cp -p "$CFG" "$STATE/original"
@@ -90,16 +92,23 @@ grep -F 'Replacing lginput_uinput_send_button' "$STATE/hook.log" >/dev/null || f
 if grep -Eiq 'SIGILL|SIGSEGV|Illegal instruction|Segmentation fault' "$STATE/inject.log" "$STATE/hook.log"; then fail 'fault observed'; fi
 echo 'PASS-THROUGH PHASE: test Volume, Back and cursor for 10 seconds; stop immediately if abnormal'
 sleep 10
-identity && empty_config || fail 'target/config changed'
+identity && empty_config && [ ! -e "$STATE/cancel" ] || fail 'target/config changed or canceled'
+echo 'After confirming Volume, Back and cursor work, type YES to arm; anything else cancels.'
+read answer || fail 'confirmation canceled'
+[ "$answer" = YES ] && [ ! -e "$STATE/cancel" ] && identity && empty_config || fail 'trial canceled'
+/usr/bin/node "$D/native-trial-proof.js" begin || fail 'cannot baseline ribbon logs'
 echo 'ARMING 60-second trial; press Home from another app, then again while Tân Dev foreground'
 printf '%s\n' "$(( $(date +%s) + 60 ))" > "$STATE/active"
 tmp="$CFG.infiniti-trial-$$"
 printf '%s\n' "$KEY" > "$tmp"
 chmod 600 "$tmp"
+[ ! -e "$STATE/cancel" ] || { rm -f "$tmp"; fail "trial canceled"; }
 mv -f "$tmp" "$CFG"
+[ ! -e "$STATE/cancel" ] || fail "trial canceled during mapping"
 n=0
 while [ "$n" -lt 60 ] && [ -f "$STATE/active" ]; do
   identity || fail 'lginput2 exited/restarted'
+  [ ! -e "$STATE/cancel" ] || break
   [ "$(cat "$CFG")" = "$KEY" ] || fail 'config changed'
   sleep 1
   n=$((n+1))

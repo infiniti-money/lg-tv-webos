@@ -5,6 +5,13 @@ D=/home/root/lg-tv-vibehack
 I=/var/lib/webosbrew/init.d/infiniti-legacy-v8
 PROOF=/tmp/infiniti-legacy-v8-trial-ok
 [ "$(id -u)" = 0 ] || { echo "Root required" >&2; exit 1; }
+no_input_hook() {
+  [ ! -e /tmp/inputhook ] && [ ! -e /var/lib/webosbrew/init.d/inputhook ] || return 1
+  for p in $(pidof RELEASE lginput2 micomservice tvservice testapp 2>/dev/null || true); do
+    [ -r "/proc/$p/maps" ] || return 1
+    if grep -Eq 'libphp\.so|libinputhookpp\.so' "/proc/$p/maps"; then return 1; fi
+  done
+}
 check() {
   [ -f "$D/legacy-home-v8.py" ] || { echo "Install root tools first"; exit 1; }
   [ ! -e "$D/home-enabled" ] && [ ! -e /var/lib/webosbrew/init.d/97-homekey ] ||
@@ -40,7 +47,7 @@ case "${1:-status}" in
     for f in session armed trial enabled; do
       [ ! -e "$D/legacy-v8-$f" ] || { echo "Stop existing observer first"; exit 1; }
     done
-    [ ! -e /tmp/infiniti-legacy-v8-lock ] && [ ! -e /tmp/inputhook ] && [ ! -e /var/lib/webosbrew/init.d/inputhook ] || { echo "Observer or Input Hook conflict"; exit 1; }
+    [ ! -e /tmp/infiniti-legacy-v8-lock ] && no_input_hook || { echo "Observer or Input Hook conflict"; exit 1; }
     touch "$D/legacy-v8-fast"
     echo "V9.1 fast trial selected; run watch. No firmware changes."
     ;;
@@ -65,7 +72,7 @@ case "${1:-status}" in
     check
     [ ! -e "$D/legacy-v8-session" ] && [ ! -e "$D/legacy-v8-enabled" ] && [ ! -e "$D/legacy-v8-armed" ] && [ ! -e "$D/legacy-v8-trial" ] && [ ! -e /tmp/infiniti-legacy-v8-lock ] ||
       { echo "Stop existing observer and boot modes before changing engine"; exit 1; }
-    [ ! -e /tmp/inputhook ] && [ ! -e /var/lib/webosbrew/init.d/inputhook ] ||
+    no_input_hook ||
       { echo "Input Hook detected: uninstall and reboot cleanly before V9"; exit 1; }
     [ -r /var/log/messages ] || { echo "System log unavailable"; exit 1; }
     touch "$D/legacy-v8-ribbon"
@@ -78,6 +85,7 @@ case "${1:-status}" in
     ;;
   watch)
     check
+    if [ -f "$D/legacy-v8-ribbon" ]; then no_input_hook || { echo "Input Hook conflict; clean reboot required"; exit 1; }; fi
     /usr/bin/node "$D/legacy-luna.js" probe || exit 1
     [ ! -e "$D/legacy-v8-enabled" ] && [ ! -e "$D/legacy-v8-armed" ] ||
       { echo "Disable boot mode before interactive testing"; exit 1; }
@@ -89,6 +97,7 @@ case "${1:-status}" in
     ;;
   arm)
     check
+    if [ -f "$D/legacy-v8-ribbon" ]; then no_input_hook || { echo "Input Hook conflict; clean reboot required"; exit 1; }; fi
     /usr/bin/node "$D/legacy-luna.js" probe || exit 1
     [ ! -e "$D/legacy-v8-session" ] && [ ! -e "$D/legacy-v8-enabled" ] ||
       { echo "Disable existing mode first"; exit 1; }

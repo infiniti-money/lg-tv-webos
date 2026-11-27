@@ -4,6 +4,19 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <pthread.h>
+
+/* Bind the old ARM glibc symbol explicitly, including on modern build hosts. */
+extern int legacy_pthread_create(pthread_t *, const pthread_attr_t *, void *(*)(void *), void *);
+__asm__(".symver legacy_pthread_create,pthread_create@GLIBC_2.4");
+static void *idle_worker(void *arg) { (void)arg; for (;;) pause(); return 0; }
+static int start_workers(void) {
+    pthread_t threads[6];
+    unsigned i;
+    for(i=0;i<6;i++) if(legacy_pthread_create(&threads[i],0,idle_worker,0)!=0) return -1;
+    return 0;
+}
+
 
 struct keybind { int reserved1[4]; int code; int reserved2[9]; };
 struct uinput_info { int fd; struct keybind *keys; };
@@ -27,10 +40,15 @@ static void say(const char *s, unsigned n) { (void)write(1,s,n); }
 
 int probe_main(void) {
     char c;
+    int multi=0;
     keys[0].code=773; keys[1].code=115;
     SAY("READY\n");
     while(read(0,&c,1)==1) {
         if(c=='q') return 0;
+        if(c=='m') {
+            if(multi || start_workers()!=0) { SAY("MULTI_FAILED\n"); return 2; }
+            multi=1; SAY("MULTI_READY\n"); continue;
+        }
         if(c!='t') continue;
         unsigned before=calls;
         int a=invoke(&info,0,1);

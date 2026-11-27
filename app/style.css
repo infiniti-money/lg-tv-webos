@@ -945,3 +945,67 @@ body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-focus{-w
 
 /* Keep the row clean: one selected application label in the existing hero area. */
 .item .name,.item.dock .name,.item.focused .name,.item.dock.focused .name {visibility:hidden;opacity:0;}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-slide-nw{-webkit-animation:album-slide-nw 1100ms ease both;animation:album-slide-nw 1100ms ease both;}
+@-webkit-keyframes album-slide-nw{from{opacity:0;-webkit-transform:translate(10%,10%);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-slide-nw{from{opacity:0;transform:translate(10%,10%);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-slide-ne{-webkit-animation:album-slide-ne 1100ms ease both;animation:album-slide-ne 1100ms ease both;}
+@-webkit-keyframes album-slide-ne{from{opacity:0;-webkit-transform:translate(-10%,10%);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-slide-ne{from{opacity:0;transform:translate(-10%,10%);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-slide-sw{-webkit-animation:album-slide-sw 1100ms ease both;animation:album-slide-sw 1100ms ease both;}
+@-webkit-keyframes album-slide-sw{from{opacity:0;-webkit-transform:translate(10%,-10%);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-slide-sw{from{opacity:0;transform:translate(10%,-10%);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-cross-zoom{-webkit-animation:album-cross-zoom 1100ms ease both;animation:album-cross-zoom 1100ms ease both;}
+@-webkit-keyframes album-cross-zoom{from{opacity:0;-webkit-transform:scale(1.13);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-cross-zoom{from{opacity:0;transform:scale(1.13);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-swing-left{-webkit-animation:album-swing-left 1100ms ease both;animation:album-swing-left 1100ms ease both;}
+@-webkit-keyframes album-swing-left{from{opacity:0;-webkit-transform:rotate(-5deg) scale(1.12);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-swing-left{from{opacity:0;transform:rotate(-5deg) scale(1.12);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-swing-right{-webkit-animation:album-swing-right 1100ms ease both;animation:album-swing-right 1100ms ease both;}
+@-webkit-keyframes album-swing-right{from{opacity:0;-webkit-transform:rotate(5deg) scale(1.12);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-swing-right{from{opacity:0;transform:rotate(5deg) scale(1.12);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-drift-in{-webkit-animation:album-drift-in 1100ms ease both;animation:album-drift-in 1100ms ease both;}
+@-webkit-keyframes album-drift-in{from{opacity:0;-webkit-transform:translateX(5%) scale(1.03);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-drift-in{from{opacity:0;transform:translateX(5%) scale(1.03);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-drop-in{-webkit-animation:album-drop-in 1100ms ease both;animation:album-drop-in 1100ms ease both;}
+@-webkit-keyframes album-drop-in{from{opacity:0;-webkit-transform:translateY(-9%) scale(1.06);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-drop-in{from{opacity:0;transform:translateY(-9%) scale(1.06);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-curtain-lite{-webkit-animation:album-curtain-lite 1100ms ease both;animation:album-curtain-lite 1100ms ease both;}
+@-webkit-keyframes album-curtain-lite{from{opacity:0;-webkit-transform:scaleX(.7);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-curtain-lite{from{opacity:0;transform:scaleX(.7);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-flip-lite{-webkit-animation:album-flip-lite 1100ms ease both;animation:album-flip-lite 1100ms ease both;}
+@-webkit-keyframes album-flip-lite{from{opacity:0;-webkit-transform:scaleX(.85);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-flip-lite{from{opacity:0;transform:scaleX(.85);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-nw{-webkit-animation:album-motion-pan-nw 32s ease-in-out infinite alternate;animation:album-motion-pan-nw 32s ease-in-out infinite alternate;}
+@-webkit-keyframes album-motion-pan-nw{from{-webkit-transform:scale(1.11) translate(2%,2%);}to{-webkit-transform:scale(1.11) translate(-2%,-2%);}}
+@keyframes album-motion-pan-nw{from{transform:scale(1.11) translate(2%,2%);}to{transform:scale(1.11) translate(-2%,-2%);}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-ne{-webkit-animation:album-motion-pan-ne 32s ease-in-out infinite alternate;animation:album-motion-pan-ne 32s ease-in-out infinite alternate;}
+@-webkit-keyframes album-motion-pan-ne{from{-webkit-transform:scale(1.11) translate(-2%,2%);}to{-webkit-transform:scale(1.11) translate(2%,-2%);}}
+@keyframes album-motion-pan-ne{from{transform:scale(1.11) translate(-2%,2%);}to{transform:scale(1.11) translate(2%,-2%);}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-sw{-webkit-animation:album-motion-pan-sw 32s ease-in-out infinite alternate;animation:album-motion-pan-sw 32s ease-in-out infinite alternate;}
+@-webkit-keyframes album-motion-pan-sw{from{-webkit-transform:scale(1.11) translate(2%,-2%);}to{-webkit-transform:scale(1.11) translate(-2%,2%);}}
+@keyframes album-motion-pan-sw{from{transform:scale(1.11) translate(2%,-2%);}to{transform:scale(1.11) translate(-2%,2%);}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-se{-webkit-animation:album-motion-pan-se 32s ease-in-out infinite alternate;animation:album-motion-pan-se 32s ease-in-out infinite alternate;}
+@-webkit-keyframes album-motion-pan-se{from{-webkit-transform:scale(1.11) translate(-2%,-2%);}to{-webkit-transform:scale(1.11) translate(2%,2%);}}
+@keyframes album-motion-pan-se{from{transform:scale(1.11) translate(-2%,-2%);}to{transform:scale(1.11) translate(2%,2%);}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-drift-horizontal{-webkit-animation:album-motion-drift-horizontal 32s ease-in-out infinite alternate;animation:album-motion-drift-horizontal 32s ease-in-out infinite alternate;}
+@-webkit-keyframes album-motion-drift-horizontal{from{-webkit-transform:scale(1.06) translate(1.4%,0%);}to{-webkit-transform:scale(1.06) translate(-1.4%,0%);}}
+@keyframes album-motion-drift-horizontal{from{transform:scale(1.06) translate(1.4%,0%);}to{transform:scale(1.06) translate(-1.4%,0%);}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-drift-vertical{-webkit-animation:album-motion-drift-vertical 32s ease-in-out infinite alternate;animation:album-motion-drift-vertical 32s ease-in-out infinite alternate;}
+@-webkit-keyframes album-motion-drift-vertical{from{-webkit-transform:scale(1.06) translate(0%,1.4%);}to{-webkit-transform:scale(1.06) translate(0%,-1.4%);}}
+@keyframes album-motion-drift-vertical{from{transform:scale(1.06) translate(0%,1.4%);}to{transform:scale(1.06) translate(0%,-1.4%);}}

@@ -75,3 +75,6 @@ Hai lớp ảnh tối đa; một lớp hiệu ứng; không mạng/video cho hi�
 - [ ] CI trên head cuối và main thành công; phát hành IPK + Root Tools + SHA-256; xác minh assets.
 
 **Điều kiện phát hành:** ưu tiên P0 và kiểm thử hardware trước; chưa gộp hoặc xuất bản nếu CI chưa đạt. Nếu phần cứng chưa nghiệm thu thì ghi rõ và chỉ cân nhắc ứng viên thử nghiệm, không quảng cáo là stable đã xác minh. Không thay đổi quyền sở hữu kho (đã thuộc infiniti-money) hoặc xóa ghi công bắt buộc. Không đổi đường dẫn dữ liệu tương thích trong bản này.
+
+### Tiến độ triển khai
+Bổ sung đủ 24 chuyển cảnh, 12 motion, chu kỳ 20 giây, tốc độ 600/1100/1600ms và nhóm random nhẹ/điện ảnh. Các mục khác trong đặc tả vẫn theo checklist; cần CI và kiểm thử TV.

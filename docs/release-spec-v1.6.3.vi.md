@@ -93,3 +93,6 @@ Bổ sung đủ 24 chuyển cảnh, 12 motion, chu kỳ 20 giây, tốc độ 60
 
 ### Đồng bộ đóng gói
 Metadata 1.6.3, notes và workflow đã cập nhật; CI của head mới vẫn cần xác nhận. Artifact baseline cũ ở trên vẫn mang 1.6.2. Phát hành thử nghiệm không đặt làm latest; tag chính thức cũ giữ nguyên.
+
+### P4 — Xem thử riêng từng chuyển cảnh và chuyển động (27/11/2026)
+TV có hai nút lựa chọn tạm trong Album: 24 chuyển cảnh, 12 chuyển động và chế độ tĩnh. Nhấn Thử nhanh để áp dụng riêng trong phiên preview; mũi tên phải chuyển ảnh khi player sẵn sàng. Không ghi cấu hình album hoặc mốc lịch thật; giảm chuyển động vẫn ưu tiên. Kiểm thử validator và đường truyền tham số đã bổ sung; cần CI head và nghiệm thu D-pad/hiển thị trên TV. Quản lý ảnh trực tiếp trên TV và cường độ motion vẫn chưa hoàn tất.

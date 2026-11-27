@@ -1,4 +1,4 @@
-/* Infiniti TV Home settings: ES5 for LG webOS 3.x / Chromium 38.
+/* Designed by Tân Dev settings: ES5 for LG webOS 3.x / Chromium 38.
  * Local changes affect only launcher appearance and weather, not TV system settings.
  */
 (function (root) {
@@ -74,16 +74,16 @@
   }
   function resetVisible() { safeWrite(VISIBILITY_KEY, {}); }
   var IDLE_CHOICES=[0,30,60,120,300];
-  var IDLE_EFFECTS=["rain","snow","petals","stars","fireflies","bubbles","mist","random"];
-  var IDLE_LABELS=["Mưa rơi","Tuyết rơi","Cánh hoa","Bầu trời sao","Đom đóm","Bong bóng","Sương mờ","Ngẫu nhiên"];
+  var IDLE_EFFECTS=["rain","snow","petals","stars","fireflies","bubbles","mist","leaves","sparkles","meteor","aurora","embers","waves","hearts","random","random-light"];
+  var IDLE_LABELS=["Mưa rơi","Tuyết rơi","Cánh hoa","Bầu trời sao","Đom đóm","Bong bóng","Sương mờ","Lá bay","Ánh kim","Sao băng","Cực quang","Tàn lửa","Sóng ánh sáng","Trái tim","Ngẫu nhiên","Ngẫu nhiên nhẹ"];
   function idleEffectValue(v){return IDLE_EFFECTS.indexOf(v)>=0?v:defaults.idleEffect;}
   function resolveIdleEffect(p,random){
     if(!p.idleRain||p.reduceMotion)return '';
     var effect=idleEffectValue(p.idleEffect);
-    if(effect!=='random')return effect;
+    if(effect!=='random'&&effect!=='random-light')return effect;
     var n=Number(random);
     if(!isFinite(n)||n<0||n>=1)n=0;
-    return IDLE_EFFECTS[Math.floor(n*(IDLE_EFFECTS.length-1))];
+    var pool=effect==='random-light'?['snow','petals','stars','mist','leaves','sparkles']:IDLE_EFFECTS.slice(0,14);return pool[Math.floor(n*pool.length)];
   }
   function idleValue(v){return IDLE_CHOICES.indexOf(v)>=0?v:defaults.idleSeconds;}
   function getAppearance() {
@@ -140,8 +140,7 @@
     current.place = String(current.place || '').slice(0, 90);
     current.enabled = current.enabled === true;
     current.unit = current.unit === 'fahrenheit' ? 'fahrenheit' : 'celsius';
-    safeWrite(WEATHER_KEY, current);
-    return current;
+    return safeWrite(WEATHER_KEY,current)?current:false;
   }
   function validAppId(id) {
     return typeof id === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,159}$/.test(id) &&
@@ -228,6 +227,9 @@
   }
   function getPinned(){var v=safeRead('tvhome.pinned.v1').ids;return Array.isArray(v)?v.filter(validAppId).slice(0,250):[];}
   function setPinned(id,on){if(!validAppId(id))return false;var list=getPinned().filter(function(x){return x!==id;});if(on)list.unshift(id);return safeWrite('tvhome.pinned.v1',{ids:list});}
+  function getRecent(){var v=safeRead('tvhome.recent.v1').ids;return Array.isArray(v)?v.filter(validAppId).slice(0,20):[];}
+  function recordRecent(id){if(!validAppId(id))return false;var ids=getRecent().filter(function(x){return x!==id;});ids.unshift(id);return safeWrite('tvhome.recent.v1',{ids:ids.slice(0,20)});}
+  function matchesApp(app,query){var s=styledApp(app);query=String(query||'').toLowerCase().trim();return !query||String(s.title||'').toLowerCase().indexOf(query)>=0||String(app.title||'').toLowerCase().indexOf(query)>=0||String(app.id||'').toLowerCase().indexOf(query)>=0;}
   function styledApp(app) {
     var style = getAppStyle(app.id), out = {};
     Object.keys(app).forEach(function(k){out[k]=app[k];});
@@ -255,7 +257,7 @@
   }
   var api = {
     directionalIndex:directionalIndex,
-    getAppStyle:getAppStyle, saveAppStyle:saveAppStyle, styledApp:styledApp,getPinned:getPinned,setPinned:setPinned,
+    getAppStyle:getAppStyle, saveAppStyle:saveAppStyle, styledApp:styledApp,getPinned:getPinned,setPinned:setPinned,getRecent:getRecent,recordRecent:recordRecent,matchesApp:matchesApp,
     iconCategory:iconCategory,packIcon:packIcon,iconSource:iconSource,getIconPack:getIconPack,setIconPack:setIconPack,
     isVisible:isVisible, setVisible:setVisible, resetVisible:resetVisible,
     getAppearance:getAppearance, saveAppearance:saveAppearance, resolveIdleEffect:resolveIdleEffect,
@@ -273,17 +275,17 @@
   var tabs = {
     apps:$('customizeAppsTab'), style:$('customizeStyleTab'),
     weather:$('customizeWeatherTab'), calendar:$('customizeCalendarTab'),
-    privacy:$('customizePrivacyTab'), wallpaper:$('customizeWallpaperTab')
+    privacy:$('customizePrivacyTab'), wallpaper:$('customizeWallpaperTab'), idle:$('customizeIdleTab'), album:$('customizeAlbumTab')
   };
   var views = {
     apps:$('customizeAppsView'), style:$('customizeStyleView'),
     weather:$('customizeWeatherView'), calendar:$('customizeCalendarView'),
-    privacy:$('customizePrivacyView'), wallpaper:$('customizeWallpaperView')
+    privacy:$('customizePrivacyView'), wallpaper:$('customizeWallpaperView'), idle:$('customizeIdleView'), album:$('customizeAlbumView')
   };
   var appsList = $('customizeAppList'), themeBox = $('customizeThemes');
   var fontBox = $('customizeFonts'), status = $('customizeStatus');
   var opened = false, activeTab = 'style', searchRequest = null;
-  var appPage=0, glyphPage=0, currentGlyphPack='minimal', APP_PAGE_SIZE=5, GLYPH_PAGE_SIZE=6;
+  var appPage=0, glyphPage=0, currentGlyphPack='minimal', APP_PAGE_SIZE=4, GLYPH_PAGE_SIZE=6;
   var appFilter=0,appSort=0;
 
   function applyAppearance() {
@@ -453,12 +455,13 @@
     all.forEach(function (app) {
       if (app && app.id && !isProtected(app.id)) installed.push(app);
     });
-    var pins=getPinned(),shown=installed.filter(function(app){return isVisible(app.id,(root.CONFIG||{}).hiddenApps);}).length;
+    var pins=getPinned(),recent=getRecent(),query=$('customizeAppSearch').value,shown=installed.filter(function(app){return isVisible(app.id,(root.CONFIG||{}).hiddenApps);}).length;
     $('customizeAppSummary').textContent=installed.length+' ứng dụng · '+shown+' hiện · '+(installed.length-shown)+' ẩn';
-    $('customizeAppFilter').textContent='Lọc: '+['Tất cả','Đang hiện','Đang ẩn','Đã ghim'][appFilter];
+    $('customizeAppFilter').textContent='Lọc: '+['Tất cả','Đang hiện','Đang ẩn','Đã ghim','Gần đây'][appFilter];
     $('customizeAppSort').textContent='Sắp xếp: '+['A–Z','Z–A','Đã ghim trước'][appSort];
-    installed=installed.filter(function(app){var v=isVisible(app.id,(root.CONFIG||{}).hiddenApps);return appFilter===0||(appFilter===1&&v)||(appFilter===2&&!v)||(appFilter===3&&pins.indexOf(app.id)>=0);});
+    installed=installed.filter(function(app){var v=isVisible(app.id,(root.CONFIG||{}).hiddenApps);return matchesApp(app,query)&&(appFilter===0||(appFilter===1&&v)||(appFilter===2&&!v)||(appFilter===3&&pins.indexOf(app.id)>=0)||(appFilter===4&&recent.indexOf(app.id)>=0));});
     installed.sort(function (a, b) {
+      if(appFilter===4)return recent.indexOf(a.id)-recent.indexOf(b.id);
       if(appSort===2){var pa=pins.indexOf(a.id),pb=pins.indexOf(b.id);if(pa!==pb){if(pa<0)return 1;if(pb<0)return -1;return pa-pb;}}
       var aa = String(a.title || a.id).toLowerCase();
       var bb = String(b.title || b.id).toLowerCase();
@@ -471,7 +474,7 @@
     $('customizeAppNext').disabled=appPage>=pages-1;
     if (!installed.length) {
       var empty = document.createElement('p');
-      empty.textContent = 'Chưa có danh sách ứng dụng. Chạy đồng bộ ứng dụng trên TV.';
+      empty.textContent = query||appFilter?'Không có ứng dụng phù hợp.':'Chưa có danh sách ứng dụng. Chạy đồng bộ ứng dụng trên TV.';
       appsList.appendChild(empty);
       return;
     }
@@ -509,10 +512,10 @@
       state.textContent = 'Dịch vụ hình nền chưa sẵn sàng. Mở lại Tùy chỉnh.';
       return;
     }
-    root.INFINITI_WALLPAPER_GET_URL(function (url) {
+    root.INFINITI_WALLPAPER_GET_URL(function (url,mdnsState) {
       // The QR links to a TV-local, secret-authenticated phone service.
-      // Only display a valid local IP:8090 URL written by the root helper.
-      if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:8090\/\?k=[a-f0-9]{12,48}$/.test(url || '')) {
+      // Only display a valid local IP:9090 URL written by the root helper.
+      if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:9090\/\?k=[A-Za-z0-9_-]{8,64}$/.test(url || '')) {
         state.textContent = 'Chưa có địa chỉ dịch vụ hình nền. Qua SSH chạy legacy-home.sh wallpaper-on, sau đó bấm Lấy mã QR lại.';
         return;
       }
@@ -521,8 +524,9 @@
         qr.addData(url);
         qr.make();
         code.innerHTML = '<img alt="Quét để đổi hình nền" src="' + qr.createDataURL(6, 24) + '">';
-        state.textContent = 'Quét QR bằng điện thoại cùng Wi-Fi để chỉnh giao diện, icon và album ảnh.';
-        host.textContent = url;
+        state.textContent = 'Quét QR hoặc mở địa chỉ bên dưới và nhập khóa riêng để chỉnh TV.';
+        host.textContent = (mdnsState==='ready'?'http://tan-dev.local:9090/ · ':'')+url.split('?')[0];
+        if(mdnsState==='conflict')state.textContent+=' Tên tan-dev.local đã được dùng; hãy truy cập IP.';
       } catch (err) {
         state.textContent = 'Không tạo được mã QR. Hãy kiểm tra bộ cài và thử lại.';
       }
@@ -558,6 +562,35 @@
     var list = parent.querySelectorAll('button');
     for (var i=0; i<list.length; i++) list[i].className = list[i] === selected ? 'selected' : '';
   }
+  function renderIdle(){var a=getAppearance(),box=$('customizeIdleChoices');box.innerHTML='';IDLE_EFFECTS.forEach(function(e,i){var b=addButton(box,IDLE_LABELS[i],function(){saveAppearance({idleEffect:e});applyAppearance();refreshToggles();markChoice(box,b);},a.idleEffect===e);});refreshToggles();}
+  var albumReadSeq=0,albumData=null,albumSelected='',albumDeleteId='',albumDeleteAt=0,albumBusy=false;
+  var albumTimes=[0,15,20,30,60,120,300,600,1800,3600,7200,21600,43200,86400,172800,604800];
+  function albumTime(t){return t===0?'Mỗi lần bật TV':t>=86400?(t/86400)+' ngày':t>=3600?(t/3600)+' giờ':t+' giây';}
+  function albumControls(){
+    var p=albumData,ids=p?p.photos:[],i=ids.indexOf(albumSelected),ready=!!(p&&/^[a-f0-9]{48}$/.test(p.localToken||''))&&!albumBusy;
+    var thumb=$('customizeAlbumSelectedPhoto');if(i>=0){var src='idle-photo-'+albumSelected+'.jpg';if(thumb.getAttribute('src')!==src)thumb.setAttribute('src',src);thumb.style.display='block';}else{thumb.removeAttribute('src');thumb.style.display='none';}
+    $('customizeAlbumSelect').textContent=i<0?'Chọn ảnh':'Ảnh '+(i+1)+'/'+ids.length;
+    $('customizeAlbumEnabled').textContent='Album: '+(p?(p.enabled?'Bật':'Tắt'):'—');
+    $('customizeAlbumSeconds').textContent='Lịch: '+(p?albumTime(p.seconds):'—');
+    $('customizeAlbumRandom').textContent='Thứ tự: '+(p?(p.random?'Ngẫu nhiên':'Tuần tự'):'—');
+    $('customizeAlbumIntensity').textContent='Cường độ: '+(p?(p.intensity==='medium'?'Vừa':'Nhẹ'):'—');
+    $('customizeAlbumDelete').textContent=albumDeleteId===albumSelected&&albumSelected&&Date.now()-albumDeleteAt<10000?'Xác nhận xóa':'Xóa ảnh';
+    ['customizeAlbumEnabled','customizeAlbumSeconds','customizeAlbumRandom','customizeAlbumIntensity'].forEach(function(k){$(k).disabled=!ready;});
+    $('customizeAlbumSelect').disabled=albumBusy||!ids.length;
+    $('customizeAlbumUp').disabled=!ready||i<=0;
+    $('customizeAlbumDown').disabled=!ready||i<0||i>=ids.length-1;
+    $('customizeAlbumDelete').disabled=!ready||i<0;
+  }
+  function renderAlbumState(){var target=$('customizeAlbumState'),n=++albumReadSeq,sc=document.createElement('script'),done=false,timer;albumData=null;albumDeleteId='';albumControls();target.textContent='Đang đọc album…';function finish(ok){if(done)return;done=true;clearTimeout(timer);if(sc.parentNode)sc.parentNode.removeChild(sc);if(n!==albumReadSeq||!opened||activeTab!=='album')return;var p=ok?root.INFINITI_IDLE_ALBUM:null;if(!p||!Array.isArray(p.photos)){target.textContent='Chưa có album đồng bộ. Bật dịch vụ web và tải ảnh.';return;}p.photos=p.photos.filter(function(id){return typeof id==='string'&&/^[a-f0-9]{24}$/.test(id);}).slice(0,20);albumData=p;if(p.photos.indexOf(albumSelected)<0)albumSelected=p.photos[0]||'';target.textContent=(p.enabled?'Đang bật':'Đang tắt')+' · '+p.photos.length+' ảnh · '+albumTime(p.seconds)+' · '+(p.random?'Ngẫu nhiên':'Tuần tự');albumControls();}
+    sc.onload=function(){finish(true);};sc.onerror=function(){finish(false);};sc.src='idle-album.js?t='+Date.now();timer=setTimeout(function(){finish(false);},4000);document.body.appendChild(sc);}
+  function albumAction(v){
+    if(albumBusy||!albumData||!/^[a-f0-9]{48}$/.test(albumData.localToken||''))return;
+    v.token=albumData.localToken;albumBusy=true;albumDeleteId='';albumControls();
+    var x=new XMLHttpRequest(),done=false;
+    function finish(ok,published){if(done)return;done=true;albumBusy=false;if(opened&&activeTab==='album'){message(ok?(published?'Đã lưu và đồng bộ album.':'Đã lưu, đang chờ đồng bộ album.'):'Không thể lưu album. Hãy đọc lại hoặc kiểm tra Root Tools.');renderAlbumState();}}
+    try{x.open('POST','http://127.0.0.1:9090/api/album-local',true);x.timeout=5000;x.setRequestHeader('Content-Type','text/plain;charset=UTF-8');x.onload=function(){var v;try{v=JSON.parse(x.responseText);}catch(e){}finish(x.status===200&&v&&v.ok===true,v&&v.published);};x.onerror=x.ontimeout=function(){finish(false);};x.send(JSON.stringify(v));}catch(e){finish(false);}
+  }
+  function albumSetting(k,v){albumAction({action:'settings',field:k,value:v});}
   function refreshToggles() {
     var a = getAppearance();
     $('customizeIdleTime').textContent='Tự ẩn: '+(a.idleSeconds?a.idleSeconds+' giây':'Tắt');
@@ -648,8 +681,10 @@
       if (key === name) views[key].classList.remove('hidden');
       else views[key].classList.add('hidden');
     }
-    if (name === 'apps') {appPage=0;appFilter=0;appSort=0;renderGlobalPacks();renderApps();}
+    if (name === 'apps') {appPage=0;appFilter=0;appSort=0;$('customizeAppSearch').value='';renderGlobalPacks();renderApps();}
     else if (name === 'style') renderStyle();
+    else if (name === 'idle') renderIdle();
+    else if (name === 'album') renderAlbumState();
     else if (name === 'weather') renderWeather();
     else if (name === 'calendar') renderCalendar();
     else if (name === 'wallpaper') renderWallpaperQR();
@@ -664,6 +699,7 @@
     tabs.style.focus();
   }
   function hide() {
+    albumDeleteId='';albumReadSeq++;albumData=null;albumControls();
     closeAppEditor();
     if (searchRequest) { searchRequest.abort(); searchRequest = null; }
     opened = false;
@@ -681,7 +717,7 @@
   }
   // Directional focus based on actual visible button geometry; no CSS spatial-navigation dependency.
   function moveFocus(buttons,i,code){
-    var active=buttons[i], menu=['style','wallpaper','weather','calendar','apps','privacy'];
+    var active=buttons[i], menu=['style','idle','wallpaper','album','weather','calendar','apps','privacy'];
     var selected=menu.filter(function(k){return tabs[k]===active;})[0];
     if(selected && (code===38||code===40)){
       var index=menu.indexOf(selected)+(code===38?-1:1);
@@ -721,6 +757,7 @@
     if (editingApp && (code === 461 || code === 27)) {
       stopKey(e);if(e.type==='keydown'){closeAppEditor();renderApps();tabs.apps.focus();}return;
     }
+    if(active===$('customizeAppSearch')){if(code===13&&e.type==='keydown'){stopKey(e);$('customizeAppSearchBtn').click();$('customizeAppSearchBtn').focus();return;}if(code!==38&&code!==40&&code!==461&&code!==27)return;}
     if (active === $('customizeAppName')) {
       if (code===13 && e.type==='keydown') {stopKey(e);$('customizeAppSave').focus();return;}
       if(code!==38 && code!==40)return;
@@ -781,7 +818,9 @@
     message(count ? 'Đã ẩn ' + count + ' biểu tượng ứng dụng LG trong Infiniti.' :
       'Không còn biểu tượng LG mặc định nào cần ẩn.');
   });
-  $('customizeAppFilter').addEventListener('click',function(){appFilter=(appFilter+1)%4;appPage=0;renderApps();});
+  $('customizeAppSearchBtn').addEventListener('click',function(){appPage=0;renderApps();});
+  $('customizeAppSearch').addEventListener('input',function(){appPage=0;renderApps();});
+  $('customizeAppFilter').addEventListener('click',function(){appFilter=(appFilter+1)%5;appPage=0;renderApps();});
   $('customizeAppSort').addEventListener('click',function(){appSort=(appSort+1)%3;appPage=0;renderApps();});
   $('customizeShowAllApps').addEventListener('click',function(){((root.TV_APPS||{}).apps||[]).forEach(function(a){if(a&&validAppId(a.id))setVisible(a.id,true);});refreshLauncher();renderApps();message('Đã hiện các ứng dụng có thể chỉnh sửa.');});
   $('customizeAppPin').addEventListener('click',function(){if(!editingApp)return;var on=getPinned().indexOf(editingApp.id)<0;if(setPinned(editingApp.id,on)){if(on)setVisible(editingApp.id,true);refreshLauncher();$('customizeAppPin').textContent=on?'Bỏ ghim':'Ghim đầu Home';message(on?'Đã ghim':'Đã bỏ ghim');}});
@@ -800,7 +839,25 @@
   appearanceToggle('customizeShowWeek','showWeek');
   appearanceToggle('customizeMotion','reduceMotion');
   appearanceToggle('customizeIdleRain','idleRain');
-  $('customizeIdleEffect').addEventListener('click',function(){var a=getAppearance();saveAppearance({idleEffect:IDLE_EFFECTS[(IDLE_EFFECTS.indexOf(a.idleEffect)+1)%IDLE_EFFECTS.length]});applyAppearance();refreshToggles();});
+  $('customizeAlbumSelect').addEventListener('click',function(){if(!albumData||!albumData.photos.length)return;albumSelected=albumData.photos[(albumData.photos.indexOf(albumSelected)+1)%albumData.photos.length];albumDeleteId='';albumControls();});
+  $('customizeAlbumUp').addEventListener('click',function(){albumAction({action:'move',id:albumSelected,direction:'up'});});
+  $('customizeAlbumDown').addEventListener('click',function(){albumAction({action:'move',id:albumSelected,direction:'down'});});
+  $('customizeAlbumDelete').addEventListener('click',function(){if(!albumSelected)return;if(albumDeleteId===albumSelected&&Date.now()-albumDeleteAt<10000){albumAction({action:'delete',id:albumSelected,confirm:true});return;}albumDeleteId=albumSelected;albumDeleteAt=Date.now();albumControls();message('Nhấn Xác nhận xóa lần nữa trong 10 giây.');});
+  $('customizeAlbumEnabled').addEventListener('click',function(){if(albumData)albumSetting('enabled',!albumData.enabled);});
+  $('customizeAlbumSeconds').addEventListener('click',function(){if(albumData)albumSetting('seconds',albumTimes[(albumTimes.indexOf(albumData.seconds)+1)%albumTimes.length]);});
+  $('customizeAlbumRandom').addEventListener('click',function(){if(albumData)albumSetting('random',!albumData.random);});
+  $('customizeAlbumIntensity').addEventListener('click',function(){if(albumData)albumSetting('intensity',albumData.intensity==='medium'?'light':'medium');});
+  $('customizeAlbumBrowse').addEventListener('click',function(){hide();if(root.INFINITI_IDLE_PREVIEW)root.INFINITI_IDLE_PREVIEW(true,{motion:'still',manual:true});});
+  $('customizeAlbumRefresh').addEventListener('click',renderAlbumState);
+  $('customizeAlbumWeb').addEventListener('click',function(){activateTab('wallpaper');tabs.wallpaper.focus();});
+  var previewTransition='',previewMotion='',previewIntensity='';
+  function cyclePreview(id,values,current,label){var choices=[''].concat(values),next=choices[(choices.indexOf(current)+1)%choices.length];$(id).textContent=label+': '+(next||'cấu hình');return next;}
+  $('customizeAlbumTransitionPreview').addEventListener('click',function(){previewTransition=cyclePreview('customizeAlbumTransitionPreview',root.INFINITI_IDLE_ALBUM_STYLES?root.INFINITI_IDLE_ALBUM_STYLES():[],previewTransition,'Chuyển cảnh');});
+  $('customizeAlbumMotionPreview').addEventListener('click',function(){previewMotion=cyclePreview('customizeAlbumMotionPreview',root.INFINITI_IDLE_ALBUM_MOTIONS?['still'].concat(root.INFINITI_IDLE_ALBUM_MOTIONS()):[],previewMotion,'Chuyển động');});
+  $('customizeAlbumIntensityPreview').addEventListener('click',function(){previewIntensity=cyclePreview('customizeAlbumIntensityPreview',['light','medium'],previewIntensity,'Cường độ');});
+  $('customizeAlbumPreview').addEventListener('click',function(){hide();if(root.INFINITI_IDLE_PREVIEW)root.INFINITI_IDLE_PREVIEW(true,{transition:previewTransition,motion:previewMotion,intensity:previewIntensity});});
+  $('customizeIdlePreview').addEventListener('click',function(){var a=getAppearance();if(!a.idleRain||a.reduceMotion){message('Bật hiệu ứng và tắt Giảm chuyển động để thử chuyển động.');return;}hide();if(root.INFINITI_IDLE_PREVIEW)root.INFINITI_IDLE_PREVIEW();});
+  $('customizeIdleEffect').addEventListener('click',function(){var a=getAppearance();saveAppearance({idleEffect:IDLE_EFFECTS[(IDLE_EFFECTS.indexOf(a.idleEffect)+1)%IDLE_EFFECTS.length]});applyAppearance();refreshToggles();renderIdle();});
   $('customizeIdleTime').addEventListener('click',function(){var a=getAppearance();saveAppearance({idleSeconds:IDLE_CHOICES[(IDLE_CHOICES.indexOf(a.idleSeconds)+1)%IDLE_CHOICES.length]});applyAppearance();refreshToggles();});
   appearanceToggle('customizeSolar','showSolar');
   appearanceToggle('customizeLunar','showLunar');

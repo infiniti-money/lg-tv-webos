@@ -21,7 +21,8 @@ var crypto = require('crypto');
 var parseUrl = require('url').parse;
 var execFile = require('child_process').execFile;
 
-var PORT = 8090;
+var PORT = 9090;
+var mdns=null;
 var DATA = '/home/root/lg-tv-vibehack';
 var APP_DIR = require('./sync.js').findLauncherDir();
 var legacyLuna = require('./legacy-luna.js').luna;
@@ -40,17 +41,25 @@ function readJSON(file, fallback) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return fallback; }
 }
 
+function validKey(k){return typeof k==='string'&&/^[A-Za-z0-9_-]{8,64}$/.test(k);}
+function keyMatches(a,b){if(!validKey(a)||!validKey(b))return false;var x=crypto.createHash('sha256').update(a).digest(),y=crypto.createHash('sha256').update(b).digest(),v=0;for(var i=0;i<x.length;i++)v|=x[i]^y[i];return v===0;}
+// Bounded per-source lockout; refuse guesses before password comparison.
+var keyAttempts={};
+function keyBlocked(ip,now){var v=keyAttempts[ip];return !!(v&&now-v.at<60000&&v.count>=5);}
+function keyFailure(ip,now){var ks=Object.keys(keyAttempts);if(ks.length>=128&&!keyAttempts[ip]){ks.sort(function(a,b){return keyAttempts[a].at-keyAttempts[b].at;});delete keyAttempts[ks[0]];}var v=keyAttempts[ip];if(!v||now-v.at>=60000)v={at:now,count:0};v.count++;keyAttempts[ip]=v;return v.count>5;}
+function storeKey(k){var f=path.join(DATA,'.wallpaper-key'),tmp=f+'.new-'+process.pid;fs.writeFileSync(tmp,k,{mode:384});fs.chmodSync(tmp,384);fs.renameSync(tmp,f);}
 function loadKey() {
   var f = path.join(DATA, '.wallpaper-key');
   try {
     var k = fs.readFileSync(f, 'utf8').trim();
-    if (/^[0-9a-f]{48}$/.test(k)) return k;
+    if (validKey(k)) return k;
   } catch (e) { /* first run */ }
   k = crypto.randomBytes(24).toString('hex');
-  fs.writeFileSync(f, k, { mode: 384 });
+  storeKey(k);
   return k;
 }
 var KEY = loadKey();
+function refreshKey(){try{var k=fs.readFileSync(path.join(DATA,'.wallpaper-key'),'utf8').trim();if(!validKey(k))return false;if(k!==KEY){KEY=k;writeWallJs();}return true;}catch(e){return false;}}
 var remote = require('./remote-settings.js').create(DATA,function(){return require('./sync.js').findLauncherDir();},permitted,log);
 var album = require('./idle-album.js').create(DATA,function(){return require('./sync.js').findLauncherDir();},permitted,log);
 
@@ -66,19 +75,19 @@ function tvAddress() {
 }
 
 /** Tells the launcher where this page is (for the QR code). */
-var wallHeartbeat=0, wallLastUrl='';
+var wallHeartbeat=0, wallLastUrl='',wallLastMdns='';
 function writeWallJs() {
   APP_DIR = require('./sync.js').findLauncherDir();
   var ip = tvAddress();
   var url = permitted() && ip ? 'http://' + ip + ':' + PORT + '/?k=' + KEY : '';
-  var now=Date.now();
+  var now=Date.now(),mdnsState=mdns?mdns.status():'unavailable';
   try {
     var file=path.join(APP_DIR,'wall.js');
-    if(url===wallLastUrl && now-wallHeartbeat<30000 && fs.existsSync(file))return;
-    var value='// Written by wallpaper-server.js\nwindow.WALL_URL = '+JSON.stringify(url)+';\nwindow.WALL_EXPIRES = '+(url?now+90000:0)+';\n';
+    if(url===wallLastUrl&&mdnsState===wallLastMdns && now-wallHeartbeat<30000 && fs.existsSync(file))return;
+    var value='// Written by wallpaper-server.js\nwindow.WALL_URL = '+JSON.stringify(url)+';\nwindow.WALL_MDNS = '+JSON.stringify(mdnsState)+';\nwindow.WALL_EXPIRES = '+(url?now+90000:0)+';\n';
     fs.writeFileSync(file+'.tmp',value,{mode:420});
     fs.renameSync(file+'.tmp',file);
-    wallHeartbeat=now;wallLastUrl=url;
+    wallHeartbeat=now;wallLastUrl=url;wallLastMdns=mdnsState;
   } catch (e) { log('cannot write wall.js: ' + e.message); }
 }
 
@@ -158,12 +167,29 @@ function insideUsb(p) {
 function handle(req, res) {
   if(!permitted())return json(res,503,{error:'service disabled'});
   var u = parseUrl(req.url, true), q = u.query, route = req.method + ' ' + u.pathname;
-  if(remote.route(req,res,u,json,q.k===KEY))return;
-  if (q.k !== KEY) {
-    return send(res, 403, 'text/html; charset=utf-8', page403());
+  if(!refreshKey())return json(res,503,{error:'key unavailable'});
+  var ip='ip:'+String(req.socket.remoteAddress||''),now=Date.now();
+  if(u.pathname==='/api/remote-ack'&&remote.route(req,res,u,json,false))return;
+  if(album.localRoute(req,res,u,json))return;
+  if(q.k!==undefined&&keyBlocked(ip,now))return send(res,429,'text/plain; charset=utf-8','Thử sai quá nhiều. Vui lòng đợi 1 phút.',{'Retry-After':'60'});
+  var authenticated=keyMatches(q.k,KEY);
+  function stillAuthorized(){return permitted()&&refreshKey()&&keyMatches(q.k,KEY);}
+  if(!authenticated){
+    if(q.k!==undefined)keyFailure(ip,now);
+    if(route==='GET /')return send(res,q.k?403:200,'text/html; charset=utf-8',loginPage(!!q.k));
+    return json(res,403,{error:'key'});
+  }
+  delete keyAttempts[ip];
+  if(remote.route(req,res,u,json,true,stillAuthorized))return;
+  if(route==='POST /api/key'){
+    var chunks=[],size=0,done=false;
+    req.on('data',function(d){if(done)return;size+=d.length;if(size>512){done=true;chunks=[];json(res,413,{error:'too large'});return;}chunks.push(d);});
+    req.on('end',function(){if(done)return;done=true;if(!permitted()||!refreshKey()||!keyMatches(q.k,KEY))return json(res,403,{error:'key'});
+      try{var p=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(!p||!validKey(p.key)||keyMatches(p.key,KEY))return json(res,400,{error:'invalid new key'});storeKey(p.key);KEY=p.key;writeWallJs();json(res,200,{ok:true});}catch(e){json(res,400,{error:'cannot change key'});}
+    });return;
   }
 
-  if(album.route(req,res,u,json,send))return;
+  if(album.route(req,res,u,json,send,stillAuthorized))return;
   if (route === 'GET /') {
     return fs.readFile(path.join(DATA, 'wallpaper.html'), function (err, buf) {
       if (err) return send(res, 500, 'text/plain', 'wallpaper.html missing, run the installer again');
@@ -171,6 +197,9 @@ function handle(req, res) {
     });
   }
 
+  if (route === 'GET /api/diagnostics') {
+    return json(res,200,{uptime:os.uptime(),totalMemory:os.totalmem(),freeMemory:os.freemem(),load:os.loadavg(),cores:os.cpus().length,port:PORT,mdns:mdns?mdns.status():'unavailable',ip:tvAddress()});
+  }
   if (route === 'GET /api/state') {
     var s = readJSON(SETTINGS, {}), w = s.weather || {};
     return json(res, 200, {
@@ -192,17 +221,9 @@ function handle(req, res) {
   }
 
   if (route === 'POST /api/weather') {
-    if (q.off) {
-      log('weather off');
-      return saveSettings(function (st) { if (st.weather) st.weather.enabled = false; }, res);
-    }
-    var lat = parseFloat(q.lat), lon = parseFloat(q.lon), place = String(q.place || '').slice(0, 80);
-    if (!(lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180)) return json(res, 400, { error: 'bad place' });
-    log('weather city: ' + place);
-    return saveSettings(function (st) {
-      var unit = st.weather && st.weather.unit === 'fahrenheit' ? 'fahrenheit' : 'celsius';
-      st.weather = { enabled: true, latitude: lat, longitude: lon, place: place, unit: unit };
-    }, res);
+    var changes={weatherEnabled:!q.off};
+    if(!q.off){var lat=Number(q.lat),lon=Number(q.lon),place=String(q.place||'').slice(0,90);if(q.lat===undefined||q.lon===undefined)return json(res,400,{error:'bad place'});changes.weatherLocation={latitude:lat,longitude:lon,place:place};}
+    try{if(!stillAuthorized())return json(res,403,{error:'key'});return json(res,202,{queued:true,revision:remote.commit(changes)});}catch(e){return json(res,400,{error:'invalid weather'});}
   }
 
   if (route === 'GET /current.jpg') {
@@ -225,7 +246,7 @@ function handle(req, res) {
       var buf = Buffer.concat(chunks);
       if (buf.length < 4 || buf[0] !== 0xff || buf[1] !== 0xd8 || buf[buf.length-2]!==0xff || buf[buf.length-1]!==0xd9) return json(res, 400, { error: 'not a JPEG' });
       var tmp = WALLPAPER + '.part-' + process.pid;
-      if(!permitted())return json(res,503,{error:'service disabled'});
+      if(!permitted()||!refreshKey()||!keyMatches(q.k,KEY))return json(res,403,{error:'key or service changed'});
       try {fs.writeFileSync(tmp,buf);fs.renameSync(tmp,WALLPAPER);} catch(e){return json(res,500,{error:'cannot save photo'});}
       log('new wallpaper, ' + Math.round(buf.length / 1024) + ' KB');
       sync(function (err, refreshed) { json(res, err ? 500 : 200, { ok: !err, reloadRequested: !!refreshed }); });
@@ -260,26 +281,24 @@ function handle(req, res) {
   send(res, 404, 'text/plain', 'not found');
 }
 
-function page403() {
-  return '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<body style="font:18px system-ui,sans-serif;background:#111;color:#eee;padding:24px">' +
-    '<p>Open this page by scanning the QR code on the TV (Wallpaper button).</p>' +
-    '<p>Hãy mở trang này bằng cách quét mã QR trên TV (nút Hình nền).</p>';
+function loginPage(bad) {
+  return '<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Designed by Tân Dev</title><style>body{font:17px system-ui,sans-serif;background:#101820;color:#eee;margin:0;padding:28px}main{max-width:420px;margin:8vh auto;padding:24px;border:1px solid #3b4b58;border-radius:16px}input,button{box-sizing:border-box;width:100%;padding:13px;margin:8px 0;border-radius:8px;font:inherit}input{color:#fff;background:#22303c;border:1px solid #546674}button{background:#d1e5f5;border:0;color:#14232f;font-weight:bold}p{line-height:1.5;color:#b8c9d7}</style><main><h1>Designed by Tân Dev</h1><p>Tùy chỉnh TV qua mạng nội bộ.</p>'+(bad?'<p role="alert">Khóa không đúng. Thử lại hoặc xem mã QR trên TV.</p>':'')+'<form method="get" action="/"><label for="k">Khóa riêng</label><input type="password" name="k" id="k" required minlength="8" maxlength="64" autocomplete="current-password" pattern="[A-Za-z0-9_\\-]{8,64}"><button>Đăng nhập</button></form><p>Chỉ dùng trên Wi-Fi riêng. Không mở cổng ra Internet.</p></main></html>';
 }
 
 
 http.createServer(function (req, res) {
   try { handle(req, res); } catch (e) { log('error: ' + e.message); try { json(res, 500, { error: 'server error' }); } catch (x) { /* sent */ } }
-}).on('error', function (e) {
+}).on('connection',function(s){s.setTimeout(45000,function(){s.destroy();});}).on('error', function (e) {
   log('cannot start: ' + e.message);
   process.exit(1);
 }).listen(PORT, function () {
+  try{mdns=require('./local-name.js').create(tvAddress,permitted,log);mdns.refresh();}catch(e){log('mDNS unavailable; use IP URL');}
   writeWallJs();remote.publish();album.publish();
   // An app-only auto-update may replace wall.js. Restore the QR URL without
   // reopening the launcher or interacting with LG's Home on wake.
   setInterval(function () {
-    if(!permitted()){try{writeWallJs();}catch(e){}process.exit(0);}
-    try {writeWallJs();remote.publish();album.publish();} catch(e){log('wall.js refresh failed: '+e.message);}
+    if(!permitted()){if(mdns)mdns.stop();try{writeWallJs();}catch(e){}process.exit(0);}
+    try {if(mdns)mdns.refresh();if(refreshKey()){writeWallJs();remote.publish();album.publish();}} catch(e){log('wall.js refresh failed: '+e.message);}
   }, 5000);
   log('listening on port ' + PORT);
 });

@@ -1,3 +1,9 @@
+> Lịch sử phiên bản. Xem [hướng dẫn hiện hành](docs/owner-guide.vi.md); các tên và lệnh cũ chỉ mang tính tham chiếu lịch sử.
+
+# v1.6.3 — Designed by Tân Dev (ứng viên chưa phát hành)
+
+Xem [ghi chú v1.6.3](RELEASE_NOTES_v1.6.3.md) và [lộ trình nghiệm thu](docs/release-spec-v1.6.3.vi.md). IPK và Root Tools phải cùng build; chưa nghiệm thu TV thực tế. Bản chính thức vẫn là v1.6.2.
+
 # v1.6.2 — Designed by Tân Dev
 
 Xem RELEASE_NOTES_v1.6.2.md. Cài IPK và Root Tools đồng bộ qua SSH; không có mục Cập nhật trên TV.

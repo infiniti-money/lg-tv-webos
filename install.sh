@@ -1,5 +1,5 @@
 #!/bin/sh
-# Infiniti TV Home - one-command installer for ROOTED LG webOS TVs.
+# Designed by Tân Dev - one-command installer for ROOTED LG webOS TVs.
 # Run it ON the TV as root (over SSH):
 #
 #   curl -fsSL https://raw.githubusercontent.com/infiniti-money/lg-tv-webos/main/install.sh | sh
@@ -25,7 +25,7 @@
 #   --auto-update           Enable delayed, SHA-256-verified app updates + wallpaper server
 #   --wallpaper-service     Enable wallpaper QR phone server only (no app update)
 #   --no-auto-update        Disable auto updates; safe mode also stops background services by default
-#   --uninstall             Remove Infiniti TV Home after safe recovery
+#   --uninstall             Remove Designed by Tân Dev after safe recovery
 #   --app-only              Only install IPK; no root sidecar/boot/keymap changes
 #   --diagnose-root         Read-only Homebrew/Failsafe status, even without root
 #   --recover-home          Explicitly archive/disarm custom Home hooks and exit
@@ -154,7 +154,7 @@ fi
 
 # ---------------------------------------------------------------- uninstall
 if [ -n "$UNINSTALL" ]; then
-  say "Removing Infiniti TV Home"
+  say "Removing Designed by Tân Dev"
   [ ! -f "$DATA/legacy-home.sh" ] || sh "$DATA/legacy-home.sh" disable || die "V8 recovery failed"
   if [ -f "$DATA/home-control.sh" ]; then
     sh "$DATA/home-control.sh" disable || die "Could not safely restore the previous Home key binding. Check $DATA/home-key-backup.json"
@@ -179,7 +179,7 @@ say "Downloading scripts"
 # Disarm V8 before replacing root sidecars; activation is always explicit.
 if [ -f "$DATA/legacy-home.sh" ]; then sh "$DATA/legacy-home.sh" disable || die "V8 disarm failed"; fi
 mkdir -p "$DATA/icons"
-for f in legacy-home-v8.py legacy-luna.js legacy-home.sh autostart-rollback.sh sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js wallpaper.html remote-settings.js idle-album.js golauncher.sh boot.sh boot-home-once.sh home-control.sh safe-recovery.sh root-safety-check.sh auto-update.sh install-ipk-update.js diagnose-home.sh integration-diagnostics.sh compat-check.sh; do
+for f in legacy-home-v8.py legacy-luna.js legacy-home.sh autostart-rollback.sh sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js local-name.js wallpaper.html remote-settings.js idle-album.js golauncher.sh boot.sh boot-home-once.sh home-control.sh safe-recovery.sh root-safety-check.sh auto-update.sh install-ipk-update.js diagnose-home.sh home-repeat-diagnose.sh integration-diagnostics.sh compat-check.sh; do
   curl -fsSL "$RAW/tv/$f" -o "$DATA/$f" || die "Could not download $f. Is the TV online?"
 done
 chmod +x "$DATA"/*.sh "$DATA"/*.js

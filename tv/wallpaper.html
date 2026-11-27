@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>TV wallpaper</title>
+<title>Designed by Tân Dev — TV Control</title>
 <!-- Served by wallpaper-server.js on the TV. Runs on the phone, not on the TV. -->
 <style>
   :root { color-scheme: dark; }
@@ -63,11 +63,14 @@
   #albumPhotos img { width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:8px;display:block; }
   #albumPhotos button { width:100%; margin-top:4px;padding:7px;background:#34313e;color:white;border:0;border-radius:6px; }
   #albumStatus,#remoteStatus { color:#b3dbea;min-height:24px; }
+#settingsNav{display:flex;flex-wrap:wrap;gap:7px;padding:10px 0;background:#101820;position:sticky;top:0;z-index:8;border-bottom:1px solid #354656}#settingsNav a{color:#d9edff;text-decoration:none;padding:9px 12px;border-radius:9px;background:#263745;font-weight:600;font-size:14px}#settingsNav a:focus,#settingsNav a:hover{background:#d4e6f5;color:#14232f}section{scroll-margin-top:110px}#viewMode,#weatherSection,#usbSection{padding:16px;border:1px solid #353a46;border-radius:16px;margin-top:22px;background:#171b24}#albumSection .remoteGrid,#remoteSection .remoteGrid{margin:10px 0 18px}#t-title{font-size:clamp(22px,4vw,34px);letter-spacing:-.03em;margin:8px 0 18px}#remoteSection h3{color:#b9d4e5;font-size:17px;margin:20px 0 8px}
 </style>
 </head>
 <body>
 <main>
   <h1 id="t-title"></h1>
+  <nav id="settingsNav" aria-label="Chuyên mục"><a href="#viewMode">Hình nền</a><a href="#albumSection">Album &amp; chuyển cảnh</a><a href="#remoteSection">Giao diện &amp; ứng dụng</a><a href="#weatherSection">Thời tiết</a><a href="#usbSection">USB</a><a href="#diagnosticSection">Trạng thái &amp; sao lưu</a><a href="#keySection">Mật khẩu</a></nav>
+
 
   <!-- Normal view: the current wallpaper -->
   <section id="viewMode">
@@ -103,13 +106,17 @@
   <div id="status"></div>
 
   <section id="albumSection" class="remotePanel">
-    <h2>Album màn hình chờ</h2>
+    <h2>Album &amp; chuyển cảnh</h2><p class="hint">24 kiểu chuyển ảnh, 12 chuyển động ảnh, ngẫu nhiên độc lập. Chọn hiệu ứng màn hình chờ ở mục Giao diện.</p>
     <p class="hint">Tối đa 20 ảnh. Ảnh được căn giữa và thu về 1920×1080 trước khi gửi. Hình nền chính không bị thay thế.</p>
     <div class="remoteGrid">
       <label class="remoteRow">Trình chiếu <input type="checkbox" id="albumEnabled"></label>
-      <label class="remoteRow">Đổi ảnh sau <select id="albumSeconds"><option value="15">15 giây</option><option value="30">30 giây</option><option value="60" selected>1 phút</option><option value="120">2 phút</option><option value="300">5 phút</option><option value="600">10 phút</option><option value="1800">30 phút</option><option value="3600">1 giờ</option><option value="7200">2 giờ</option><option value="21600">6 giờ</option><option value="43200">12 giờ</option><option value="86400">1 ngày (24 giờ)</option><option value="172800">2 ngày</option><option value="604800">7 ngày</option><option value="0">Mỗi lần bật TV</option></select></label>
-      <label class="remoteRow">Ngẫu nhiên <input type="checkbox" id="albumRandom"></label>
+      <label class="remoteRow">Đổi ảnh sau <select id="albumSeconds"><option value="15">15 giây</option><option value="20">20 giây</option><option value="30">30 giây</option><option value="60" selected>1 phút</option><option value="120">2 phút</option><option value="300">5 phút</option><option value="600">10 phút</option><option value="1800">30 phút</option><option value="3600">1 giờ</option><option value="7200">2 giờ</option><option value="21600">6 giờ</option><option value="43200">12 giờ</option><option value="86400">1 ngày (24 giờ)</option><option value="172800">2 ngày</option><option value="604800">7 ngày</option><option value="0">Mỗi lần bật TV</option></select></label>
+      <label class="remoteRow">Thứ tự ảnh ngẫu nhiên <input type="checkbox" id="albumRandom"></label>
+      <label class="remoteRow">Chuyển cảnh <select id="albumTransition"><option value="random">Ngẫu nhiên toàn bộ</option><option value="random-light">Ngẫu nhiên nhẹ</option><option value="random-cinema">Ngẫu nhiên điện ảnh</option><option value="fade">Mờ dần</option><option value="slide-left">Trượt trái</option><option value="slide-right">Trượt phải</option><option value="slide-up">Trượt lên</option><option value="zoom-in">Zoom vào</option><option value="zoom-out">Zoom ra</option><option value="dissolve">Hòa tan</option><option value="cinema">Điện ảnh</option><option value="slide-down">Trượt xuống</option><option value="diagonal">Trượt chéo</option><option value="soft-rotate">Xoay nhẹ</option><option value="sweep">Quét ngang</option><option value="lift">Nâng ảnh</option><option value="focus">Lấy nét zoom</option><option value="slide-nw">Chéo lên trái</option><option value="slide-ne">Chéo lên phải</option><option value="slide-sw">Chéo xuống trái</option><option value="cross-zoom">Zoom giao thoa</option><option value="swing-left">Nghiêng trái</option><option value="swing-right">Nghiêng phải</option><option value="drift-in">Lướt vào</option><option value="drop-in">Hạ ảnh</option><option value="curtain-lite">Rèm nhẹ</option><option value="flip-lite">Lật nhẹ</option><option value="none">Không hiệu ứng</option></select></label>
+      <label class="remoteRow">Chuyển động ảnh <select id="albumMotion"><option value="random">Ngẫu nhiên</option><option value="zoom">Zoom chậm</option><option value="pan">Lướt ảnh</option><option value="drift">Trôi nhẹ</option><option value="random-light">Ngẫu nhiên nhẹ</option><option value="zoom-in">Zoom vào</option><option value="zoom-out">Zoom ra</option><option value="pan-left">Pan trái</option><option value="pan-right">Pan phải</option><option value="pan-up">Pan lên</option><option value="pan-down">Pan xuống</option><option value="pan-nw">Chéo lên trái</option><option value="pan-ne">Chéo lên phải</option><option value="pan-sw">Chéo xuống trái</option><option value="pan-se">Chéo xuống phải</option><option value="drift-horizontal">Trôi ngang</option><option value="drift-vertical">Trôi dọc</option><option value="still">Ảnh tĩnh</option></select></label>
     </div>
+    <label class="remoteRow">Cường độ chuyển động <select id="albumIntensity"><option value="light">Nhẹ</option><option value="medium">Vừa</option></select></label>
+    <label class="remoteRow">Tốc độ chuyển ảnh <select id="albumSpeed"><option value="600">0,6 giây</option><option value="1100">1,1 giây</option><option value="1600">1,6 giây</option></select></label>
     <button class="btn" id="albumSave" type="button">Lưu chế độ trình chiếu</button>
     <button class="btn ghost" id="albumChoose" type="button">Thêm nhiều ảnh</button><input type="file" id="albumFiles" accept="image/*" multiple hidden>
     <p id="albumStatus" role="status" aria-live="polite"></p><div id="albumPhotos"></div>
@@ -118,17 +125,17 @@
     <h2>Tùy chỉnh Launcher</h2>
     <p class="hint">Mở Home trên TV và đóng bảng Tùy chỉnh để đồng bộ. Chỉ trường đã sửa được gửi lên TV.</p>
     <div class="pair"><button class="btn ghost" id="remoteRefresh" type="button">Đọc từ TV</button><button class="btn" id="remoteSave" type="button" disabled>Lưu thay đổi</button></div>
-    <p id="remoteStatus" role="status" aria-live="polite"></p>
+    <p id="remoteStatus" role="status" aria-live="polite"></p><p id="idleDiagnostic" class="hint">Chưa có trạng thái màn hình chờ từ TV.</p>
     <fieldset id="remoteControls" disabled>
-      <legend>Giao diện</legend><div id="remoteFields" class="remoteGrid"></div>
+      <legend>Giao diện</legend><div id="remoteFields" class="remoteGrid"></div><h3>Màn hình chờ</h3><div id="remoteIdleFields" class="remoteGrid"></div><h3>Lịch và thời tiết</h3><div id="remoteCalendarFields" class="remoteGrid"></div>
       <h3>Ứng dụng</h3>
       <label class="remoteRow">Ứng dụng <select id="remoteApp"></select></label>
       <div id="remoteAppFields" class="remoteGrid" hidden>
         <label class="remoteRow">Tên <input id="remoteTitle" maxlength="48" placeholder="Tên gốc nếu để trống"></label>
         <label class="remoteRow">Icon <select id="remoteIcon"></select></label>
-        <label class="remoteRow">Hiển thị <input id="remoteVisible" type="checkbox"></label>
+        <label class="remoteRow">Hiển thị <input id="remoteVisible" type="checkbox"></label><label class="remoteRow">Ghim lên đầu Home <input id="remotePinned" type="checkbox"></label>
       </div>
-      <p class="hint">Icon riêng đã tải trên TV được giữ nguyên trừ khi bạn chọn icon khác.</p>
+      <h3>Thứ tự trên Home</h3><p class="hint">Chọn app rồi dùng lên/xuống. App đã ghim vẫn đứng trước. Chỉ đổi danh sách đang có; bấm Lưu thay đổi để gửi.</p><select id="orderApp" size="5" style="width:100%"></select><div class="pair"><button id="orderUp" class="btn ghost" type="button">↑ Lên</button><button id="orderDown" class="btn ghost" type="button">↓ Xuống</button></div><p class="hint">Icon riêng đã tải trên TV được giữ nguyên trừ khi bạn chọn icon khác.</p>
     </fieldset>
   </section>
   <section id="weatherSection">
@@ -147,10 +154,12 @@
     <div id="usb"></div>
     <p class="hint" id="usbHint"></p>
   </section>
+  <section id="diagnosticSection" class="remotePanel"><h2>Trạng thái &amp; sao lưu</h2><p id="systemStatus" class="hint">Bấm đọc trạng thái TV.</p><button type="button" class="btn ghost" id="systemRefresh">Đọc RAM và tải hệ thống</button><p class="hint">Sao lưu cài đặt chung đã được TV xác nhận: giao diện, font, icon chung, thời tiết, lịch, màn hình chờ. Không gồm ảnh, icon riêng, mật khẩu, lịch sử hay dữ liệu hệ thống.</p><div class="pair"><button type="button" class="btn ghost" id="backupExport">Xuất JSON</button><button type="button" class="btn ghost" id="backupImport">Nhập JSON</button></div><input id="backupFile" type="file" accept=".json,application/json" hidden><p id="backupStatus" role="status"></p></section>
+  <section id="keySection" class="remotePanel"><h2>Khóa truy cập riêng</h2><p class="hint">8–64 ký tự, chỉ dùng chữ cái cũng được; không bắt buộc số hoặc ký tự đặc biệt. Dùng khóa dài, khó đoán. Khi đổi khóa, liên kết QR cũ hết hiệu lực.</p><form id="keyForm"><label class="remoteRow">Khóa mới <input id="newKey" type="password" minlength="8" maxlength="64" autocomplete="new-password" required></label><label class="remoteRow">Nhập lại <input id="confirmKey" type="password" minlength="8" maxlength="64" autocomplete="new-password" required></label><button type="submit" class="btn" id="keySave">Đổi khóa riêng</button></form><p id="keyStatus" role="status"></p><a href="/" style="color:#b8d9ef">Về trang đăng nhập</a></section>
 </main>
 <script>
 (function () {
-  var match = /[?&]k=([a-f0-9]{12,48})(?:&|$)/.exec(location.search);
+  var match = /[?&]k=([A-Za-z0-9_-]{8,64})(?:&|$)/.exec(location.search);
   var K = match ? match[1] : '';
   var T = {
     en: { title: 'Designed by Tân Dev · TV settings', dim: 'Darken', pick: 'Choose a photo', clear: 'Remove wallpaper', usb: 'From a USB stick in the TV',
@@ -332,7 +341,7 @@
               $('cities').innerHTML = '';
               $('city').value = '';
               showWeather({ enabled: true, place: c.name });
-              status(L.cityDone + c.name + '.');
+              status('Đã gửi khu vực '+c.name+'; chờ TV xác nhận.');remoteRead().catch(function(){});
             }).catch(function () { status(L.fail, 1); });
         };
         $('cities').appendChild(b);
@@ -340,7 +349,7 @@
     }).catch(function () { status(L.fail, 1); });
   };
   $('weatherOff').onclick = function () {
-    api('POST', 'api/weather?off=1').then(function () { showWeather({ enabled: false }); status(L.weatherOffDone); })
+    api('POST', 'api/weather?off=1').then(function () { showWeather({ enabled: false }); status('Đã gửi yêu cầu tắt thời tiết; chờ TV xác nhận.');remoteRead().catch(function(){}); })
       .catch(function () { status(L.fail, 1); });
   };
 
@@ -364,15 +373,16 @@
   };
 
 
+  $('keyForm').onsubmit=function(e){e.preventDefault();var k=$('newKey').value,msg=$('keyStatus'),btn=$('keySave');if(!/^[A-Za-z0-9_-]{8,64}$/.test(k)||k!==$('confirmKey').value||k===K){msg.textContent='Khóa không hợp lệ, trùng khóa cũ hoặc nhập lại chưa khớp.';return;}if(!confirm('Đổi khóa và vô hiệu hóa đường dẫn cũ?'))return;btn.disabled=true;api('POST','api/key',JSON.stringify({key:k})).then(function(){location.replace('/?k='+encodeURIComponent(k));}).catch(function(){msg.textContent='Không đổi được khóa. Thử đăng nhập lại.';btn.disabled=false;});};
   // Album: sequential uploads, bounded full-HD JPEG conversion, no replacement of main wallpaper.
   var albumBusy=false,albumState=null;
   function albumMessage(s){$('albumStatus').textContent=s;}
-  function albumLock(b){albumBusy=b;['albumChoose','albumSave','albumEnabled','albumSeconds','albumRandom'].forEach(function(id){$(id).disabled=b;});Array.prototype.forEach.call($('albumPhotos').querySelectorAll('button'),function(el){el.disabled=b;});}
+  function albumLock(b){albumBusy=b;['albumChoose','albumSave','albumEnabled','albumSeconds','albumRandom','albumTransition','albumMotion','albumIntensity','albumSpeed'].forEach(function(id){$(id).disabled=b;});Array.prototype.forEach.call($('albumPhotos').querySelectorAll('button'),function(el){el.disabled=b||el.getAttribute('data-boundary')==='1';});}
   function albumRead(){return api('GET','api/album').then(function(s){
-    albumState=s;$('albumEnabled').checked=s.enabled;$('albumRandom').checked=s.random;$('albumSeconds').value=String(s.seconds);
+    albumState=s;$('albumEnabled').checked=s.enabled;$('albumRandom').checked=s.random;$('albumSeconds').value=String(s.seconds);$('albumTransition').value=s.transition||'random';$('albumMotion').value=s.motion||'random-light';$('albumSpeed').value=String(s.speed||1100);$('albumIntensity').value=s.intensity||'light';
     var grid=$('albumPhotos');grid.textContent='';
-    s.photos.forEach(function(id){var card=document.createElement('div'),img=document.createElement('img'),b=document.createElement('button');img.loading='lazy';img.alt='Ảnh album';img.src='api/album/photo?id='+encodeURIComponent(id)+'&k='+K;b.textContent='Xóa ảnh';b.disabled=albumBusy;
-      b.onclick=function(){if(albumBusy||!confirm('Xóa ảnh này khỏi album?'))return;albumLock(true);api('POST','api/album/delete?id='+encodeURIComponent(id)).then(albumRead).then(function(){albumMessage('Đã xóa ảnh.');}).catch(function(){albumMessage('Không xóa được ảnh.');}).then(function(){albumLock(false);});};card.appendChild(img);card.appendChild(b);grid.appendChild(card);});
+    s.photos.forEach(function(id,i){var card=document.createElement('div'),img=document.createElement('img'),b=document.createElement('button');img.loading='lazy';img.alt='Ảnh album';img.src='api/album/photo?id='+encodeURIComponent(id)+'&k='+K;b.textContent='Xóa ảnh';b.disabled=albumBusy;
+      b.onclick=function(){if(albumBusy||!confirm('Xóa ảnh này khỏi album?'))return;albumLock(true);api('POST','api/album/delete?id='+encodeURIComponent(id)).then(albumRead).then(function(){albumMessage('Đã xóa ảnh.');}).catch(function(){albumMessage('Không xóa được ảnh.');}).then(function(){albumLock(false);});};card.appendChild(img);['up','down'].forEach(function(direction){var move=document.createElement('button'),boundary=direction==='up'?i===0:i===s.photos.length-1;move.textContent=direction==='up'?'↑ Lên trước':'↓ Xuống sau';move.setAttribute('data-boundary',boundary?'1':'0');move.disabled=albumBusy||boundary;move.onclick=function(){if(albumBusy||boundary)return;albumLock(true);api('POST','api/album/move?id='+encodeURIComponent(id)+'&direction='+direction).then(albumRead).then(function(){albumMessage('Đã đổi thứ tự ảnh.');}).catch(function(){albumMessage('Không đổi được thứ tự.');}).then(function(){albumLock(false);});};card.appendChild(move);});card.appendChild(b);grid.appendChild(card);});
     return s;
   });}
   function albumJpeg(f,max){return new Promise(function(resolve,reject){
@@ -388,31 +398,41 @@
       return files.reduce(function(p,f,i){return p.then(function(){albumMessage('Đang gửi '+(i+1)+' / '+files.length+'…');return albumJpeg(f,s.maxBytes).then(function(b){return api('POST','api/album/upload',b);}).then(function(){ok++;},function(){fail++;});});},Promise.resolve());
     }).then(albumRead).then(function(){albumMessage('Đã thêm '+ok+' ảnh; lỗi '+fail+'; bỏ qua '+skipped+'.');}).catch(function(){albumMessage('Không kết nối được album.');}).then(function(){albumLock(false);});
   };
-  $('albumSave').onclick=function(){if(albumBusy)return;albumLock(true);api('POST','api/album/settings?enabled='+($('albumEnabled').checked?1:0)+'&seconds='+$('albumSeconds').value+'&random='+($('albumRandom').checked?1:0)).then(function(r){albumMessage(r.published?'Đã lưu. TV sẽ đọc album khi vào chế độ chờ hoặc đến lượt đổi ảnh.':'Đã lưu; đang chờ đồng bộ tệp lên Launcher.');return albumRead();}).catch(function(){albumMessage('Không lưu được album.');}).then(function(){albumLock(false);});};
+  $('albumSave').onclick=function(){if(albumBusy)return;albumLock(true);api('POST','api/album/settings?enabled='+($('albumEnabled').checked?1:0)+'&seconds='+$('albumSeconds').value+'&random='+($('albumRandom').checked?1:0)+'&transition='+encodeURIComponent($('albumTransition').value)+'&motion='+encodeURIComponent($('albumMotion').value)+'&intensity='+$('albumIntensity').value+'&speed='+$('albumSpeed').value).then(function(r){albumMessage(r.published?'Đã lưu. TV sẽ đọc album khi vào chế độ chờ hoặc đến lượt đổi ảnh.':'Đã lưu; đang chờ đồng bộ tệp lên Launcher.');return albumRead();}).catch(function(){albumMessage('Không lưu được album.');}).then(function(){albumLock(false);});};
   albumRead().catch(function(){albumMessage('Album chưa sẵn sàng. Cập nhật Root Tools.');});
   // Remote settings: edit only touched fields, never overwrite unseen local changes.
-  var defs={theme:['Chủ đề',['midnight','ocean','amber'],['Midnight','Ocean','Amber']],font:['Phông chữ',['lexend','sans','serif'],['Lexend','Sans','Serif']],idleSeconds:['Tự ẩn',[0,30,60,120,300],['Tắt','30 giây','1 phút','2 phút','5 phút']],idleEffect:['Hiệu ứng chờ',['rain','snow','petals','stars','fireflies','bubbles','mist','random'],['Mưa','Tuyết','Cánh hoa','Sao','Đom đóm','Bong bóng','Sương','Ngẫu nhiên']],pack:['Bộ icon',['original','minimal','neon','glass','pastel','gold'],['Gốc','Minimal','Neon','Glass','Pastel','Gold']],largeText:['Chữ lớn'],showWeek:['Dự báo 3 ngày'],reduceMotion:['Giảm chuyển động'],showSolar:['Dương lịch'],showLunar:['Âm lịch'],idleRain:['Bật hiệu ứng']};
+  var defs={theme:['Chủ đề',['midnight','ocean','amber'],['Midnight','Ocean','Amber']],font:['Phông chữ',['lexend','sans','serif'],['Lexend','Sans','Serif']],idleSeconds:['Tự ẩn',[0,30,60,120,300],['Tắt','30 giây','1 phút','2 phút','5 phút']],idleEffect:['Hiệu ứng chờ',["rain","snow","petals","stars","fireflies","bubbles","mist","leaves","sparkles","meteor","aurora","embers","waves","hearts","random","random-light"],["Mưa rơi","Tuyết rơi","Cánh hoa","Bầu trời sao","Đom đóm","Bong bóng","Sương mờ","Lá bay","Ánh kim","Sao băng","Cực quang","Tàn lửa","Sóng ánh sáng","Trái tim","Ngẫu nhiên","Ngẫu nhiên nhẹ"]],pack:['Bộ icon',['original','minimal','neon','glass','pastel','gold'],['Gốc','Minimal','Neon','Glass','Pastel','Gold']],largeText:['Chữ lớn'],showWeek:['Dự báo 3 ngày'],reduceMotion:['Giảm chuyển động'],showSolar:['Dương lịch'],showLunar:['Âm lịch'],idleRain:['Bật hiệu ứng'],weatherUnit:['Đơn vị nhiệt độ',['celsius','fahrenheit'],['°C','°F']]};
   var fields={},pending={},values={},remoteBusy=false,remoteApps=[],waiting=null,watch=null;
   function remoteMsg(s){$('remoteStatus').textContent=s;}
   function option(el,v,t){var o=document.createElement('option');o.value=String(v);o.textContent=t;el.appendChild(o);}
   function touched(k,v){pending[k]=v;$('remoteSave').disabled=remoteBusy||!Object.keys(pending).length;}
-  Object.keys(defs).forEach(function(k){var d=defs[k],l=document.createElement('label'),el=document.createElement(d[1]?'select':'input');l.className='remoteRow';l.appendChild(document.createTextNode(d[0]));if(d[1])d[1].forEach(function(v,i){option(el,v,d[2][i]);});else el.type='checkbox';el.onchange=function(){touched(k,d[1]?(k==='idleSeconds'?Number(el.value):el.value):el.checked);};l.appendChild(el);$('remoteFields').appendChild(l);fields[k]=el;});
+  Object.keys(defs).forEach(function(k){var d=defs[k],l=document.createElement('label'),el=document.createElement(d[1]?'select':'input');l.className='remoteRow';l.appendChild(document.createTextNode(d[0]));if(d[1]){option(el,'','— Chưa biết —');d[1].forEach(function(v,i){option(el,v,d[2][i]);});}else el.type='checkbox';el.onchange=function(){if(d[1]&&el.value==='')return;el.indeterminate=false;touched(k,d[1]?(k==='idleSeconds'?Number(el.value):el.value):el.checked);};l.appendChild(el);$(k.indexOf('idle')===0?'remoteIdleFields':['showSolar','showLunar','showWeek','weatherUnit'].indexOf(k)>=0?'remoteCalendarFields':'remoteFields').appendChild(l);fields[k]=el;});
   function appKey(k){return 'app:'+$('remoteApp').value+':'+k;}
   function effective(k){return Object.prototype.hasOwnProperty.call(pending,k)?pending[k]:values[k];}
+  function renderOrder(){var list=effective('appOrder'),el=$('orderApp'),selected=el.value;el.textContent='';if(!Array.isArray(list)){option(el,'','Chưa có thứ tự xác nhận');$('orderUp').disabled=$('orderDown').disabled=true;return;}var by={};remoteApps.forEach(function(a){by[a.id]=a.title;});list.forEach(function(id){if(Object.prototype.hasOwnProperty.call(by,id))option(el,id,by[id]);});el.value=selected;if(!el.value&&el.options.length)el.selectedIndex=0;$('orderUp').disabled=$('orderDown').disabled=!el.value;}
+  function moveOrder(delta){var list=effective('appOrder');if(!Array.isArray(list))return;list=list.slice();var id=$('orderApp').value,i=list.indexOf(id),j=i+delta;if(i<0||j<0||j>=list.length)return;var other=list[j];list[j]=id;list[i]=other;touched('appOrder',list);renderOrder();}
+  $('orderUp').onclick=function(){moveOrder(-1);};$('orderDown').onclick=function(){moveOrder(1);};
   function appFields(){var id=$('remoteApp').value;$('remoteAppFields').hidden=!id;if(!id)return;
-    $('remoteTitle').value=effective(appKey('title'))||'';$('remoteIcon').value=effective(appKey('icon'))||'';$('remoteVisible').checked=effective(appKey('visible'))===true;
+    $('remoteTitle').value=effective(appKey('title'))||'';$('remoteIcon').value=effective(appKey('icon'))||'';$('remoteVisible').checked=effective(appKey('visible'))===true;$('remoteVisible').indeterminate=effective(appKey('visible'))===undefined;$('remotePinned').checked=effective(appKey('pinned'))===true;$('remotePinned').indeterminate=effective(appKey('pinned'))===undefined;
   }
   option($('remoteIcon'),'','Giữ bộ icon chung');option($('remoteIcon'),'original','Icon gốc');
   ['minimal','neon','glass','pastel','gold'].forEach(function(p){['video','music','web','tv','game','settings','home','photo','apps','youtube','netflix','prime','disney','tiktok','jellyfin','spotify','radio','hdmi','store','files','network'].forEach(function(g){option($('remoteIcon'),'pack:'+p+':'+g,p+' / '+g);});});
-  $('remoteApp').onchange=appFields;$('remoteTitle').onchange=function(){touched(appKey('title'),this.value);};$('remoteIcon').onchange=function(){touched(appKey('icon'),this.value);};$('remoteVisible').onchange=function(){touched(appKey('visible'),this.checked);};
+  $('remoteApp').onchange=appFields;$('remoteTitle').onchange=function(){touched(appKey('title'),this.value);};$('remoteIcon').onchange=function(){touched(appKey('icon'),this.value);};$('remoteVisible').onchange=function(){this.indeterminate=false;touched(appKey('visible'),this.checked);};$('remotePinned').onchange=function(){this.indeterminate=false;touched(appKey('pinned'),this.checked);};
   function remoteRead(){return api('GET','api/remote-state').then(function(s){
-    if(waiting!==null){if(s.applied!==null&&s.applied>=waiting){waiting=null;remoteMsg('TV đã xác nhận áp dụng.');}else{remoteMsg('Đã gửi. Chờ TV nhận thay đổi; mở Home và đóng Tùy chỉnh.');return s;}}
-    if(!s.online){$('remoteControls').disabled=true;remoteMsg('Chưa đọc được cài đặt TV. Mở Home và đóng Tùy chỉnh, sau đó bấm Đọc từ TV.');return s;}
-    values=s.values||{};$('remoteControls').disabled=false;
-    Object.keys(defs).forEach(function(k){var v=effective(k);if(defs[k][1])fields[k].value=String(v);else fields[k].checked=v===true;});
-    var id=$('remoteApp').value;$('remoteApp').textContent='';option($('remoteApp'),'','Chọn ứng dụng');(s.apps||[]).forEach(function(a){option($('remoteApp'),a.id,a.title);});$('remoteApp').value=id;if(!$('remoteApp').value)$('remoteApp').value='';appFields();
-    if(!Object.keys(pending).length&&s.pending.length===0)remoteMsg('Đã kết nối TV.');return s;
+    var d=s.idle;$('idleDiagnostic').textContent=!s.online||!d?'Chưa có phản hồi màn hình chờ. Mở Home trên TV.':('Màn hình chờ: '+(d.active?'Đang chạy':'Chưa kích hoạt')+' · '+(d.actualEffect||d.effect)+' · '+(d.engine==='fallback'?'JavaScript 10 FPS':d.engine==='css'?'CSS':'Chưa chạy hiệu ứng')+(d.reduceMotion?' · Giảm chuyển động đang bật':'')+(!d.enabled?' · Hiệu ứng đang tắt':'')+(!d.eligible?' · Chưa đủ điều kiện idle':''));
+    if(waiting!==null){if(s.applied!==null&&s.applied>=waiting){waiting=null;remoteMsg('TV đã xác nhận áp dụng.');}else{remoteMsg('Đã gửi. Chờ TV nhận thay đổi; mở Home và đóng Tùy chỉnh.');$('remoteControls').disabled=false;}}
+    values=s.values||{};Object.keys(s.queuedValues||{}).forEach(function(k){values[k]=s.queuedValues[k];});$('remoteControls').disabled=false;
+    if(typeof values.weatherEnabled==='boolean')showWeather({enabled:values.weatherEnabled,place:values.weatherLocation?values.weatherLocation.place:''});
+    if(!s.online&&waiting===null)remoteMsg('TV chưa xác nhận. Có thể gửi từng thay đổi; mở Home để TV áp dụng. Các trường trống là chưa biết.');
+    Object.keys(defs).forEach(function(k){var v=effective(k);if(defs[k][1])fields[k].value=v===undefined?'':String(v);else {fields[k].checked=v===true;fields[k].indeterminate=v===undefined;}});
+    remoteApps=s.apps||[];renderOrder();var id=$('remoteApp').value;$('remoteApp').textContent='';option($('remoteApp'),'','Chọn ứng dụng');(s.apps||[]).forEach(function(a){option($('remoteApp'),a.id,a.title);});$('remoteApp').value=id;if(!$('remoteApp').value)$('remoteApp').value='';appFields();
+    if(s.online&&!Object.keys(pending).length&&s.pending.length===0)remoteMsg('Đã kết nối TV.');return s;
   });}
+  $('systemRefresh').onclick=function(){var b=$('systemRefresh');b.disabled=true;api('GET','api/diagnostics').then(function(d){$('systemStatus').textContent='RAM trống '+Math.round(d.freeMemory/1048576)+' / '+Math.round(d.totalMemory/1048576)+' MB · tải trung bình 1 phút '+Number(d.load[0]).toFixed(2)+' ('+d.cores+' lõi) · uptime '+Math.floor(d.uptime/60)+' phút · cổng '+d.port+' · '+(d.mdns==='ready'?'tan-dev.local đã quảng bá':d.mdns==='conflict'?'Tên mạng bị trùng':'Tên mạng chưa sẵn sàng')+' · IP '+(d.ip||'chưa có');}).catch(function(){$('systemStatus').textContent='Không đọc được trạng thái TV.';}).then(function(){b.disabled=false;});};
+  var backupKeys=Object.keys(defs).concat(['weatherEnabled','weatherLocation']);
+  $('backupExport').onclick=function(){api('GET','api/remote-state').then(function(s){if(!s.online||s.applied===null)throw Error('no confirmed snapshot');var data={};backupKeys.forEach(function(k){if(Object.prototype.hasOwnProperty.call(s.values,k))data[k]=s.values[k];});var blob=new Blob([JSON.stringify({schema:1,product:'Designed by Tân Dev',values:data},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='tan-dev-settings.json';document.body.appendChild(link);link.click();link.parentNode.removeChild(link);setTimeout(function(){URL.revokeObjectURL(url);},30000);$('backupStatus').textContent='Đã tạo bản sao tùy chỉnh chung; kiểm tra tệp tải xuống.';}).catch(function(){$('backupStatus').textContent='Chưa có bản cấu hình xác nhận từ TV. Mở Home rồi thử lại.';});};
+  $('backupImport').onclick=function(){$('backupFile').click();};
+  $('backupFile').onchange=function(){var f=this.files[0];this.value='';if(!f||f.size>24000)return;var reader=new FileReader();reader.onload=function(){try{var data=JSON.parse(reader.result),v=data.values;if(data.schema!==1||data.product!=='Designed by Tân Dev'||!v||typeof v!=='object'||Array.isArray(v))throw Error('format');var keys=Object.keys(v);if(!keys.length||keys.some(function(k){return backupKeys.indexOf(k)<0;}))throw Error('fields');if(!confirm('Khôi phục '+keys.length+' tùy chọn chung?'))return;api('POST','api/remote-set',JSON.stringify(v)).then(function(result){waiting=result.revision;$('backupStatus').textContent='Đã gửi khôi phục; chưa xác nhận TV.';return remoteRead();}).catch(function(){$('backupStatus').textContent='Không khôi phục được: dữ liệu không hợp lệ hoặc mất kết nối.';});}catch(e){$('backupStatus').textContent='Tệp sao lưu không hợp lệ.';}};reader.onerror=function(){$('backupStatus').textContent='Không đọc được tệp.';};reader.readAsText(f);};
   $('remoteRefresh').onclick=function(){if(remoteBusy)return;remoteRead().catch(function(){remoteMsg('Không kết nối được TV.');});};
   $('remoteSave').onclick=function(){if(remoteBusy||!Object.keys(pending).length)return;remoteBusy=true;$('remoteSave').disabled=true;$('remoteControls').disabled=true;var sent=pending;
     api('POST','api/remote-set',JSON.stringify(sent)).then(function(r){pending={};waiting=r.revision;remoteMsg('Đã gửi; chờ TV xác nhận.');var tries=0;function pollAck(){remoteRead().then(function(){if(waiting!==null&&++tries<12)watch=setTimeout(pollAck,3000);}).catch(function(){remoteMsg('Đã gửi, chưa xác nhận TV. Bấm Đọc từ TV để kiểm tra.');});}if(watch)clearTimeout(watch);pollAck();}).catch(function(){remoteMsg('Không gửi được thay đổi.');$('remoteControls').disabled=false;}).then(function(){remoteBusy=false;$('remoteSave').disabled=!Object.keys(pending).length;});};

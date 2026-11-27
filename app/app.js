@@ -81,39 +81,62 @@
   function launcherCovered() {
     return lifecycle ? lifecycle.isCovered() : !!document.hidden;
   }
-  var idleTimer=null, idleActive=false, idleWakeKey=0, idleClickUntil=0, idleMouseX=null,idleMouseY=null,idleEffectClass='',idleMouseAt=0;
+  var idleTimer=null, idleActive=false, idleWakeKey=0, idleClickUntil=0, idleMouseX=null,idleMouseY=null,idleEffectClass='',idleMouseAt=0,idlePreviewTimer=null,idleWakeUntil=0,idleLastInput=Date.now();
   function idlePrefs(){return window.INFINITI_PREFS?window.INFINITI_PREFS.getAppearance():{idleSeconds:60,idleRain:true};}
-  function idleEligible(){return !launcherCovered()&&!editing&&!arranging&&!okDown&&!pressTimer&&(zone==='grid'||zone==='top'||zone==='pen')&&!(window.INFINITI_CUSTOMIZE_IS_OPEN&&window.INFINITI_CUSTOMIZE_IS_OPEN());}
-  function idleClear(){if(idleTimer!==null){clearTimeout(idleTimer);idleTimer=null;}}
-  function idleShow(){if(idleActive&&window.INFINITI_IDLE_ALBUM_STOP)window.INFINITI_IDLE_ALBUM_STOP();idleActive=false;document.body.classList.remove('idle-home');if(idleEffectClass)document.body.classList.remove(idleEffectClass);idleEffectClass='';}
+  function idleEligible(){return !launcherCovered()&&!editing&&!arranging&&(zone==='grid'||zone==='top'||zone==='pen'||zone==='none')&&!(window.INFINITI_CUSTOMIZE_IS_OPEN&&window.INFINITI_CUSTOMIZE_IS_OPEN());}
+  function idleClear(){if(idleTimer!==null){clearTimeout(idleTimer);idleTimer=null;}if(idlePreviewTimer!==null){clearTimeout(idlePreviewTimer);idlePreviewTimer=null;}}
+  function idleShow(){if(window.INFINITI_IDLE_EFFECT_STOP)window.INFINITI_IDLE_EFFECT_STOP();if(idleActive&&window.INFINITI_IDLE_ALBUM_STOP)window.INFINITI_IDLE_ALBUM_STOP();idleActive=false;document.body.classList.remove('idle-home');if(idleEffectClass)document.body.classList.remove(idleEffectClass);idleEffectClass='';}
+  function idleEnter(preview,albumPreview,options){
+    if(!idleEligible()||idleActive)return false;
+    idleClear();
+    // A lost key-up must not block idle forever or launch an app on return.
+    resetDialogOk();
+    if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
+    var p=idlePrefs(),effect=window.INFINITI_PREFS&&window.INFINITI_PREFS.resolveIdleEffect?window.INFINITI_PREFS.resolveIdleEffect(p,Math.random()):(p.idleRain&&!p.reduceMotion?'rain':'');
+    idleActive=true;idleWakeUntil=Date.now()+(preview?1800:700);
+    document.body.classList.add('idle-home');
+    if(window.INFINITI_IDLE_ALBUM_START)window.INFINITI_IDLE_ALBUM_START(albumPreview===true,options);
+    if(effect){idleEffectClass='idle-'+effect;document.body.classList.add(idleEffectClass);if(window.INFINITI_IDLE_EFFECT_START)window.INFINITI_IDLE_EFFECT_START(effect);}
+    return true;
+  }
   function idleSchedule(){
     idleClear();var p=idlePrefs();if(!p.idleSeconds||launcherCovered()||idleActive)return;
-    idleTimer=setTimeout(function(){idleTimer=null;if(!idleEligible()){idleSchedule();return;}idleActive=true;document.body.classList.add('idle-home');if(window.INFINITI_IDLE_ALBUM_START)window.INFINITI_IDLE_ALBUM_START();var effect=window.INFINITI_PREFS&&window.INFINITI_PREFS.resolveIdleEffect?window.INFINITI_PREFS.resolveIdleEffect(p,Math.random()):(p.idleRain&&!p.reduceMotion?'rain':'');if(effect){idleEffectClass='idle-'+effect;document.body.classList.add(idleEffectClass);}},p.idleSeconds*1000);
+    var remaining=Math.max(0,p.idleSeconds*1000-(Date.now()-idleLastInput));
+    idleTimer=setTimeout(function(){idleTimer=null;if(!idleEligible()){idleLastInput=Date.now();idleSchedule();return;}idleEnter(false);},remaining);
   }
-  function idleReset(){idleShow();idleSchedule();}
+  function idleReset(){idleLastInput=Date.now();idleShow();idleSchedule();}
+  window.INFINITI_IDLE_PREVIEW=function(albumPreview,options){
+    if(launcherCovered())return false;
+    idleClear();idlePreviewTimer=setTimeout(function(){idlePreviewTimer=null;if(!idleEnter(true,albumPreview===true,options))idleReset();},450);return true;
+  };
+  window.INFINITI_IDLE_STATUS=function(){var p=idlePrefs();return {active:idleActive,covered:launcherCovered(),eligible:idleEligible(),seconds:p.idleSeconds,enabled:p.idleRain,effect:p.idleEffect,actualEffect:idleEffectClass.replace('idle-',''),engine:window.INFINITI_IDLE_EFFECT_MODE?window.INFINITI_IDLE_EFFECT_MODE():'off',reduceMotion:p.reduceMotion,lastInputMs:Date.now()-idleLastInput};};
   function idleStopEvent(e){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();}
   function idleInput(e){
-    if(launcherCovered())return;
+    if(launcherCovered()||e.isTrusted===false)return;
+    if(idlePreviewTimer!==null&&e.type==='mousemove')return;
+    if(e.type==='keydown'&&idleWakeKey&&Date.now()>idleWakeUntil+10000)idleWakeKey=0;
     if(e.type==='keyup'&&idleWakeKey&&e.keyCode===idleWakeKey){idleWakeKey=0;idleStopEvent(e);return;}
     if(e.type==='keydown'&&idleWakeKey&&e.keyCode===idleWakeKey){idleStopEvent(e);return;}
     if(e.type==='mousemove'){
-      var moved=idleMouseX===null||Math.abs(e.clientX-idleMouseX)+Math.abs(e.clientY-idleMouseY)>=4;
+      var moved=idleMouseX===null||Math.abs(e.clientX-idleMouseX)+Math.abs(e.clientY-idleMouseY)>=12;
       if(!moved)return;idleMouseX=e.clientX;idleMouseY=e.clientY;
+      if(idleActive&&Date.now()<idleWakeUntil)return;
     }
     if(e.type==='click'&&Date.now()<idleClickUntil){idleStopEvent(e);return;}
     if(idleActive){
+      if(e.type==='keydown'&&e.keyCode===39&&window.INFINITI_IDLE_ALBUM_IS_PREVIEW&&window.INFINITI_IDLE_ALBUM_IS_PREVIEW()){window.INFINITI_IDLE_ALBUM_NEXT();idleWakeKey=e.keyCode;idleWakeUntil=Date.now();idleStopEvent(e);return;}
       idleReset();
-      if(e.type==='keydown'){idleWakeKey=e.keyCode;idleStopEvent(e);}
+      if(e.type==='keydown'){idleWakeKey=e.keyCode;idleWakeUntil=Date.now();idleStopEvent(e);}
       else if(e.type==='mousedown'||e.type==='touchstart'||e.type==='wheel'){idleClickUntil=Date.now()+700;idleStopEvent(e);}
       else if(e.type==='click')idleStopEvent(e);
     }else if(e.type!=='keyup'){
       if(e.type==='mousemove'){var now=Date.now();if(now-idleMouseAt<500)return;idleMouseAt=now;}
-      idleSchedule();
+      idleLastInput=Date.now();idleSchedule();
     }
   }
   ['keydown','keyup','mousemove','mousedown','click','touchstart','wheel'].forEach(function(type){document.addEventListener(type,idleInput,true);});
   window.INFINITI_IDLE_REFRESH=idleReset;
-  window.INFINITI_REMOTE_CAN_APPLY=function(){return !launcherCovered()&&!editing&&!arranging&&!okDown&&!pressTimer&&(zone==='grid'||zone==='top'||zone==='pen');};
+  window.INFINITI_REMOTE_CAN_APPLY=function(){return !launcherCovered()&&!editing&&!arranging&&(idleActive||(!okDown&&!pressTimer))&&(zone==='grid'||zone==='top'||zone==='pen'||zone==='none');};
   var entranceTimers = [];
   function clearEntranceTimers() {
     while (entranceTimers.length) clearTimeout(entranceTimers.pop());
@@ -145,12 +168,12 @@
     var gh = window.INFINITI_GLASSHOUSE;
     if (gh && gh.enabled) {
       gh.openApp(id, function (err) {
-        if (err) toast(L.cantOpen + (title || id));
+        if (err) toast(L.cantOpen + (title || id));else if(window.INFINITI_PREFS)window.INFINITI_PREFS.recordRecent(id);
       });
       return;
     }
     luna('luna://com.webos.applicationManager/launch', { id: id, params: params || {} }, function (res) {
-      if (res.returnValue === false) toast(L.cantOpen + (title || id));
+      if (res.returnValue === false) toast(L.cantOpen + (title || id));else if(res.returnValue===true&&window.INFINITI_PREFS)window.INFINITI_PREFS.recordRecent(id);
     });
   }
 
@@ -213,6 +236,8 @@
     }
   }
 
+  window.INFINITI_GET_APP_ORDER=function(){return orderedApps().map(function(a){return a.id;}).filter(function(id){return !window.INFINITI_PREFS.isProtected(id);}).slice(0,250);};
+  window.INFINITI_SET_APP_ORDER=function(ids){try{if(!Array.isArray(ids)||ids.length>250)return false;var all=(window.TV_APPS||{}).apps||[],valid=all.map(function(a){return a.id;});var clean=ids.filter(function(id,i){return valid.indexOf(id)>=0&&!window.INFINITI_PREFS.isProtected(id)&&ids.indexOf(id)===i;});if(clean.length!==ids.length)return false;localStorage.setItem(ORDER_KEY,JSON.stringify({dock:(CONFIG.dockApps||[]).join(','),ids:clean}));return true;}catch(e){return false;}};
   function saveOrder() {
     try {
       localStorage.setItem(ORDER_KEY, JSON.stringify({
@@ -509,6 +534,7 @@
       hero.style.transform = 'translateX(-24px)';
       clearTimeout(hero.swap);
       hero.swap = setTimeout(function () {
+        if(zone!=='grid'||!heroShown)return;
         hero.textContent = label;
         hero.style.transition = 'none';
         hero.style.transform = 'translateX(24px)';
@@ -522,6 +548,7 @@
   }
 
   function hideHero() {
+    clearTimeout(hero.swap);
     if (!heroShown) return;
     heroShown = false;
     hero.style.opacity = '0';
@@ -556,7 +583,7 @@
     if (zone === 'pen') pen.classList.remove('focused');
     if (zone === 'grid') {
       if (items[focused]) items[focused].el.classList.remove('focused');
-      hideGlass();
+      hideGlass();hideHero();
     }
     zone = z;
   }
@@ -616,14 +643,14 @@
     var old = $('wallJs');
     if (old && old.parentNode) old.parentNode.removeChild(old);
     window.WALL_URL = '';
-    window.WALL_EXPIRES = 0;
+    window.WALL_EXPIRES = 0;window.WALL_MDNS='';
     var sc = document.createElement('script');
     sc.id = 'wallJs';
     sc.src = 'wall.js?ts=' + Date.now();
     sc.onload = function () {
       // Expired heartbeat means a stopped root service, not a valid QR.
       if ($('wallJs') !== sc) return;
-      cb(window.WALL_EXPIRES > Date.now() ? (window.WALL_URL || '') : '');
+      cb(window.WALL_EXPIRES > Date.now() ? (window.WALL_URL || '') : '',window.WALL_MDNS);
     };
     sc.onerror = function () { if ($('wallJs') === sc) cb(''); };
     document.body.appendChild(sc);
@@ -1041,6 +1068,7 @@
     if (!p.reload && window.PalmSystem) { try { p = JSON.parse(PalmSystem.launchParams || '{}'); } catch (x) { p = {}; } }
     if (p.reload) { location.reload(); return; }
     idleReset();resume();
+    if(p.infinitiIdlePreview===true&&window.INFINITI_IDLE_PREVIEW)window.INFINITI_IDLE_PREVIEW();
     acknowledgeRender(p.infinitiRenderToken?p:readLaunchParams());
   });
   // Glasshouse owns Home and wake; this app never launches itself on resume.
@@ -1061,7 +1089,7 @@
     document.body.classList.remove('launcher-covered');
     if (clockTicker === null) clockTicker = setInterval(updateClock, 10000);
     if (appsTicker === null) appsTicker = setInterval(function () {
-      if (!launcherCovered() &&
+      if (!launcherCovered() && !idleActive &&
           !(window.INFINITI_CUSTOMIZE_IS_OPEN && window.INFINITI_CUSTOMIZE_IS_OPEN()))
         refreshApps(function () {});
     }, 30000);
@@ -1123,5 +1151,6 @@
   zone = 'none';
   if (items.length) focusTile(0);
   else focusPill(pills.length - 1);
-  acknowledgeRender(readLaunchParams());
+  var initialParams=readLaunchParams();acknowledgeRender(initialParams);
+  if(initialParams.infinitiIdlePreview===true&&window.INFINITI_IDLE_PREVIEW)window.INFINITI_IDLE_PREVIEW();
 })();

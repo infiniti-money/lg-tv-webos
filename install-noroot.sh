@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Infiniti TV Home - installer for TVs WITHOUT root (Developer Mode).
+# Designed by Tân Dev - installer for TVs WITHOUT root (Developer Mode).
 # Run it on a Mac or Linux computer on the same network as the TV:
 #
 #   ./install-noroot.sh

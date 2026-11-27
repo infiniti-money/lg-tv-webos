@@ -19,6 +19,19 @@ class LegacyTests(unittest.TestCase):
         self.assertFalse(legacy.home_down(event(272, 1)))
         self.assertFalse(legacy.home_down(b'bad'))
 
+    def test_distinct_home_presses(self):
+        event = lambda sec, usec, value: legacy.EVENT.pack(sec, usec, 1, 773, value)
+        first = legacy.home_press_time(event(100, 0, 1))
+        second = legacy.home_press_time(event(100, 500000, 1))
+        duplicate = legacy.home_press_time(event(100, 30000, 1))
+        self.assertTrue(legacy.distinct_home_press(first, None))
+        self.assertFalse(legacy.distinct_home_press(duplicate, first))
+        self.assertTrue(legacy.distinct_home_press(second, first))
+        self.assertIsNone(legacy.home_press_time(event(100, 600000, 2)))
+        self.assertFalse(legacy.distinct_home_press(None, second))
+        source = pathlib.Path("tv/legacy-home-v8.py").read_text()
+        self.assertIn("trigger or (wake_trigger and now - last >= 2)", source)
+
     def test_no_optional_modules(self):
         source = pathlib.Path("tv/legacy-home-v8.py").read_text()
         for name in ('json', 'fcntl', 'subprocess', 'glob'):

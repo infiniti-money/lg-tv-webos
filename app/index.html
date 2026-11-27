@@ -9,7 +9,7 @@
   <!-- Ambient glow in the colour of the focused dock app; two layers so colours crossfade. -->
   <div id="ambientA" class="ambient"></div>
   <div id="ambientB" class="ambient"></div>
-  <div id="idlePhotoA" class="idlePhoto"></div><div id="idlePhotoB" class="idlePhoto"></div>
+  <div id="idlePhotoA" class="idlePhoto"><div class="idlePhotoImage"></div></div><div id="idlePhotoB" class="idlePhoto"><div class="idlePhotoImage"></div></div>
   <div id="idleSignature">Designed by Tân Dev</div>
   <div id="idleRain" aria-hidden="true"><div class="rainSheet"></div></div>
 
@@ -73,13 +73,15 @@
   <div id="customizePanel" class="hidden" role="dialog" aria-modal="true" aria-label="Cài đặt Designed by Tân Dev">
     <div class="customizeDialog">
       <div class="customizeHead">
-        <div><div class="customizeEyebrow">Designed by Tân Dev</div><strong>Cài đặt giao diện</strong></div>
+        <div><div class="customizeEyebrow">Designed by Tân Dev</div><strong>Trung tâm tùy chỉnh</strong></div>
         <button id="customizeClose" type="button">Đóng ×</button>
       </div>
       <div class="customizeMain">
       <div class="customizeTabs" role="navigation" aria-label="Chuyên mục cài đặt">
         <button type="button" id="customizeStyleTab">Giao diện</button>
-        <button type="button" id="customizeWallpaperTab">Hình nền</button>
+        <button type="button" id="customizeIdleTab">Màn hình chờ</button>
+        <button type="button" id="customizeWallpaperTab">Ảnh &amp; kết nối web</button>
+        <button type="button" id="customizeAlbumTab">Album trình chiếu</button>
         <button type="button" id="customizeWeatherTab">Thời tiết</button>
         <button type="button" id="customizeCalendarTab">Âm · dương lịch</button>
         <button type="button" id="customizeAppsTab">Ứng dụng</button>
@@ -97,9 +99,25 @@
             <button type="button" id="customizeShowWeek">Thời tiết 3 ngày</button>
             <button type="button" id="customizeResetStyle">Khôi phục giao diện</button>
           </div>
-          <h3>Chế độ chờ · hình nền</h3>
-          <div class="customizeChoice"><button id="customizeIdleTime" type="button">Tự ẩn: 60 giây</button><button id="customizeIdleRain" type="button">Hiệu ứng: Bật</button><button id="customizeIdleEffect" type="button">Kiểu: Mưa rơi</button></div>
-          <p class="customizeHint">Khi chờ: giữ đồng hồ, lịch và thời tiết hiện tại; ẩn ứng dụng, nút chức năng và dự báo 3 ngày. Bấm OK trên nút Kiểu để đổi hiệu ứng. Bấm phím hoặc di chuyển remote để trở về.</p>
+        </div>
+        <div id="customizeIdleView" class="hidden">
+          <h3>Màn hình chờ</h3><p>Giữ đồng hồ, lịch và thời tiết hiện tại; ẩn dock và dự báo 3 ngày.</p>
+          <div class="customizeChoice"><button id="customizeIdleTime" type="button">Tự ẩn: 60 giây</button><button id="customizeIdleRain" type="button">Hiệu ứng: Bật</button><button id="customizeIdlePreview" type="button">Thử màn hình chờ</button></div>
+          <h3>Chọn phong cách</h3><div id="customizeIdleChoices" class="customizeChoice idleEffectGrid"></div>
+          <button id="customizeIdleEffect" type="button">Kiểu: Mưa rơi</button>
+          <p class="customizeHint">Chọn trực tiếp hoặc bấm Kiểu để chuyển lần lượt. Nếu đang giảm chuyển động, vào Giao diện để bật lại.</p>
+        </div>
+        <div id="customizeAlbumView" class="hidden">
+          <h3>Album trình chiếu</h3><p>20 ảnh Full HD · 24 chuyển cảnh · 12 chuyển động ảnh.</p>
+          <div id="customizeAlbumState" class="customizeSelectedCity">Đang đọc cấu hình album…</div>
+          <div class="customizeChoice"><button id="customizeAlbumBrowse" type="button">Xem ảnh trong album</button></div>
+          <h3>Quản lý ảnh và lịch chuyển</h3>
+          <img id="customizeAlbumSelectedPhoto" alt="Ảnh đang chọn" style="width:160px;height:90px;object-fit:contain;display:none">
+          <div class="customizeChoice"><button id="customizeAlbumSelect" type="button">Chọn ảnh</button><button id="customizeAlbumUp" type="button">Lên trước</button><button id="customizeAlbumDown" type="button">Xuống sau</button><button id="customizeAlbumDelete" type="button">Xóa ảnh</button></div>
+          <div class="customizeChoice"><button id="customizeAlbumEnabled" type="button">Album: —</button><button id="customizeAlbumSeconds" type="button">Lịch: —</button><button id="customizeAlbumRandom" type="button">Thứ tự: —</button><button id="customizeAlbumIntensity" type="button">Cường độ: —</button></div>
+          <div class="customizeChoice"><button id="customizeAlbumRefresh" type="button">Đọc lại album</button><button id="customizeAlbumWeb" type="button">Mở QR &amp; địa chỉ web</button><button id="customizeAlbumPreview" type="button">Thử nhanh · → ảnh tiếp</button></div>
+          <div class="customizeChoice"><button id="customizeAlbumTransitionPreview" type="button">Chuyển cảnh: cấu hình</button><button id="customizeAlbumMotionPreview" type="button">Chuyển động: cấu hình</button><button id="customizeAlbumIntensityPreview" type="button">Cường độ: cấu hình</button></div>
+          <p class="customizeHint">Chọn hiệu ứng rồi nhấn Thử nhanh. Thử nhanh không đổi lịch hoặc bật album vĩnh viễn. Tải thêm ảnh từ trang web. Xóa ảnh cần nhấn xác nhận lần hai. Các thay đổi trên TV cần Root Tools cùng phiên bản. Không cần cập nhật hay root lại khi đổi ảnh.</p>
         </div>
         <div id="customizeWallpaperView" class="hidden">
           <h3>Hình nền · Tùy chỉnh qua web</h3>
@@ -142,6 +160,7 @@
           <div class="customizeChoice">
             <button id="customizeHideLGApps" type="button">Ẩn app LG</button><button id="customizeShowAllApps" type="button">Hiện tất cả</button><button id="customizeAppFilter" type="button">Lọc: Tất cả</button><button id="customizeAppSort" type="button">Sắp xếp: A–Z</button>
           </div>
+          <div class="customizeSearchRow"><input id="customizeAppSearch" type="text" maxlength="60" autocomplete="off" placeholder="Tìm tên ứng dụng" aria-label="Tìm ứng dụng"><button id="customizeAppSearchBtn" type="button">Tìm</button></div>
           <p id="customizeAppSummary" class="customizeHint">Chỉ thay đổi biểu tượng trên Home, không gỡ ứng dụng.</p>
           <h3>Bộ icon toàn bộ ứng dụng</h3><div id="customizeGlobalPacks" class="customizeChoice"></div>
           </div><div id="customizeAppBrowse"><div id="customizeAppList"></div><div class="customizePager"><button id="customizeAppPrev" type="button">‹ Trước</button><span id="customizeAppPage"></span><button id="customizeAppNext" type="button">Sau ›</button></div></div>
@@ -209,5 +228,6 @@
   <script src="extras.js"></script>
   <script src="remote-settings.js"></script>
   <script src="idle-album-player.js"></script>
+  <script src="idle-effect.js"></script>
 </body>
 </html>

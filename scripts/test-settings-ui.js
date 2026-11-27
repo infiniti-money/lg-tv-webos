@@ -9,7 +9,7 @@ var ids = {}, docEvents = {}, weatherCalls = 0, lastXhr = null;
 function Node(tag, id) {
   this.tagName = tag || 'div'; this.id = id || '';
   this.parentNode = null; this.children = []; this.className = '';
-  this.textContent = ''; this.value = ''; this.events = {}; this.style = {};
+  this.textContent = ''; this.value = ''; this.events = {}; this.style = {}; this.attributes = {};
   var self = this;
   this.classList = {
     add:function(name) { if (!self.hasClass(name)) self.className += (self.className ? ' ' : '') + name; },
@@ -21,7 +21,9 @@ Node.prototype.appendChild = function (el) { el.parentNode=this; this.children.p
 Node.prototype.addEventListener = function (type, cb) { this.events[type] = cb; };
 Node.prototype.focus = function () { document.activeElement = this; };
 Node.prototype.click = function () { if (this.events.click) this.events.click({target:this}); };
-Node.prototype.setAttribute = function () {};
+Node.prototype.setAttribute = function (name,value) { this.attributes[name]=String(value); };
+Node.prototype.getAttribute = function (name) { return Object.prototype.hasOwnProperty.call(this.attributes,name)?this.attributes[name]:null; };
+Node.prototype.removeAttribute = function (name) { delete this.attributes[name]; };
 Node.prototype.scrollIntoView = function () {};
 Node.prototype.querySelectorAll = function (tag) {
   var found = [];
@@ -53,25 +55,27 @@ var document = {
   addEventListener:function (type,cb) { docEvents[type]=cb; }
 };
 var panel=node('customizePanel'); panel.className='hidden';
-['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizePrivacyTab','customizeWallpaperTab'].forEach(function (id) {
+['customizeClose','customizeStyleTab','customizeWeatherTab','customizeCalendarTab','customizeAppsTab','customizePrivacyTab','customizeWallpaperTab','customizeIdleTab','customizeAlbumTab'].forEach(function (id) {
   panel.appendChild(node(id,'button'));
 });
 var groups = {
   customizeStyleView:['customizeThemes','customizeFonts','customizeLargeText',
-    'customizeShowWeek','customizeMotion','customizeIdleTime','customizeIdleRain','customizeIdleEffect','customizeResetStyle'],
+    'customizeShowWeek','customizeMotion','customizeResetStyle'],
+  customizeIdleView:['customizeIdleTime','customizeIdleRain','customizeIdleEffect','customizeIdlePreview','customizeIdleChoices'],
+  customizeAlbumView:['customizeAlbumState','customizeAlbumRefresh','customizeAlbumWeb','customizeAlbumPreview'],
   customizeWallpaperView:['customizeWallpaper','customizeWallQr','customizeWallState','customizeWallHost'],
   customizeWeatherView:['customizeWeatherChoice',
     'customizeWeatherSearch','customizeWeatherSearchBtn','customizeWeatherResults',
     'customizeWeatherEnable','customizeWeatherUnit'],
   customizeCalendarView:['customizeSolar','customizeLunar','customizeCalendarNote'],
-  customizeAppsView:['customizeAppList','customizeHideLGApps','customizeResetApps','customizeShowAllApps','customizeAppFilter','customizeAppSort','customizeAppSummary'],
+  customizeAppsView:['customizeAppList','customizeHideLGApps','customizeResetApps','customizeShowAllApps','customizeAppFilter','customizeAppSort','customizeAppSummary','customizeAppSearch','customizeAppSearchBtn'],
   customizePrivacyView:[]
 };
 Object.keys(groups).forEach(function (name) {
   var view=node(name); view.className='hidden'; panel.appendChild(view);
   groups[name].forEach(function (id) {
-    view.appendChild(node(id,id==='customizeWeatherSearch'?'input':
-      /Btn$|customizeShowAllApps|customizeAppFilter|customizeAppSort|customizeIdleTime|customizeIdleRain|customizeIdleEffect|customizeCheckUpdate|customizeUpdateHelp$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
+    view.appendChild(node(id,(id==='customizeWeatherSearch'||id==='customizeAppSearch')?'input':
+      /Btn$|customizeAlbumRefresh|customizeAlbumWeb|customizeAlbumPreview|customizeShowAllApps|customizeAppFilter|customizeAppSort|customizeIdleTime|customizeIdleRain|customizeIdleEffect|customizeIdlePreview|customizeCheckUpdate|customizeUpdateHelp$|customizeLargeText|customizeShowWeek|customizeMotion|customizeWallpaper|customizeResetStyle|customizeSolar|customizeLunar|customizeWeatherEnable|customizeWeatherUnit|customizeResetApps|customizeHideLGApps|customizeAIToggle/.test(id)?'button':'div'));
   });
 });
 var browse=node('customizeAppBrowse');node('customizeAppsView').appendChild(browse);browse.appendChild(node('customizeAppList'));node('customizeAppsView').appendChild(node('customizeAppOptions'));
@@ -93,7 +97,7 @@ var window={
   INFINITI_WEATHER_RELOAD:function(){weatherCalls++;},
   INFINITI_LAUNCHER_LAYOUT_REFRESH:function(){},
   INFINITI_WALLPAPER_GET_URL:function(cb) {
-    cb('http://192.168.2.154:8090/?k=abcdef123456');
+    cb('http://192.168.2.154:9090/?k=TestOnly');
   }
 };
 function qrcode() {
@@ -123,7 +127,7 @@ node('customizeWallpaperTab').click();
 assert.ok(node('customizeWallQr').innerHTML.indexOf('data:image/png')>=0,
   'Valid QR must render inside Customize, not on Home');
 assert.equal(node('customizeWallState').textContent,
-  'Quét QR bằng điện thoại cùng Wi-Fi để chỉnh giao diện, icon và album ảnh.');
+  'Quét QR hoặc mở địa chỉ bên dưới và nhập khóa riêng để chỉnh TV.');
 node('customizeWallpaper').click();
 assert.equal(window.INFINITI_CUSTOMIZE_IS_OPEN(),true,
   'Wallpaper QR refresh must keep settings open, not return to Home');
@@ -161,7 +165,8 @@ node('customizeAppRestore').click();
 assert.equal(window.INFINITI_PREFS.styledApp(window.TV_APPS.apps[0]).title,'LG Browser');
 assert.equal(window.INFINITI_PREFS.getAppStyle('com.webos.app.browser').icon,'original');
 for(var k=0;k<12;k++)window.TV_APPS.apps.push({id:'test.app'+k,title:'Z app '+k});
-node('customizeAppsTab').click();assert.equal(node('customizeAppList').children.length,5);node('customizeAppNext').click();assert.ok(node('customizeAppPage').textContent.indexOf('Trang 2')===0);node('customizeAppPrev').click();assert.ok(node('customizeAppPage').textContent.indexOf('Trang 1')===0);
+node('customizeAppsTab').click();assert.equal(node('customizeAppList').children.length,4);node('customizeAppNext').click();assert.ok(node('customizeAppPage').textContent.indexOf('Trang 2')===0);node('customizeAppPrev').click();assert.ok(node('customizeAppPage').textContent.indexOf('Trang 1')===0);
+node('customizeAppSearch').value='Z app 11';node('customizeAppSearchBtn').click();assert.equal(node('customizeAppList').children.length,1);assert.ok(node('customizeAppList').children[0].children.some(function(el){return el.title==='test.app11';}));
 node('customizeWeatherTab').click();
 assert.equal(node('customizeWeatherView').hasClass('hidden'),false);
 assert.equal(node('customizeStyleView').hasClass('hidden'),true);
@@ -194,15 +199,16 @@ assert.equal(window.INFINITI_PREFS.getAppearance().showSolar,false);
 assert.equal(document.body.hasClass('solar-hidden'),true);
 node('customizeLunar').click();
 assert.equal(window.INFINITI_PREFS.getAppearance().showLunar,false);
-node('customizeStyleTab').click();
+node('customizeIdleTab').click();
+assert.equal(node('customizeIdleView').hasClass('hidden'),false);assert.equal(node('customizeIdleChoices').querySelectorAll('button').length,16);
 node('customizeIdleTime').click();assert.equal(window.INFINITI_PREFS.getAppearance().idleSeconds,120);
 node('customizeIdleRain').click();assert.equal(window.INFINITI_PREFS.getAppearance().idleRain,false);
 node('customizeIdleEffect').click();assert.equal(window.INFINITI_PREFS.getAppearance().idleEffect,'snow');
 assert.ok(node('customizeIdleEffect').textContent.indexOf('Tuyết')>=0);
-for(var e=0;e<6;e++)node('customizeIdleEffect').click();
+for(var e=0;e<13;e++)node('customizeIdleEffect').click();
 assert.equal(window.INFINITI_PREFS.getAppearance().idleEffect,'random');
-node('customizeIdleEffect').click();assert.equal(window.INFINITI_PREFS.getAppearance().idleEffect,'rain');
-node('customizeMotion').click();
+node('customizeIdleEffect').click();assert.equal(window.INFINITI_PREFS.getAppearance().idleEffect,'random-light');node('customizeIdleEffect').click();assert.equal(window.INFINITI_PREFS.getAppearance().idleEffect,'rain');
+node('customizeStyleTab').click();node('customizeMotion').click();
 assert.equal(window.INFINITI_PREFS.getAppearance().reduceMotion,true);
 assert.equal(document.body.hasClass('motion-reduced'),true);
 var back={type:'keydown',keyCode:461,preventDefault:function(){},

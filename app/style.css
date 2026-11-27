@@ -837,3 +837,175 @@ body.motion-reduced #idleSignature { transition:none; }
 #customizeWallHost { overflow-wrap:break-word; word-break:break-all; max-width:100%; font-size:18px; }
 
 #customizeAppOptions .customizeChoice button { padding:8px 12px; font-size:19px; }
+
+/* Keep idle effects visibly above the album and below the header/signature. */
+#idleRain { z-index:2; } #idleRain .rainSheet { opacity:.75; }
+
+/* Album compositor: two wrappers with independent image movement; no filters or canvas. */
+.idlePhoto { overflow:hidden; -webkit-transition:none; transition:none; }
+.idlePhotoImage { position:absolute; top:0; right:0; bottom:0; left:0; background-position:center; background-size:cover; background-repeat:no-repeat; }
+body.idle-home .idlePhoto.shown { opacity:1; }
+body.idle-home:not(.motion-reduced) .album-enter-fade { -webkit-animation:album-fade 1100ms ease both; animation:album-fade 1100ms ease both; }
+@-webkit-keyframes album-fade {0%{opacity:0;}100%{opacity:1;}}
+@keyframes album-fade {0%{opacity:0;}100%{opacity:1;}}
+body.idle-home:not(.motion-reduced) .album-enter-slide-left { -webkit-animation:album-slide-left 1100ms ease both; animation:album-slide-left 1100ms ease both; }
+@-webkit-keyframes album-slide-left {0%{opacity:0;-webkit-transform:translateX(12%);}100%{opacity:1;-webkit-transform:translateX(0);}}
+@keyframes album-slide-left {0%{opacity:0;transform:translateX(12%);}100%{opacity:1;transform:translateX(0);}}
+body.idle-home:not(.motion-reduced) .album-enter-slide-right { -webkit-animation:album-slide-right 1100ms ease both; animation:album-slide-right 1100ms ease both; }
+@-webkit-keyframes album-slide-right {0%{opacity:0;-webkit-transform:translateX(-12%);}100%{opacity:1;-webkit-transform:translateX(0);}}
+@keyframes album-slide-right {0%{opacity:0;transform:translateX(-12%);}100%{opacity:1;transform:translateX(0);}}
+body.idle-home:not(.motion-reduced) .album-enter-slide-up { -webkit-animation:album-slide-up 1100ms ease both; animation:album-slide-up 1100ms ease both; }
+@-webkit-keyframes album-slide-up {0%{opacity:0;-webkit-transform:translateY(12%);}100%{opacity:1;-webkit-transform:translateY(0);}}
+@keyframes album-slide-up {0%{opacity:0;transform:translateY(12%);}100%{opacity:1;transform:translateY(0);}}
+body.idle-home:not(.motion-reduced) .album-enter-zoom-in { -webkit-animation:album-zoom-in 1100ms ease both; animation:album-zoom-in 1100ms ease both; }
+@-webkit-keyframes album-zoom-in {0%{opacity:0;-webkit-transform:scale(.92);}100%{opacity:1;-webkit-transform:scale(1);}}
+@keyframes album-zoom-in {0%{opacity:0;transform:scale(.92);}100%{opacity:1;transform:scale(1);}}
+body.idle-home:not(.motion-reduced) .album-enter-zoom-out { -webkit-animation:album-zoom-out 1100ms ease both; animation:album-zoom-out 1100ms ease both; }
+@-webkit-keyframes album-zoom-out {0%{opacity:0;-webkit-transform:scale(1.14);}100%{opacity:1;-webkit-transform:scale(1);}}
+@keyframes album-zoom-out {0%{opacity:0;transform:scale(1.14);}100%{opacity:1;transform:scale(1);}}
+body.idle-home:not(.motion-reduced) .album-enter-dissolve { -webkit-animation:album-dissolve 1100ms ease both; animation:album-dissolve 1100ms ease both; }
+@-webkit-keyframes album-dissolve {0%{opacity:0;}35%{opacity:.16;}70%{opacity:.68;}100%{opacity:1;}}
+@keyframes album-dissolve {0%{opacity:0;}35%{opacity:.16;}70%{opacity:.68;}100%{opacity:1;}}
+body.idle-home:not(.motion-reduced) .album-enter-cinema { -webkit-animation:album-cinema 1100ms ease both; animation:album-cinema 1100ms ease both; }
+@-webkit-keyframes album-cinema {0%{opacity:0;-webkit-transform:translateX(5%) scale(1.08);}100%{opacity:1;-webkit-transform:translateX(0) scale(1);}}
+@keyframes album-cinema {0%{opacity:0;transform:translateX(5%) scale(1.08);}100%{opacity:1;transform:translateX(0) scale(1);}}
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-zoom-in { -webkit-animation:album-motion-zoom-in 32s ease-in-out infinite alternate; animation:album-motion-zoom-in 32s ease-in-out infinite alternate; }
+@-webkit-keyframes album-motion-zoom-in {from{-webkit-transform:scale(1.03);}to{-webkit-transform:scale(1.12);}}
+@keyframes album-motion-zoom-in {from{transform:scale(1.03);}to{transform:scale(1.12);}}
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-zoom-out { -webkit-animation:album-motion-zoom-out 32s ease-in-out infinite alternate; animation:album-motion-zoom-out 32s ease-in-out infinite alternate; }
+@-webkit-keyframes album-motion-zoom-out {from{-webkit-transform:scale(1.12);}to{-webkit-transform:scale(1.03);}}
+@keyframes album-motion-zoom-out {from{transform:scale(1.12);}to{transform:scale(1.03);}}
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-left { -webkit-animation:album-motion-pan-left 32s ease-in-out infinite alternate; animation:album-motion-pan-left 32s ease-in-out infinite alternate; }
+@-webkit-keyframes album-motion-pan-left {from{-webkit-transform:scale(1.11) translateX(2.5%);}to{-webkit-transform:scale(1.11) translateX(-2.5%);}}
+@keyframes album-motion-pan-left {from{transform:scale(1.11) translateX(2.5%);}to{transform:scale(1.11) translateX(-2.5%);}}
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-right { -webkit-animation:album-motion-pan-right 32s ease-in-out infinite alternate; animation:album-motion-pan-right 32s ease-in-out infinite alternate; }
+@-webkit-keyframes album-motion-pan-right {from{-webkit-transform:scale(1.11) translateX(-2.5%);}to{-webkit-transform:scale(1.11) translateX(2.5%);}}
+@keyframes album-motion-pan-right {from{transform:scale(1.11) translateX(-2.5%);}to{transform:scale(1.11) translateX(2.5%);}}
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-up { -webkit-animation:album-motion-pan-up 32s ease-in-out infinite alternate; animation:album-motion-pan-up 32s ease-in-out infinite alternate; }
+@-webkit-keyframes album-motion-pan-up {from{-webkit-transform:scale(1.11) translateY(2.5%);}to{-webkit-transform:scale(1.11) translateY(-2.5%);}}
+@keyframes album-motion-pan-up {from{transform:scale(1.11) translateY(2.5%);}to{transform:scale(1.11) translateY(-2.5%);}}
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-down { -webkit-animation:album-motion-pan-down 32s ease-in-out infinite alternate; animation:album-motion-pan-down 32s ease-in-out infinite alternate; }
+@-webkit-keyframes album-motion-pan-down {from{-webkit-transform:scale(1.11) translateY(-2.5%);}to{-webkit-transform:scale(1.11) translateY(2.5%);}}
+@keyframes album-motion-pan-down {from{transform:scale(1.11) translateY(-2.5%);}to{transform:scale(1.11) translateY(2.5%);}}
+body.motion-reduced .idlePhoto,body.motion-reduced .idlePhotoImage,body.launcher-covered .idlePhoto,body.launcher-covered .idlePhotoImage { -webkit-animation:none!important; animation:none!important; -webkit-transform:none!important; transform:none!important; }
+
+body.idle-home.idle-leaves:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-leaves:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-leaves.svg');opacity:.8;-webkit-animation:idleRainFall 19s linear infinite;animation:idleRainFall 19s linear infinite;}
+
+body.idle-home.idle-sparkles:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-sparkles:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-sparkles.svg');opacity:.8;-webkit-animation:idleRainFall 21s linear infinite;animation:idleRainFall 21s linear infinite;}
+
+body.idle-home.idle-meteor:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-meteor:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-meteor.svg');opacity:.8;-webkit-animation:idleRainFall 6.5s linear infinite;animation:idleRainFall 6.5s linear infinite;}
+
+body.idle-home.idle-aurora:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-aurora:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-aurora.svg');opacity:.8;-webkit-animation:idleMistDrift 45s linear infinite;animation:idleMistDrift 45s linear infinite;left:-480px;}
+
+body.idle-home.idle-embers:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-embers:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-embers.svg');opacity:.8;-webkit-animation:idleRise 14.5s linear infinite;animation:idleRise 14.5s linear infinite;}
+
+body.idle-home.idle-waves:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-waves:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-waves.svg');opacity:.8;-webkit-animation:idleMistDrift 30s linear infinite;animation:idleMistDrift 30s linear infinite;left:-480px;}
+
+body.idle-home.idle-hearts:not(.launcher-covered):not(.motion-reduced) #idleRain {display:block;}
+body.idle-home.idle-hearts:not(.launcher-covered):not(.motion-reduced) .rainSheet {background-image:url('icons/idle-hearts.svg');opacity:.8;-webkit-animation:idleRise 22s linear infinite;animation:idleRise 22s linear infinite;}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-slide-down{-webkit-animation:album-slide-down 1100ms ease both;animation:album-slide-down 1100ms ease both;}
+@-webkit-keyframes album-slide-down{from{opacity:0;-webkit-transform:translateY(-12%);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-slide-down{from{opacity:0;transform:translateY(-12%);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-diagonal{-webkit-animation:album-diagonal 1100ms ease both;animation:album-diagonal 1100ms ease both;}
+@-webkit-keyframes album-diagonal{from{opacity:0;-webkit-transform:translate(9%,9%);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-diagonal{from{opacity:0;transform:translate(9%,9%);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-soft-rotate{-webkit-animation:album-soft-rotate 1100ms ease both;animation:album-soft-rotate 1100ms ease both;}
+@-webkit-keyframes album-soft-rotate{from{opacity:0;-webkit-transform:rotate(-3deg) scale(1.1);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-soft-rotate{from{opacity:0;transform:rotate(-3deg) scale(1.1);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-sweep{-webkit-animation:album-sweep 1100ms ease both;animation:album-sweep 1100ms ease both;}
+@-webkit-keyframes album-sweep{from{opacity:0;-webkit-transform:translateX(-18%) scale(1.04);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-sweep{from{opacity:0;transform:translateX(-18%) scale(1.04);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-lift{-webkit-animation:album-lift 1100ms ease both;animation:album-lift 1100ms ease both;}
+@-webkit-keyframes album-lift{from{opacity:0;-webkit-transform:translateY(7%) scale(.96);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-lift{from{opacity:0;transform:translateY(7%) scale(.96);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-focus{-webkit-animation:album-focus 1100ms ease both;animation:album-focus 1100ms ease both;}
+@-webkit-keyframes album-focus{from{opacity:0;-webkit-transform:scale(1.20);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-focus{from{opacity:0;transform:scale(1.20);}to{opacity:1;transform:none;}}
+
+/* Settings center: eight fixed-height pages, large D-pad targets, no scroll on TV. */
+.customizeMain .customizeTabs{width:302px;padding-top:4px;}
+.customizeMain .customizeTabs button{min-height:60px;margin-bottom:8px;font-size:23px;padding:11px 14px;}
+.customizeMain .customizeContent{padding:10px 18px 8px;}
+.customizeContent .idleEffectGrid{display:flex;flex-wrap:wrap;align-items:stretch;margin:8px 0 12px;}
+.customizeContent .idleEffectGrid button{width:30%;min-height:64px;margin:4px 1.5% 4px 0;text-align:center;font-size:23px;}
+#customizeIdleEffect{font-size:19px;padding:10px 14px;}
+#customizeAlbumState{margin:20px 0;line-height:1.45;}
+
+/* Keep the row clean: one selected application label in the existing hero area. */
+.item .name,.item.dock .name,.item.focused .name,.item.dock.focused .name {visibility:hidden;opacity:0;}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-slide-nw{-webkit-animation:album-slide-nw 1100ms ease both;animation:album-slide-nw 1100ms ease both;}
+@-webkit-keyframes album-slide-nw{from{opacity:0;-webkit-transform:translate(10%,10%);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-slide-nw{from{opacity:0;transform:translate(10%,10%);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-slide-ne{-webkit-animation:album-slide-ne 1100ms ease both;animation:album-slide-ne 1100ms ease both;}
+@-webkit-keyframes album-slide-ne{from{opacity:0;-webkit-transform:translate(-10%,10%);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-slide-ne{from{opacity:0;transform:translate(-10%,10%);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-slide-sw{-webkit-animation:album-slide-sw 1100ms ease both;animation:album-slide-sw 1100ms ease both;}
+@-webkit-keyframes album-slide-sw{from{opacity:0;-webkit-transform:translate(10%,-10%);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-slide-sw{from{opacity:0;transform:translate(10%,-10%);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-cross-zoom{-webkit-animation:album-cross-zoom 1100ms ease both;animation:album-cross-zoom 1100ms ease both;}
+@-webkit-keyframes album-cross-zoom{from{opacity:0;-webkit-transform:scale(1.13);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-cross-zoom{from{opacity:0;transform:scale(1.13);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-swing-left{-webkit-animation:album-swing-left 1100ms ease both;animation:album-swing-left 1100ms ease both;}
+@-webkit-keyframes album-swing-left{from{opacity:0;-webkit-transform:rotate(-5deg) scale(1.12);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-swing-left{from{opacity:0;transform:rotate(-5deg) scale(1.12);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-swing-right{-webkit-animation:album-swing-right 1100ms ease both;animation:album-swing-right 1100ms ease both;}
+@-webkit-keyframes album-swing-right{from{opacity:0;-webkit-transform:rotate(5deg) scale(1.12);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-swing-right{from{opacity:0;transform:rotate(5deg) scale(1.12);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-drift-in{-webkit-animation:album-drift-in 1100ms ease both;animation:album-drift-in 1100ms ease both;}
+@-webkit-keyframes album-drift-in{from{opacity:0;-webkit-transform:translateX(5%) scale(1.03);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-drift-in{from{opacity:0;transform:translateX(5%) scale(1.03);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-drop-in{-webkit-animation:album-drop-in 1100ms ease both;animation:album-drop-in 1100ms ease both;}
+@-webkit-keyframes album-drop-in{from{opacity:0;-webkit-transform:translateY(-9%) scale(1.06);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-drop-in{from{opacity:0;transform:translateY(-9%) scale(1.06);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-curtain-lite{-webkit-animation:album-curtain-lite 1100ms ease both;animation:album-curtain-lite 1100ms ease both;}
+@-webkit-keyframes album-curtain-lite{from{opacity:0;-webkit-transform:scaleX(.7);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-curtain-lite{from{opacity:0;transform:scaleX(.7);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .album-enter-flip-lite{-webkit-animation:album-flip-lite 1100ms ease both;animation:album-flip-lite 1100ms ease both;}
+@-webkit-keyframes album-flip-lite{from{opacity:0;-webkit-transform:scaleX(.85);}to{opacity:1;-webkit-transform:none;}}
+@keyframes album-flip-lite{from{opacity:0;transform:scaleX(.85);}to{opacity:1;transform:none;}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-nw{-webkit-animation:album-motion-pan-nw 32s ease-in-out infinite alternate;animation:album-motion-pan-nw 32s ease-in-out infinite alternate;}
+@-webkit-keyframes album-motion-pan-nw{from{-webkit-transform:scale(1.11) translate(2%,2%);}to{-webkit-transform:scale(1.11) translate(-2%,-2%);}}
+@keyframes album-motion-pan-nw{from{transform:scale(1.11) translate(2%,2%);}to{transform:scale(1.11) translate(-2%,-2%);}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-ne{-webkit-animation:album-motion-pan-ne 32s ease-in-out infinite alternate;animation:album-motion-pan-ne 32s ease-in-out infinite alternate;}
+@-webkit-keyframes album-motion-pan-ne{from{-webkit-transform:scale(1.11) translate(-2%,2%);}to{-webkit-transform:scale(1.11) translate(2%,-2%);}}
+@keyframes album-motion-pan-ne{from{transform:scale(1.11) translate(-2%,2%);}to{transform:scale(1.11) translate(2%,-2%);}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-sw{-webkit-animation:album-motion-pan-sw 32s ease-in-out infinite alternate;animation:album-motion-pan-sw 32s ease-in-out infinite alternate;}
+@-webkit-keyframes album-motion-pan-sw{from{-webkit-transform:scale(1.11) translate(2%,-2%);}to{-webkit-transform:scale(1.11) translate(-2%,2%);}}
+@keyframes album-motion-pan-sw{from{transform:scale(1.11) translate(2%,-2%);}to{transform:scale(1.11) translate(-2%,2%);}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-pan-se{-webkit-animation:album-motion-pan-se 32s ease-in-out infinite alternate;animation:album-motion-pan-se 32s ease-in-out infinite alternate;}
+@-webkit-keyframes album-motion-pan-se{from{-webkit-transform:scale(1.11) translate(-2%,-2%);}to{-webkit-transform:scale(1.11) translate(2%,2%);}}
+@keyframes album-motion-pan-se{from{transform:scale(1.11) translate(-2%,-2%);}to{transform:scale(1.11) translate(2%,2%);}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-drift-horizontal{-webkit-animation:album-motion-drift-horizontal 32s ease-in-out infinite alternate;animation:album-motion-drift-horizontal 32s ease-in-out infinite alternate;}
+@-webkit-keyframes album-motion-drift-horizontal{from{-webkit-transform:scale(1.06) translate(1.4%,0%);}to{-webkit-transform:scale(1.06) translate(-1.4%,0%);}}
+@keyframes album-motion-drift-horizontal{from{transform:scale(1.06) translate(1.4%,0%);}to{transform:scale(1.06) translate(-1.4%,0%);}}
+
+body.idle-home:not(.motion-reduced):not(.launcher-covered) .idlePhoto.shown .motion-drift-vertical{-webkit-animation:album-motion-drift-vertical 32s ease-in-out infinite alternate;animation:album-motion-drift-vertical 32s ease-in-out infinite alternate;}
+@-webkit-keyframes album-motion-drift-vertical{from{-webkit-transform:scale(1.06) translate(0%,1.4%);}to{-webkit-transform:scale(1.06) translate(0%,-1.4%);}}
+@keyframes album-motion-drift-vertical{from{transform:scale(1.06) translate(0%,1.4%);}to{transform:scale(1.06) translate(0%,-1.4%);}}

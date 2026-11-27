@@ -1,0 +1,3 @@
+# Attribution and licensing
+
+The Designed by Tân Dev distribution is maintained by infiniti-money. Existing copyright notices are preserved in [LICENSE](../LICENSE), including Gathin, OmkarK97, hoangvya19 and Infiniti Money. Upstream origins include [Gathin23/tv-vibehack](https://github.com/Gathin23/tv-vibehack) and webos-vibehack (MIT); Homebrew, RootMyTV, LG Input Hook and Open-Meteo are independent projects/services. Lexend and the QR library retain their applicable notices. No transfer of third-party copyright is asserted. Historical upstream names in technical code identify compatibility paths, not the current product brand.

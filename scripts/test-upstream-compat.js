@@ -26,8 +26,8 @@ assert.ok(diag.indexOf('luna://')===-1,
   'The diagnostic should not call Luna methods that could mutate the TV');
 assert.ok(control.indexOf('sh "$DATA/integration-diagnostics.sh"')>=0,
   'Home diagnostics should include read-only integration audit');
-assert.ok(install.indexOf('diagnose-home.sh integration-diagnostics.sh compat-check.sh')>=0,
-  'Root installer should distribute the interoperability diagnostic');
+var manifest=install.match(/for f in ([^\n;]+); do/);assert.ok(manifest,'Root tools manifest missing');
+['diagnose-home.sh','home-repeat-diagnose.sh','integration-diagnostics.sh','compat-check.sh'].forEach(function(name){assert.ok(manifest[1].split(/\s+/).indexOf(name)>=0,'Missing root diagnostic: '+name);assert.ok(fs.existsSync('tv/'+name));});
 assert.ok(docs.indexOf('Simon34545/lginputhook')>=0 &&
   docs.indexOf('ecklf/lg-luma')>=0 &&
   docs.indexOf('simbasjungles/free-my-tv')>=0,

@@ -1,3 +1,5 @@
+> Tài liệu kỹ thuật/tham chiếu lịch sử — Designed by Tân Dev. Hướng dẫn cài đặt hiện hành: [Owner guide](owner-guide.vi.md). Không áp dụng hook thử nghiệm cũ đồng thời với Legacy Home.
+
 # Khôi phục Autostart cũ và dùng máy tính bật dịch vụ Homebrew — webOS 3.4.x
 
 ## Vì sao thay đổi

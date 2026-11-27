@@ -1,3 +1,5 @@
+> Tài liệu kỹ thuật/tham chiếu lịch sử — Designed by Tân Dev. Hướng dẫn cài đặt hiện hành: [Owner guide](owner-guide.vi.md). Không áp dụng hook thử nghiệm cũ đồng thời với Legacy Home.
+
 # Infiniti TV Home inside Glasshouse (no LG Input Hook)
 
 This integration is for a rooted LG TV using **Glasshouse to own Home** and

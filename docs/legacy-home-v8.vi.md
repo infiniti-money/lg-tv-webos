@@ -1,4 +1,6 @@
-# Infiniti LG Home Legacy — LG 49UH850T-TA
+> Tài liệu kỹ thuật và lịch sử kiểm thử. Hướng dẫn hiện hành: [Hướng dẫn chủ TV](owner-guide.vi.md). Các định danh cũ dùng để tương thích/khôi phục, xem [giải thích](compatibility-paths.md).
+
+# Designed by Tân Dev — Legacy Home technical reference
 
 Mục tiêu: webOS 3.4.3, firmware 05.70.45, ARMv7, Python 2.7.3, root UID 0. Home key 773 đã được đo trên LGE M-RCU Builtin [0] event4. V8 tương tác đã xác nhận close/launch/getForegroundAppInfo với Homebrew Channel; chưa thử với IPK Infiniti hoặc daemon mới.
 
@@ -61,3 +63,24 @@ Log TV ngày 26/11/2026 xác nhận readiness 10,2s, render 1,5s/17 tile, watche
 - Album màn hình chờ: tối đa 20 JPEG (1,5 MB/ảnh), chọn nhiều ảnh trên web, thu 1920×1080, chuyển 15/30/60/120/300/600 giây hoặc ngẫu nhiên không lặp ngay. Album chỉ chạy khi idle, ảnh chính giữ nguyên. Chữ Designed by Tân Dev ở góc dưới phải. Root Tools lưu album trong DATA/idle-album; phục hồi tệp sau cập nhật qua dịch vụ wallpaper-on. Cần thử webOS thực tế; không công bố đã nghiệm thu.
 
 - Album lưu ảnh gần nhất và mốc thời gian qua các lần vào/thoát chờ. Chu kỳ 15 giây đến 7 ngày (ngày = 24 giờ), hoặc mỗi lần bật TV (boot ID thay đổi; resume chỉ khi watcher nhận được Standby→Active, cần wake-on). Không chạy lúc TV tắt; ảnh được chọn khi Home vào chờ. Bỏ mục Cập nhật; quản lý app bổ sung lọc, sắp xếp, hiện tất cả, ghim, mở app. Không gỡ app hệ thống.
+
+- Ứng viên v1.6.3: Thử màn hình chờ trong Giao diện, hoặc launch param infinitiIdlePreview:true; tôn trọng bật hiệu ứng/giảm chuyển động, không kích hoạt TV standby. Chống mất key-up và bộ đếm dựa thời gian thực. Kiểm tra CSS transform sau 800ms; nếu không đổi thì dùng background-position 10 fps và dừng khi thoát/covered. Đây là fallback dựa vào computed style, không chứng minh hiển thị vật lý. Chưa nghiệm thu TV.
+
+- Ứng viên v1.6.3: Album thêm 8 phong cách chuyển ảnh (mờ, trượt trái/phải/lên, zoom vào/ra, hòa tan theo độ mờ, điện ảnh), chọn ngẫu nhiên không lặp liền hoặc không hiệu ứng. Ảnh chuyển động chậm kiểu Ken Burns với zoom/pan/ngẫu nhiên/tĩnh; 32s mỗi lượt. Web tùy chỉnh độc lập với thứ tự ảnh. Hai lớp ảnh, giữ ảnh trước đến khi ảnh sau xuất hiện; dừng khi rời idle, tôn trọng giảm chuyển động. Chưa nghiệm thu Chromium trên TV.
+
+- Truy cập http://IP-TV:8090/ không cần QR: nhập khóa hiện tại; QR vẫn dùng được. Đổi khóa trong trang đã xác thực, 8–64 ký tự A-Z/a-z/0-9/_/-, khóa cũ hết hiệu lực sau ghi atomic. Lưu .wallpaper-key với quyền 0600. HTTP LAN không mã hóa, URL sau đăng nhập chứa khóa; không chia sẻ URL hoặc mở cổng ra Internet. Khóa dài khó đoán; có thể xem/reset riêng qua SSH. Từ v1.6.3, cổng mới 9090 dùng chung với loopback ACK; 8090 là cổng của phiên bản cũ.
+
+- Idle trên webOS cũ: mặc định renderer JavaScript 10 FPS chỉ khi Home idle và đang hiển thị, đặt ảnh tile và vị trí trực tiếp; CSS trên trình duyệt mới vẫn có fallback. Chống mouse jitter 12px, bỏ event tổng hợp và bảo vệ lúc xem thử. Trang web báo trạng thái idle/engine dựa ACK TV, không khẳng định pixel đã render. Thử trực tiếp trên TV; không ép chạy khi Standby/tắt màn hình.
+
+- Rà soát v1.6.3: mật khẩu 8–64 ký tự (chữ cái đơn thuần được), giới hạn phản hồi khi thử sai quá 5 lần/phút theo IP, xác minh khóa lại trước khi ghi hình nền. Đây chỉ là giảm phản hồi cho thử sai, không thay thế HTTPS hay khóa mạnh. Album native legacy dùng transform/opacity cập nhật 10 FPS, dừng khi covered/thoát chờ; bỏ làm mới danh mục UI lúc idle. Cần nghiệm thu trên thiết bị thật.
+
+- Kiểm thử bổ sung: album lưu/đọc lại/xóa ảnh, giữ hiệu ứng khi thêm/xóa, từ chối tham số sai, đồng bộ web xác minh khóa lại khi hoàn tất tải. Sau 5 lần nhập sai trong một phút, khóa theo IP trước khi so sánh mật khẩu cho đến hết cửa sổ 60s. HTTP vẫn không mã hóa; chỉ dùng LAN tin cậy.
+
+- Tùy chỉnh v1.6.3: 8 chuyên mục TV, riêng Màn hình chờ và Album (trạng thái + QR/web), 14 hiệu ứng idle và 14 chuyển cảnh album, ngẫu nhiên. 6 chuyển động ảnh. TV chọn hiệu ứng trực tiếp bằng 15 nút gồm Ngẫu nhiên, vẫn hỗ trợ D-pad. Web có thanh điều hướng và nhóm giao diện/idle/lịch; mật khẩu riêng cuối trang. Ảnh và lịch album quản lý qua web, không giả lập ghi từ TV. Chưa kiểm thử kích thước thực tế trên TV.
+
+- Home: ẩn mọi nhãn dưới icon, chỉ hiện tên app được chọn tại hero; hủy chuyển tên khi rời hàng app. Web: có thể gửi từng trường ngay cả khi ACK chưa về; trường chưa biết để trống, không báo áp dụng thành công. ACK loopback dùng POST text/plain với token trong JSON để tránh preflight, vẫn kiểm tra loopback/token và Origin. Chưa xác minh thực tế chính sách file:// trên webOS.
+
+- v1.6.3: chuyển cổng tùy chỉnh sang 9090, QR và ACK cùng cổng; web thêm ghim/bỏ ghim app và đơn vị nhiệt độ. Mật khẩu chủ TV 8–64 ký tự; không cung cấp shell hoặc quyền root qua mạng. Cần cài IPK và Root Tools cùng phiên bản. Chủ repo và quyền quản trị phát hành: infiniti-money; giữ giấy phép MIT và các thông báo tác quyền gốc.
+
+## Chẩn đoán Home liên tiếp
+Chạy `sh /home/root/lg-tv-vibehack/home-repeat-diagnose.sh` qua SSH root; làm theo 5 mốc thời gian trên terminal trong 75 giây. Báo cáo dưới `/tmp/infiniti-home-diag.*/report.txt` gồm phím Home 773 down/up/repeat, foreground, watcher và cờ xung đột trước/sau. Ghi lại màn hình quan sát được từng bước vì LG ribbon có thể không đổi appId. Script không grab phím, không launch/close app tự động, không sửa mapping, firmware hay trạng thái watcher. Không gửi mật khẩu LAN. Nếu test gián đoạn, chạy lại từ trạng thái bình thường.

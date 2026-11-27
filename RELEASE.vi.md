@@ -1,3 +1,7 @@
+# v1.7.1 — Infiniti Home V9.1 (ứng viên)
+
+[Hướng dẫn thử nghiệm và giới hạn](RELEASE_NOTES_v1.7.1.md).
+
 # v1.7.0 — Infiniti Home V9 (ứng viên)
 
 [Xem ghi chú thử nghiệm](RELEASE_NOTES_v1.7.0.md). Chưa nghiệm thu TV thật.

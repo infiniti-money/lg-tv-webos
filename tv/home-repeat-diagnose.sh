@@ -71,17 +71,17 @@ finally:
         os.close(fd)
 PY
 EVENT_PID=$!
-/usr/bin/node - "$D/legacy-luna.js" > "$OUT/foreground.txt" 2>&1 <<'JS' &
-var helper=require(process.argv[2]),start=Date.now();
+/usr/bin/node -e '
+var helper=require(process.argv[1]),start=Date.now();
 function poll(){
  if(Date.now()-start>=75000)return;
- helper.luna('luna://com.webos.applicationManager/getForegroundAppInfo',{},function(e,r){
-  console.log((Date.now()/1000).toFixed(3)+' foreground '+(e?'QUERY_ERROR':String(r.appId||'UNKNOWN').replace(/[^a-zA-Z0-9._-]/g,'?')));
+ helper.luna("luna://com.webos.applicationManager/getForegroundAppInfo",{},function(e,r){
+  console.log((Date.now()/1000).toFixed(3)+" foreground "+(e?"QUERY_ERROR":String(r.appId||"UNKNOWN").replace(/[^a-zA-Z0-9._-]/g,"?")));
   setTimeout(poll,750);
  },null,1200);
 }
 poll();
-JS
+' "$D/legacy-luna.js" > "$OUT/foreground.txt" 2>&1 &
 FG_PID=$!
 mark(){ echo "$(date +%s) $*" | tee -a "$OUT/operator.txt"; }
 mark '0s: Observe current screen, do not press Home.'

@@ -40,11 +40,11 @@ function schedule(n){if(active&&n===seq){var delay=previewMode?5000:60000;if(pre
 function render(n){
  if(!active||n!==seq)return;
  if(!prefs||(!previewMode&&!prefs.enabled)||!prefs.photos.length){stopMotion();enterState=null;[a,b].forEach(clearLayer);current='';schedule(n);return;}
- var last=previous(),advance=previewMode?(!previewOptions||!previewOptions.manual||!current||manualNext):shouldAdvance(last,prefs,Date.now());index=prefs.photos.indexOf(previewMode?current:last.id);manualNext=false;var i=advance?nextIndex(prefs.photos.length,index,prefs.random,Math.random()):index,id=prefs.photos[i];
- if(failed[id]&&Date.now()-failed[id]<60000){var choices=prefs.photos.filter(function(x){return !failed[x]||Date.now()-failed[x]>=60000;});if(!choices.length){schedule(n);return;}id=choices[0];advance=true;}
+ var last=previous(),advance=previewMode?(!previewOptions||!previewOptions.manual||!current||manualNext):shouldAdvance(last,prefs,Date.now());index=prefs.photos.indexOf(previewMode?current:last.id);if(index<0)advance=true;manualNext=false;var i=advance?nextIndex(prefs.photos.length,index,prefs.random,Math.random()):index,id=prefs.photos[i];
+ if(Object.prototype.hasOwnProperty.call(failed,id)&&Date.now()-failed[id]<60000){var choices=prefs.photos.filter(function(x){return !Object.prototype.hasOwnProperty.call(failed,x)||Date.now()-failed[x]>=60000;});if(!choices.length){schedule(n);return;}id=choices[0];advance=true;}
  if(id===current&&(!previewMode||prefs.photos.length===1||(previewOptions&&previewOptions.manual))){if(advance&&!previewMode)remember(id);if(appliedMotion!==prefs.motion)applyMotion(layer===0?b:a,prefs.motion);schedule(n);return;}
  var src='idle-photo-'+id+'.jpg',im=new Image();loaded=im;
- im.onload=function(){if(!active||n!==seq||loaded!==im)return;clearTimeout(imageTimer);imageTimer=null;loaded=null;var dim=typeof CONFIG.wallpaperDim==='number'?Math.max(0,Math.min(.8,CONFIG.wallpaperDim)):.35,front=layer===0?a:b,back=layer===0?b:a;
+ im.onload=function(){if(!active||n!==seq||loaded!==im)return;if(document.hidden||document.body.classList.contains('launcher-covered')||!document.body.classList.contains('idle-home')){stop();return;}clearTimeout(imageTimer);imageTimer=null;loaded=null;var dim=typeof CONFIG.wallpaperDim==='number'?Math.max(0,Math.min(.8,CONFIG.wallpaperDim)):.35,front=layer===0?a:b,back=layer===0?b:a;
  showPhoto(front,back,src,dim,n);layer=1-layer;current=id;delete failed[id];if(advance&&!previewMode)remember(id);schedule(n);};
  im.onerror=function(){if(active&&n===seq&&loaded===im){clearTimeout(imageTimer);imageTimer=null;loaded=null;failed[id]=Date.now();schedule(n);}};imageTimer=setTimeout(function(){if(loaded===im){im.onload=im.onerror=null;im.removeAttribute('src');loaded=null;imageTimer=null;failed[id]=Date.now();schedule(n);}},8000);im.src=src;
 }

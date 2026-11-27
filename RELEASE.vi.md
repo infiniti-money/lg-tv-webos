@@ -1,3 +1,5 @@
+[Danh mục đầy đủ mọi phiên bản, RC và kết quả nghiệm thu](CHANGELOG.md)
+
 # v1.7.9 — Loader và symbol interposition
 
 [Xem ghi chú](RELEASE_NOTES_v1.7.9.md). Chưa nghiệm thu trên LG.

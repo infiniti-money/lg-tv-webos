@@ -1,4 +1,8 @@
-# v1.6.6 — Designed by Tân Dev (ứng viên)
+# v1.6.7 — Designed by Tân Dev (ứng viên)
+
+Xem [ghi chú v1.6.7](RELEASE_NOTES_v1.6.7.md). Home chọn cơ chế theo foreground; cần nghiệm thu trực quan trên TV thật.
+
+# v1.6.6 — Designed by Tân Dev (prerelease)
 
 Xem [ghi chú v1.6.6](RELEASE_NOTES_v1.6.6.md). Home đơn dùng fast relaunch; Home liên tiếp dùng đường phục hồi có giới hạn. Chưa nghiệm thu lớp LG ribbon trên TV thật.
 

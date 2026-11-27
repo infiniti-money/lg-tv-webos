@@ -170,6 +170,7 @@ function handle(req, res) {
   if(!refreshKey())return json(res,503,{error:'key unavailable'});
   var ip='ip:'+String(req.socket.remoteAddress||''),now=Date.now();
   if(u.pathname==='/api/remote-ack'&&remote.route(req,res,u,json,false))return;
+  if(album.localRoute(req,res,u,json))return;
   if(q.k!==undefined&&keyBlocked(ip,now))return send(res,429,'text/plain; charset=utf-8','Thử sai quá nhiều. Vui lòng đợi 1 phút.',{'Retry-After':'60'});
   var authenticated=keyMatches(q.k,KEY);
   function stillAuthorized(){return permitted()&&refreshKey()&&keyMatches(q.k,KEY);}

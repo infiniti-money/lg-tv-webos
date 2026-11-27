@@ -5,6 +5,7 @@ D=/home/root/lg-tv-vibehack
 CFG=/home/root/.config/lginputhook/keybinds.json
 SRC=/home/root/native-lab
 STATE=/tmp/infiniti-native-home-trial
+BACKUP="$D/native-trial-original.json"
 KEY='{"773":{"action":"exec","command":"/bin/sh /home/root/lg-tv-vibehack/native-launch.sh"}}'
 EXPECTED=2ba769a6f181f6bd686c6501020908ab7cb744718d3b0ff8e262164c8ba76c96
 fail(){ echo "NATIVE_REFUSED: $*" >&2; exit 1; }
@@ -14,13 +15,14 @@ empty_config(){ [ -f "$CFG" ] && [ "$(cat "$CFG")" = '{}' ]; }
 restore(){
   [ ! -d "$STATE" ] || touch "$STATE/cancel"
   rm -f "$STATE/active"
-  [ -f "$STATE/original" ] || { echo 'No saved trial config'; return 0; }
+  [ -f "$BACKUP" ] || { echo 'No saved trial config'; return 0; }
   if [ "$(cat "$CFG" 2>/dev/null || true)" = "$KEY" ]; then
     tmp="$CFG.infiniti-restore-$$"
-    cp -p "$STATE/original" "$tmp" && mv -f "$tmp" "$CFG" || { echo 'RECOVERY_PARTIAL: restore failed'; return 1; }
-  elif ! cmp -s "$STATE/original" "$CFG"; then
+    cp -p "$BACKUP" "$tmp" && mv -f "$tmp" "$CFG" || { echo 'RECOVERY_PARTIAL: restore failed'; return 1; }
+  elif ! cmp -s "$BACKUP" "$CFG"; then
     echo 'RECOVERY_PARTIAL: config changed externally; backup retained'; return 1
   fi
+  # Retain persistent backup until a subsequent explicit review; no automatic re-arm.
   echo "Mapping restored; wait for config reload. Library may remain mapped until reboot."
   echo "Evidence: $STATE"
 }
@@ -51,10 +53,12 @@ hash=$(sha256sum "/proc/$p/exe" | awk '{print $1}')
 echo "lginput2 PID=$p SHA-256=$hash"
 [ "$hash" = "$EXPECTED" ] || fail 'firmware binary fingerprint mismatch'
 (cd /lib && printf '%s\n' 'd233b7d6d86582b1814b72740741e951264d9a89631781ac13fe66566c9904bf  libc-2.19.so' | sha256sum -c -) || fail 'libc mismatch'
+(cd /usr/lib && printf '%s\n' 'cc4cc774ec21901bcf5fc226eb2eeda722bd9362edf4b509c1b17c38e42122d7  libim.so.1.0.0' | sha256sum -c -) || fail 'libim mismatch'
+(cd /lib && printf '%s\n' '33c725259c618f54e2ce3e33fc30109ff12f177d0f500b4775994bd8de748e12  libstdc++.so.6.0.19' | sha256sum -c -) || fail 'libstdc++ mismatch'
 for f in home-enabled home-event-device boot-home-armed boot-home-trial boot-home-enabled boot-services-enabled legacy-v8-session legacy-v8-armed legacy-v8-trial legacy-v8-enabled legacy-v8-wake legacy-v8-wallpaper legacy-v8-ribbon legacy-v8-fast; do
   [ ! -e "$D/$f" ] || fail "active flag $f"
 done
-for f in "$STATE" /tmp/inputhook /tmp/infiniti-native-lab.lock /tmp/infiniti-legacy-v8-lock /var/lib/webosbrew/init.d/inputhook /var/lib/webosbrew/init.d/97-homekey /var/lib/webosbrew/init.d/infiniti-legacy-v8 /media/developer/apps/usr/palm/applications/org.webosbrew.inputhook /media/cryptofs/apps/usr/palm/applications/org.webosbrew.inputhook /var/luna/preferences/webosbrew_failsafe; do
+for f in "$STATE" "$BACKUP" /tmp/inputhook /tmp/infiniti-native-lab.lock /tmp/infiniti-legacy-v8-lock /var/lib/webosbrew/init.d/inputhook /var/lib/webosbrew/init.d/97-homekey /var/lib/webosbrew/init.d/infiniti-legacy-v8 /media/developer/apps/usr/palm/applications/org.webosbrew.inputhook /media/cryptofs/apps/usr/palm/applications/org.webosbrew.inputhook /var/luna/preferences/webosbrew_failsafe; do
   [ ! -e "$f" ] || fail "existing state or conflicting hook: $f"
 done
 for q in $(pidof RELEASE lginput2 micomservice tvservice testapp 2>/dev/null || true); do
@@ -77,7 +81,8 @@ mkdir "$STATE" || fail 'trial state exists'
 trap 'rc=$?; trap - 0; restore || rc=1; exit "$rc"' 0
 trap 'exit 130' INT
 trap 'exit 143' TERM HUP
-cp -p "$CFG" "$STATE/original"
+cp -p "$CFG" "$BACKUP"
+cp -p "$BACKUP" "$STATE/original"
 printf '%s\n' "$p" > "$STATE/pid"
 printf '%s\n' "$start" > "$STATE/start"
 cp "$SRC/ezinject" "$SRC/libinputhookpp.so" "$STATE/"

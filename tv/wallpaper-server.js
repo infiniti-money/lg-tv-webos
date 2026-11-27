@@ -22,6 +22,7 @@ var parseUrl = require('url').parse;
 var execFile = require('child_process').execFile;
 
 var PORT = 9090;
+var mdns=null;
 var DATA = '/home/root/lg-tv-vibehack';
 var APP_DIR = require('./sync.js').findLauncherDir();
 var legacyLuna = require('./legacy-luna.js').luna;
@@ -74,19 +75,19 @@ function tvAddress() {
 }
 
 /** Tells the launcher where this page is (for the QR code). */
-var wallHeartbeat=0, wallLastUrl='';
+var wallHeartbeat=0, wallLastUrl='',wallLastMdns='';
 function writeWallJs() {
   APP_DIR = require('./sync.js').findLauncherDir();
   var ip = tvAddress();
   var url = permitted() && ip ? 'http://' + ip + ':' + PORT + '/?k=' + KEY : '';
-  var now=Date.now();
+  var now=Date.now(),mdnsState=mdns?mdns.status():'unavailable';
   try {
     var file=path.join(APP_DIR,'wall.js');
-    if(url===wallLastUrl && now-wallHeartbeat<30000 && fs.existsSync(file))return;
-    var value='// Written by wallpaper-server.js\nwindow.WALL_URL = '+JSON.stringify(url)+';\nwindow.WALL_EXPIRES = '+(url?now+90000:0)+';\n';
+    if(url===wallLastUrl&&mdnsState===wallLastMdns && now-wallHeartbeat<30000 && fs.existsSync(file))return;
+    var value='// Written by wallpaper-server.js\nwindow.WALL_URL = '+JSON.stringify(url)+';\nwindow.WALL_MDNS = '+JSON.stringify(mdnsState)+';\nwindow.WALL_EXPIRES = '+(url?now+90000:0)+';\n';
     fs.writeFileSync(file+'.tmp',value,{mode:420});
     fs.renameSync(file+'.tmp',file);
-    wallHeartbeat=now;wallLastUrl=url;
+    wallHeartbeat=now;wallLastUrl=url;wallLastMdns=mdnsState;
   } catch (e) { log('cannot write wall.js: ' + e.message); }
 }
 
@@ -196,7 +197,7 @@ function handle(req, res) {
   }
 
   if (route === 'GET /api/diagnostics') {
-    return json(res,200,{uptime:os.uptime(),totalMemory:os.totalmem(),freeMemory:os.freemem(),load:os.loadavg(),cores:os.cpus().length,port:PORT});
+    return json(res,200,{uptime:os.uptime(),totalMemory:os.totalmem(),freeMemory:os.freemem(),load:os.loadavg(),cores:os.cpus().length,port:PORT,mdns:mdns?mdns.status():'unavailable',ip:tvAddress()});
   }
   if (route === 'GET /api/state') {
     var s = readJSON(SETTINGS, {}), w = s.weather || {};
@@ -290,12 +291,13 @@ http.createServer(function (req, res) {
   log('cannot start: ' + e.message);
   process.exit(1);
 }).listen(PORT, function () {
+  try{mdns=require('./local-name.js').create(tvAddress,permitted,log);mdns.refresh();}catch(e){log('mDNS unavailable; use IP URL');}
   writeWallJs();remote.publish();album.publish();
   // An app-only auto-update may replace wall.js. Restore the QR URL without
   // reopening the launcher or interacting with LG's Home on wake.
   setInterval(function () {
-    if(!permitted()){try{writeWallJs();}catch(e){}process.exit(0);}
-    try {if(refreshKey()){writeWallJs();remote.publish();album.publish();}} catch(e){log('wall.js refresh failed: '+e.message);}
+    if(!permitted()){if(mdns)mdns.stop();try{writeWallJs();}catch(e){}process.exit(0);}
+    try {if(mdns)mdns.refresh();if(refreshKey()){writeWallJs();remote.publish();album.publish();}} catch(e){log('wall.js refresh failed: '+e.message);}
   }, 5000);
   log('listening on port ' + PORT);
 });

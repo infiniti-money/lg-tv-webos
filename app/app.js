@@ -640,14 +640,14 @@
     var old = $('wallJs');
     if (old && old.parentNode) old.parentNode.removeChild(old);
     window.WALL_URL = '';
-    window.WALL_EXPIRES = 0;
+    window.WALL_EXPIRES = 0;window.WALL_MDNS='';
     var sc = document.createElement('script');
     sc.id = 'wallJs';
     sc.src = 'wall.js?ts=' + Date.now();
     sc.onload = function () {
       // Expired heartbeat means a stopped root service, not a valid QR.
       if ($('wallJs') !== sc) return;
-      cb(window.WALL_EXPIRES > Date.now() ? (window.WALL_URL || '') : '');
+      cb(window.WALL_EXPIRES > Date.now() ? (window.WALL_URL || '') : '',window.WALL_MDNS);
     };
     sc.onerror = function () { if ($('wallJs') === sc) cb(''); };
     document.body.appendChild(sc);

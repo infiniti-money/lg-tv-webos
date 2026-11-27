@@ -63,6 +63,7 @@ jobs:
           node scripts/test-idle-album.js
           node scripts/test-idle-effect.js
           node scripts/test-wallpaper-key.js
+          node scripts/test-local-name.js
           node scripts/test-lan-integration.js
           node scripts/test-app-structure.js
           node scripts/test-glasshouse.js

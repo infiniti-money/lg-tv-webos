@@ -512,7 +512,7 @@
       state.textContent = 'Dịch vụ hình nền chưa sẵn sàng. Mở lại Tùy chỉnh.';
       return;
     }
-    root.INFINITI_WALLPAPER_GET_URL(function (url) {
+    root.INFINITI_WALLPAPER_GET_URL(function (url,mdnsState) {
       // The QR links to a TV-local, secret-authenticated phone service.
       // Only display a valid local IP:9090 URL written by the root helper.
       if (!/^http:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:9090\/\?k=[A-Za-z0-9_-]{8,64}$/.test(url || '')) {
@@ -525,7 +525,8 @@
         qr.make();
         code.innerHTML = '<img alt="Quét để đổi hình nền" src="' + qr.createDataURL(6, 24) + '">';
         state.textContent = 'Quét QR hoặc mở địa chỉ bên dưới và nhập khóa riêng để chỉnh TV.';
-        host.textContent = url.split('?')[0];
+        host.textContent = (mdnsState==='ready'?'http://tan-dev.local:9090/ · ':'')+url.split('?')[0];
+        if(mdnsState==='conflict')state.textContent+=' Tên tan-dev.local đã được dùng; hãy truy cập IP.';
       } catch (err) {
         state.textContent = 'Không tạo được mã QR. Hãy kiểm tra bộ cài và thử lại.';
       }

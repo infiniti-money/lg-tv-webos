@@ -6,7 +6,7 @@
 var fs = require('fs');
 var paths = [
   'app/app.js', 'app/glasshouse.js', 'app/lifecycle.js', 'app/extras.js', 'app/config.js', 'app/customize.js', 'app/lunar.js', 'app/forecast.js', 'app/qrcode.js',
-  'tv/sync.js', 'tv/homewatch.js', 'tv/wallpaper-server.js',
+  'tv/sync.js', 'tv/homewatch.js', 'tv/wallpaper-server.js', 'tv/local-name.js',
   'tv/diag.js', 'tv/legacy-luna.js', 'tv/idle-album.js', 'tv/remote-settings.js', 'app/remote-settings.js', 'app/idle-album-player.js', 'app/idle-effect.js'
 ];
 var issues = [];

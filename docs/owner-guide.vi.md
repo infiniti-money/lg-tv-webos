@@ -63,3 +63,6 @@ sh "$D/safe-recovery.sh"
 ```
 
 Chỉ reboot sau khi kiểm tra kết quả. Giữ LG Home gốc và bản phát hành trước đó. Khi cài lại bản cũ, dùng đúng tag và cùng bộ IPK/Root Tools.
+
+## Tên truy cập nội bộ (v1.6.3 ứng viên)
+Thử `http://tan-dev.local:9090/` từ thiết bị cùng mạng. Dịch vụ quảng bá bản ghi IPv4 qua mDNS UDP 5353, kiểm tra trùng tên và cập nhật khi IP đổi. Không đổi hostname LG hoặc cấu hình router. QR luôn dùng IP động làm phương án dự phòng. Tên `.local` chỉ hoạt động nếu thiết bị và mạng hỗ trợ multicast/mDNS; nếu xung đột hoặc không phân giải, dùng IP hiển thị trên TV. Chưa thử trên phần cứng webOS 3.4.3.

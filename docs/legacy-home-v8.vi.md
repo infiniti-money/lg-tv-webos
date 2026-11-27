@@ -81,3 +81,6 @@ Log TV ngày 26/11/2026 xác nhận readiness 10,2s, render 1,5s/17 tile, watche
 - Home: ẩn mọi nhãn dưới icon, chỉ hiện tên app được chọn tại hero; hủy chuyển tên khi rời hàng app. Web: có thể gửi từng trường ngay cả khi ACK chưa về; trường chưa biết để trống, không báo áp dụng thành công. ACK loopback dùng POST text/plain với token trong JSON để tránh preflight, vẫn kiểm tra loopback/token và Origin. Chưa xác minh thực tế chính sách file:// trên webOS.
 
 - v1.6.3: chuyển cổng tùy chỉnh sang 9090, QR và ACK cùng cổng; web thêm ghim/bỏ ghim app và đơn vị nhiệt độ. Mật khẩu chủ TV 8–64 ký tự; không cung cấp shell hoặc quyền root qua mạng. Cần cài IPK và Root Tools cùng phiên bản. Chủ repo và quyền quản trị phát hành: infiniti-money; giữ giấy phép MIT và các thông báo tác quyền gốc.
+
+## Chẩn đoán Home liên tiếp
+Chạy `sh /home/root/lg-tv-vibehack/home-repeat-diagnose.sh` qua SSH root; làm theo 5 mốc thời gian trên terminal trong 75 giây. Báo cáo dưới `/tmp/infiniti-home-diag.*/report.txt` gồm phím Home 773 down/up/repeat, foreground, watcher và cờ xung đột trước/sau. Ghi lại màn hình quan sát được từng bước vì LG ribbon có thể không đổi appId. Script không grab phím, không launch/close app tự động, không sửa mapping, firmware hay trạng thái watcher. Không gửi mật khẩu LAN. Nếu test gián đoạn, chạy lại từ trạng thái bình thường.

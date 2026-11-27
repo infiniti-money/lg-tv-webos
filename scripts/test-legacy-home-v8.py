@@ -87,6 +87,43 @@ class LegacyTests(unittest.TestCase):
             print('100 physical intents: %d dispatches, %d coalesced, %d completions' %
                   (q.started, q.coalesced, q.completed))
 
+    def test_repeat_home_after_fast_completion(self):
+        from unittest.mock import patch
+        calls = []
+        q = legacy.HomeQueue('enabled', lambda action: calls.append(action) or 7,
+                             lambda pid: 0, lambda pid: None)
+        with patch.object(legacy, 'log'):
+            q.press(10)
+            self.assertTrue(q.start('home', 10.15))
+            self.assertEqual(q.reap(10.5), ('home', 0))
+            q.press(10.8)
+            self.assertTrue(q.repeat)
+            self.assertAlmostEqual(q.due, 11.15)
+            self.assertTrue(q.start('home', 11.15))
+            self.assertEqual(q.reap(13), ('home', 0))
+            q.press(15)
+            self.assertFalse(q.repeat)
+            self.assertTrue(q.start('home', 15.15))
+        self.assertEqual(calls, ['redirect-enabled', 'redirect-repeat-enabled', 'redirect-enabled'])
+
+    def test_repeat_home_burst_has_bounded_delay(self):
+        from unittest.mock import patch
+        calls = []
+        q = legacy.HomeQueue('watch', lambda action: calls.append(action) or 7,
+                             lambda pid: 0, lambda pid: None)
+        with patch.object(legacy, 'log'):
+            q.press(20)
+            q.press(20.1)
+            q.press(20.4)
+            q.press(20.9)
+            self.assertTrue(q.repeat)
+            self.assertLessEqual(q.due, 21.0)
+            self.assertEqual(q.coalesced, 3)
+            self.assertTrue(q.start('home', 21))
+            self.assertFalse(q.repeat)
+            self.assertEqual(q.reap(23), ('home', 0))
+        self.assertEqual(calls, ['redirect-repeat-watch'])
+
     def test_timeout_and_cancel(self):
         from unittest.mock import patch
         stopped = []

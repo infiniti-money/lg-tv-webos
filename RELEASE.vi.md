@@ -1,3 +1,7 @@
+# v1.7.5 — Native Home 773, thử nghiệm vật lý
+
+[Xem quy trình và phục hồi](RELEASE_NOTES_v1.7.5.md). Chưa nghiệm thu phần cứng.
+
 # v1.7.4 — Native Lab: sửa thoát đa luồng và BusyBox
 
 Xem [ghi chú v1.7.4](RELEASE_NOTES_v1.7.4.md). Chưa nghiệm thu Home vật lý.

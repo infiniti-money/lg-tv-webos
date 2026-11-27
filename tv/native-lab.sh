@@ -30,9 +30,8 @@ done
 for lib in libc.so.6 libdl.so.2 libpthread.so.0 libm.so.6 libgcc_s.so.1 ld-linux.so.3 librt.so.1; do
   [ -r "/lib/$lib" ] || [ -r "/usr/lib/$lib" ] || fail "missing dependency $lib"
 done
-# Upstream uses a fixed configuration path; never overwrite or fabricate it.
-# Refuse other actions (in particular exec). An absent config is acceptable only
-# for pass-through; upstream may report missing config, not an ABI failure.
+# Upstream uses a fixed configuration path. Ordinary pass/ignore never modify it.
+# Explicit cycle requires empty config, a persistent backup, and a fixed private mock only.
 check_config(){
   /usr/bin/node -e 'var fs=require("fs"),p=process.argv[1],m=process.argv[2],o;try{o=JSON.parse(fs.readFileSync(p,"utf8"));}catch(e){if(e.code==="ENOENT"&&m==="pass")process.exit(0);process.exit(1);}if(!o||typeof o!=="object"||Array.isArray(o))process.exit(1);var k=Object.keys(o);if(m==="pass")process.exit(k.length?1:0);var a=o["773"];process.exit(k.length===1&&a&&Object.keys(a).length===1&&a.action==="ignore"?0:1);' "$CFG" "$mode"
 }
@@ -52,7 +51,7 @@ stage(){ [ -n "$work" ] && printf "%s %s\n" "$(date +%s)" "$*" >> "$work/stages.
 restore_cycle(){
   [ "$cycle_owned" = 1 ] || return 0
   if [ "$(cat "$CFG" 2>/dev/null || true)" = "$last_config" ]; then
-    cp -p "$backup" "$CFG.lab-restore-$" && mv -f "$CFG.lab-restore-$" "$CFG" && rm -f "$backup" || return 1
+    cp -p "$backup" "$CFG.lab-restore-$$" && mv -f "$CFG.lab-restore-$$" "$CFG" && rm -f "$backup" || return 1
   else
     echo "CONFIG CONFLICT: backup retained at $backup" >&2; return 1
   fi
@@ -60,9 +59,9 @@ restore_cycle(){
 }
 set_config(){
   [ "$(cat "$CFG")" = "$last_config" ] || fail "config changed externally"
-  printf "%s\n" "$1" > "$CFG.lab-$"
-  chmod 600 "$CFG.lab-$"
-  mv -f "$CFG.lab-$" "$CFG"
+  printf "%s\n" "$1" > "$CFG.lab-$$"
+  chmod 600 "$CFG.lab-$$"
+  mv -f "$CFG.lab-$$" "$CFG"
   last_config=$1
 }
 reap_if_exited(){
@@ -158,13 +157,13 @@ if [ "$mode" = cycle ]; then [ "$(cat "$CFG")" = "$last_config" ] || fail "confi
 [ "$(readlink "/proc/$child/exe")" = "$work/thumb-probe" ] || fail 'owned probe identity changed'
 printf '%s\n' 'injector-starting' > "$work/stage"
 if /usr/bin/node "$D/native-inject-observe.js" "$work" "$child" "$$" >"$work/inject.log" 2>&1; then rc=0; else rc=$?; fi
-/usr/bin/node "$D/native-diagnostics.js" "$child" "$work" >"$work/diagnostics.json" 2>&1 || true
+bounded /usr/bin/node "$D/native-diagnostics.js" "$child" "$work" >"$work/diagnostics.json" 2>&1 || true
 stage "injector-observer rc=$rc"
 [ "$rc" = 0 ] || fail "injector failed; inspect inject-result.json and diagnostics.json"
 sleep 2
 [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" = "$work/thumb-probe" ] || fail 'probe died after injection'
 grep -F "$work/libinputhookpp.so" "/proc/$child/maps" >/dev/null || fail 'library not mapped'
-check_config || fail 'config changed'
+if [ "$mode" = cycle ]; then [ "$(cat "$CFG")" = "$last_config" ] || fail 'config changed'; else check_config || fail 'config changed'; fi
 printf t >&3
 if [ "$mode" = ignore ]; then wait_line HOME_ONLY_IGNORED 1; else wait_line PASS_THROUGH_OK 2; fi
 stage initial-hook-verified
@@ -172,6 +171,10 @@ reload_config(){
   before=$(grep -c 'Keybinds reloaded' "$work/hook.log" || true)
   # Older upstream polls mtime at seconds granularity.
   sleep 2
+  for p in $(pidof RELEASE lginput2 micomservice tvservice testapp 2>/dev/null || true); do
+    [ -r "/proc/$p/maps" ] || fail "cannot inspect system process"
+    if grep -Eq 'libphp\.so|libinputhookpp\.so' "/proc/$p/maps"; then fail "system hook conflict"; fi
+  done
   set_config "$1"
   n=0
   while [ "$n" -lt 15 ]; do
@@ -202,7 +205,7 @@ if [ "$mode" = cycle ]; then
 fi
 grep -Eq 'uinput_code=773([^0-9]|$)' "$work/hook.log" || fail 'no observed Home hook call'
 grep -Eq 'uinput_code=115([^0-9]|$)' "$work/hook.log" || fail 'no observed other-key hook call'
-/usr/bin/node "$D/native-diagnostics.js" "$child" "$work" >"$work/diagnostics.json" || fail "post-hook diagnostics failed"
+bounded /usr/bin/node "$D/native-diagnostics.js" "$child" "$work" >"$work/diagnostics.json" || fail "post-hook diagnostics failed"
 if grep -Eiq 'SIGILL|SIGSEGV|Illegal instruction|Segmentation fault' "$work/inject.log" "$work/hook.log"; then fail 'fault reported'; fi
 stage quit-request
 printf q >&3

@@ -2,7 +2,7 @@
 
 **Sản phẩm:** Designed by Tân Dev · **Chủ repo:** infiniti-money  
 **Thiết bị mục tiêu:** LG 49UH850T-TA, webOS 3.4.3, ARMv7, firmware 05.70.45.  
-**Trạng thái:** kế hoạch và tiêu chí nghiệm thu, không phải release. Bản chính thức hiện tại v1.6.2. PR #33; baseline `b4b37c652ca08e18de09196ceda20bc1898889c6` có CI 45934624436 và 45934630771 thành công (bao gồm đóng gói, nhưng metadata/artifact vẫn 1.6.2). appinfo vẫn 1.6.2. Chưa nghiệm thu hardware các chức năng mới.
+**Trạng thái:** kế hoạch và tiêu chí nghiệm thu, không phải release. Bản chính thức hiện tại v1.6.2. PR #33; baseline `b4b37c652ca08e18de09196ceda20bc1898889c6` có CI 45934624436 và 45934630771 thành công (bao gồm đóng gói, nhưng metadata/artifact vẫn 1.6.2). appinfo hiện 1.6.3; workflow đóng gói Root Tools 1.6.3, chỉ cho phép phát hành thử nghiệm khi dispatch rõ ràng trên main. Chưa nghiệm thu hardware các chức năng mới.
 
 ## P0 — Tính năng bắt buộc phải hoạt động
 
@@ -90,3 +90,6 @@ Bổ sung đủ 24 chuyển cảnh, 12 motion, chu kỳ 20 giây, tốc độ 60
 - Tải artifact từ [lượt CI 45934630771](https://github.com/infiniti-money/lg-tv-webos/actions/runs/45934630771) chỉ để thử nghiệm có kiểm soát; metadata vẫn 1.6.2, không coi là release 1.6.3.
 - Trước khi thử: sao lưu, giữ IPK và Root Tools cùng build, kiểm tra SHA-256, không arm boot hook trước khi kiểm tra Home thủ công. Dùng IP hiển thị nếu mDNS không phân giải.
 - Ghi lại model/firmware, kết quả từng mục P0, log ACK (không kèm khóa/mật khẩu), RAM và lỗi; dừng nếu Home đen hoặc recovery không khả dụng.
+
+### Đồng bộ đóng gói
+Metadata 1.6.3, notes và workflow đã cập nhật; CI của head mới vẫn cần xác nhận. Artifact baseline cũ ở trên vẫn mang 1.6.2. Phát hành thử nghiệm không đặt làm latest; tag chính thức cũ giữ nguyên.

@@ -10,7 +10,8 @@ Mỗi phiên bản mới phải có mục trong CHANGELOG.md, tệp RELEASE_NOTE
 
 | Phiên bản | Ngày UTC | Loại | Thay đổi | Ghi chú |
 |---|---|---|---|---|
-| v1.8.0 | — | Ứng viên, chưa phát hành | Runtime isolation, sáu đối chứng, báo cáo loader kể cả khi lỗi | [Chi tiết](RELEASE_NOTES_v1.8.0.md) |
+| v1.8.1 | — | Ứng viên, chưa phát hành | QML/KeyFilters discovery, scratch bind test, nghiên cứu upstream | [Chi tiết](RELEASE_NOTES_v1.8.1.md) |
+| [v1.8.0](https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.8.0) | — | Prerelease, chưa nghiệm thu TV | Runtime isolation, sáu đối chứng, báo cáo loader kể cả khi lỗi | [Chi tiết](RELEASE_NOTES_v1.8.0.md) |
 | [v1.7.9](https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.7.9) | 2026-11-27 | Prerelease | Preloaded GLib/C++, constructor interposition, IFUNC và readelf Windows | [Chi tiết](RELEASE_NOTES_v1.7.9.md) |
 | [v1.7.8](https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.7.8) | 2026-11-27 | Prerelease | Dynamic Cycle, mock exec, mixed threads, ELF collector | [Chi tiết](RELEASE_NOTES_v1.7.8.md) |
 | [v1.7.7](https://github.com/infiniti-money/lg-tv-webos/releases/tag/v1.7.7) | 2026-11-27 | Prerelease | Sửa provider pthread trên glibc 2.19 | [Chi tiết](RELEASE_NOTES_v1.7.7.md) |

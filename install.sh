@@ -179,7 +179,7 @@ say "Downloading scripts"
 # Disarm V8 before replacing root sidecars; activation is always explicit.
 if [ -f "$DATA/legacy-home.sh" ]; then sh "$DATA/legacy-home.sh" disable || die "V8 disarm failed"; fi
 mkdir -p "$DATA/icons"
-for f in native-loader-report.js native-collect.sh native-diagnostics.js native-inject-observe.js native-trial.sh native-trial-proof.js native-launch.sh native-launch.js native-lab.sh native-proof.js legacy-home-v8.py legacy-luna.js legacy-home.sh autostart-rollback.sh sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js local-name.js wallpaper.html remote-settings.js idle-album.js golauncher.sh boot.sh boot-home-once.sh home-control.sh safe-recovery.sh root-safety-check.sh auto-update.sh install-ipk-update.js diagnose-home.sh home-repeat-diagnose.sh perf-sample.sh integration-diagnostics.sh compat-check.sh; do
+for f in home-discovery.js home-mount-lab.sh native-loader-report.js native-collect.sh native-diagnostics.js native-inject-observe.js native-trial.sh native-trial-proof.js native-launch.sh native-launch.js native-lab.sh native-proof.js legacy-home-v8.py legacy-luna.js legacy-home.sh autostart-rollback.sh sync.js homewatch.js home-event-monitor.js keymap.js wallpaper-server.js local-name.js wallpaper.html remote-settings.js idle-album.js golauncher.sh boot.sh boot-home-once.sh home-control.sh safe-recovery.sh root-safety-check.sh auto-update.sh install-ipk-update.js diagnose-home.sh home-repeat-diagnose.sh perf-sample.sh integration-diagnostics.sh compat-check.sh; do
   curl -fsSL "$RAW/tv/$f" -o "$DATA/$f" || die "Could not download $f. Is the TV online?"
 done
 chmod +x "$DATA"/*.sh "$DATA"/*.js

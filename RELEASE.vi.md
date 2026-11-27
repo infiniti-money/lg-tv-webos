@@ -1,3 +1,7 @@
+# v1.8.1 — Mount & Legacy Home Discovery (ứng viên)
+
+[Xem ghi chú](RELEASE_NOTES_v1.8.1.md) và [nghiên cứu](docs/mount-legacy-research.vi.md). Chưa nghiệm thu trên TV; không mount Home thật.
+
 # v1.8.0 — Runtime Isolation (ứng viên)
 
 [Ma trận thử nghiệm và bằng chứng v1.7.9](RELEASE_NOTES_v1.8.0.md). Chưa nghiệm thu sáu bài thử trên TV.

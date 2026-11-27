@@ -48,3 +48,9 @@ console.log('Native diagnostic classifications passed');
 var lab=fs.readFileSync('tv/native-lab.sh','utf8');
 assert.ok(lab.indexOf('"$work" "$child" "$$" >')>=0,'observer must receive actual shell parent PID');
 assert.ok(lab.indexOf('probe-exit-code')>=0,'capture pre-injection probe failures');
+
+assert.ok(lab.indexOf('QUIT_ACK')>=0);
+assert.ok(lab.indexOf('mock-exec-once')>=0);
+assert.ok(lab.indexOf('cycle-final-pass')>=0);
+assert.ok(lab.indexOf('LAB_CLEANUP_INCOMPLETE')>=0);
+assert.ok(lab.indexOf('native-lab-cycle-original.json')>=0);

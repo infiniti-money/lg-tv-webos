@@ -49,3 +49,25 @@ helper.waitReady(function(){return 'ready';},function(cb){samples++;cb(sequence.
  scenario([Error('canceled')],[true,false],[false],false);
  scenario([],[false],[],false);
  console.log('Home fast relaunch, one fallback, and failsafe cancellation passed.');
+
+ // Foreground Tân Dev may be covered by native LG ribbon even with a valid render.
+ function foregroundScenario(err,reply,guards,errors,expected,success){
+   var calls=[],probes=0,finished=0;
+   helper.redirectFromForeground('enabled',function(cb){probes++;cb(err,reply);},
+     function(mode,closeFirst,cb){assert.strictEqual(mode,'enabled');calls.push(closeFirst);cb(errors.shift()||null);},
+     function(){return guards.length?guards.shift():true;},
+     function(e){finished++;assert.strictEqual(!e,success);});
+   assert.deepStrictEqual(calls,expected);assert.strictEqual(finished,1);
+   assert.strictEqual(probes,expected.length===0&&guards.length===0&&reply===null&&!err?0:1);
+ }
+ foregroundScenario(null,{appId:'com.infinitimoney.tvhome'},[],[],[true],true);
+ foregroundScenario(null,{appId:'youtube.leanback.v4'},[],[],[false],true);
+ foregroundScenario(null,{appId:'com.webos.app.livetv'},[],[],[false],true);
+ foregroundScenario(null,{appId:'UNKNOWN'},[],[],[true],true);
+ foregroundScenario(null,{appId:' '},[],[],[true],true);
+ foregroundScenario(Error('probe timeout'),null,[],[],[true],true);
+ foregroundScenario(null,{appId:'youtube.leanback.v4'},[],[Error('no fresh proof'),null],[false,true],true);
+ foregroundScenario(null,{appId:'com.infinitimoney.tvhome'},[],[Error('render failed')],[true],false);
+ foregroundScenario(null,{appId:'com.infinitimoney.tvhome'},[true,false],[],[],false);
+ foregroundScenario(null,null,[false],[],[],false);
+ console.log('Home foreground recovery, unknown state, fast path and cancellation passed.');

@@ -152,6 +152,7 @@ case "$action" in
     fi
     mkdir -p "$(dirname "$HOOK_CFG")"
     /usr/bin/node "$DATA/keymap.js" enable "$HOOK_CFG" "$BACKUP" "$KEY" "$APP_ID" "$CMD"
+    rm -f /tmp/infiniti-native-proof.json
     touch "$FLAG"
     echo "Enabled manual Home key hook only; no app startup on boot or wake."
     echo "Restore with: sh $DATA/home-control.sh safe-mode"

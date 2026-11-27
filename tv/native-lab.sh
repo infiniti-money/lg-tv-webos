@@ -46,6 +46,7 @@ child=
 backup="$D/native-lab-cycle-original.json"
 last_config=
 cycle_owned=0
+completed=0
 [ ! -e "$backup" ] || { rmdir "$lock"; fail "unresolved cycle backup: $backup"; }
 stage(){ [ -n "$work" ] && printf "%s %s\n" "$(date +%s)" "$*" >> "$work/stages.log" || true; }
 restore_cycle(){
@@ -96,6 +97,7 @@ cleanup(){
     rmdir "$lock" 2>/dev/null || rc=1
   fi
   stage "final rc=$rc"
+  if [ "$rc" = 0 ] && [ "$completed" = 1 ]; then echo "LAB_PASS: $mode; synthetic target only; not proof of physical LG Home interception"; fi
   exit "$rc"
 }
 trap cleanup 0
@@ -129,13 +131,7 @@ wait_line(){
   n=0
   while [ "$n" -lt 10 ]; do
     if [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" != "$work/thumb-probe" ]; then
-      if [ ! -d "/proc/$child" ] || [ "$(awk '/^State:/ {print $2}' "/proc/$child/status" 2>/dev/null || true)" = Z ]; then
-        rc=0
-        wait "$child" || rc=$?
-        printf '%s\n' "$rc" > "$work/probe-exit-code"
-        child=
-        fail "probe exited before $1 (exit=$rc); inspect probe.log"
-      fi
+      if reap_if_exited; then fail "probe exited before $1 (exit=$reap_rc); inspect probe.log"; fi
       [ "$1" = READY ] && owned_child || fail 'owned probe identity changed; injection not attempted'
       n=$((n+1)); sleep 1; continue
     fi
@@ -219,5 +215,6 @@ while ! reap_if_exited; do
 done
 [ "$reap_rc" = 0 ] || fail "probe did not exit cleanly: $reap_rc"
 restore_cycle || fail 'config restoration incomplete'
+grep -qx QUIT_ACK "$work/probe.log" || fail "quit acknowledgement missing; use v1.7.8 probe"
 stage lab-pass
-echo "LAB_PASS: $mode; synthetic target only; not proof of physical LG Home interception"
+completed=1

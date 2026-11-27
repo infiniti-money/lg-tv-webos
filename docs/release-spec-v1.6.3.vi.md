@@ -2,7 +2,7 @@
 
 **Sản phẩm:** Designed by Tân Dev · **Chủ repo:** infiniti-money  
 **Thiết bị mục tiêu:** LG 49UH850T-TA, webOS 3.4.3, ARMv7, firmware 05.70.45.  
-**Trạng thái:** kế hoạch và tiêu chí nghiệm thu, không phải release. Bản chính thức hiện tại v1.6.2. PR #33; baseline `86ddd572bdd5b81970ad924960d49b1c4f82043e` có CI 45874912094 và 45874906257 thành công. appinfo vẫn 1.6.2. Chưa nghiệm thu hardware các chức năng mới.
+**Trạng thái:** kế hoạch và tiêu chí nghiệm thu, không phải release. Bản chính thức hiện tại v1.6.2. PR #33; baseline `b4b37c652ca08e18de09196ceda20bc1898889c6` có CI 45934624436 và 45934630771 thành công (bao gồm đóng gói, nhưng metadata/artifact vẫn 1.6.2). appinfo vẫn 1.6.2. Chưa nghiệm thu hardware các chức năng mới.
 
 ## P0 — Tính năng bắt buộc phải hoạt động
 
@@ -84,3 +84,9 @@ Bổ sung đủ 24 chuyển cảnh, 12 motion, chu kỳ 20 giây, tốc độ 60
 - Bổ sung random-light cho idle, bảng đọc RAM trống/tải trung bình/uptime theo yêu cầu, xuất/nhập JSON tùy chọn chung có xác nhận. Không phải bản sao đầy đủ ảnh, icon riêng hoặc localStorage; chưa hỗ trợ dung lượng đĩa/đo CPU phần trăm. Import qua validator hiện có, không nhận trường lệnh hoặc mật khẩu.
 
 - Bổ sung thử album nhanh 5 giây/ảnh, không ghi mốc lịch thật, có thể xem thử khi album tắt; tạm tránh ảnh lỗi 60s. Web gửi thứ tự app đang hiển thị qua mailbox, giữ nhóm ghim ở đầu; cần TV xác nhận. Không mở chức năng launch/root từ web. Chưa nghiệm thu thiết bị.
+
+### Nghiệm thu ứng viên — 27/11/2026
+- CI của baseline trên đã xanh; chưa đánh dấu nghiệm thu TV hoặc LAN.
+- Tải artifact từ [lượt CI 45934630771](https://github.com/infiniti-money/lg-tv-webos/actions/runs/45934630771) chỉ để thử nghiệm có kiểm soát; metadata vẫn 1.6.2, không coi là release 1.6.3.
+- Trước khi thử: sao lưu, giữ IPK và Root Tools cùng build, kiểm tra SHA-256, không arm boot hook trước khi kiểm tra Home thủ công. Dùng IP hiển thị nếu mDNS không phân giải.
+- Ghi lại model/firmware, kết quả từng mục P0, log ACK (không kèm khóa/mật khẩu), RAM và lỗi; dừng nếu Home đen hoặc recovery không khả dụng.

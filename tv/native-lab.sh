@@ -9,7 +9,12 @@ fail(){ echo "LAB_REFUSED: $*" >&2; exit 1; }
 src=$1
 mode=$2
 case "$mode" in pass|ignore) ;; *) fail 'invalid mode';; esac
-for c in sha256sum timeout mktemp readlink; do command -v "$c" >/dev/null || fail "$c missing"; done
+for c in sha256sum timeout mktemp readlink awk; do command -v "$c" >/dev/null || fail "$c missing"; done
+if timeout -t 2 -s KILL true >/dev/null 2>&1; then
+  bounded(){ timeout -t 20 -s KILL "$@"; }
+elif timeout -k 1 2 true >/dev/null 2>&1; then
+  bounded(){ timeout -k 2 20 "$@"; }
+else fail 'unsupported timeout syntax'; fi
 for f in home-enabled home-event-device boot-home-armed boot-home-trial boot-home-enabled legacy-v8-session legacy-v8-armed legacy-v8-trial legacy-v8-enabled; do
   [ ! -e "$D/$f" ] || fail "active flag $f"
 done
@@ -31,19 +36,28 @@ check_config(){
 }
 check_config || fail 'config must be absent/empty for pass, exactly Home ignore for ignore; no config modified'
 umask 077
-work=$(mktemp -d /tmp/infiniti-native-lab.XXXXXX)
-echo "Lab evidence: $work"
+lock=/tmp/infiniti-native-lab.lock
+mkdir "$lock" || fail 'another lab active or stale lock; inspect before removal'
+work=
 child=
+owned_child(){
+  [ -n "$child" ] && [ "$(awk '/^PPid:/ {print $2}' "/proc/$child/status" 2>/dev/null || true)" = "$" ]
+}
 cleanup(){
-  if [ -n "$child" ] && [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" = "$work/thumb-probe" ]; then
-    kill -KILL "$child" 2>/dev/null || true
-    wait "$child" 2>/dev/null || true
+  # A leader may be zombie while its worker threads are still alive.
+  # Only signal our own child, not an arbitrary or recycled PID.
+  if owned_child; then kill -KILL "$child" 2>/dev/null || true; fi
+  if [ -n "$child" ]; then wait "$child" 2>/dev/null || true; fi
+  if [ -n "$work" ]; then
+    rm -f "$work/commands" "$work/thumb-probe" "$work/ezinject" "$work/libinputhookpp.so"
   fi
-  rm -f "$work/commands" "$work/thumb-probe" "$work/ezinject" "$work/libinputhookpp.so"
+  rmdir "$lock" 2>/dev/null || true
 }
 trap cleanup 0
 trap 'exit 130' INT
 trap 'exit 143' TERM HUP
+work=$(mktemp -d /tmp/infiniti-native-lab.XXXXXX)
+echo "Lab evidence: $work"
 for f in thumb-probe ezinject libinputhookpp.so; do
   [ -f "$src/$f" ] || fail "missing $f"
   cp "$src/$f" "$work/$f"
@@ -79,7 +93,7 @@ wait_line PASS_THROUGH_OK 1
 check_config || fail 'config changed'
 # Only PID obtained from our own background child; no user PID argument.
 [ "$(readlink "/proc/$child/exe")" = "$work/thumb-probe" ] || fail 'owned probe identity changed'
-timeout -k 2 20 "$work/ezinject" -l "$work/hook.log" "$child" "$work/libinputhookpp.so" >"$work/inject.log" 2>&1 || fail 'injector failed or timed out'
+bounded "$work/ezinject" -l "$work/hook.log" "$child" "$work/libinputhookpp.so" >"$work/inject.log" 2>&1 || fail 'injector failed or timed out'
 sleep 2
 [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" = "$work/thumb-probe" ] || fail 'probe died after injection'
 grep -F "$work/libinputhookpp.so" "/proc/$child/maps" >/dev/null || fail 'library not mapped'
@@ -91,11 +105,13 @@ grep -Eq 'uinput_code=115([^0-9]|$)' "$work/hook.log" || fail 'no observed other
 if grep -Eiq 'SIGILL|SIGSEGV|Illegal instruction|Segmentation fault' "$work/inject.log" "$work/hook.log"; then fail 'fault reported'; fi
 printf q >&3
 n=0
-while [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" = "$work/thumb-probe" ]; do
-  [ "$n" -lt 5 ] || fail "probe exit timed out"
+while owned_child; do
+  state=$(awk '/^State:/ {print $2}' "/proc/$child/status" 2>/dev/null || true)
+  threads=$(awk '/^Threads:/ {print $2}' "/proc/$child/status" 2>/dev/null || true)
+  [ "$state:$threads" != Z:1 ] || break
+  [ "$n" -lt 5 ] || fail "probe exit timed out (state=$state threads=$threads)"
   n=$((n+1)); sleep 1
 done
-[ ! -e "/proc/$child/exe" ] || fail "probe identity changed at exit"
 wait "$child" || fail 'probe did not exit cleanly'
 child=
 echo "LAB_PASS: $mode; synthetic target only; not proof of physical LG Home interception"

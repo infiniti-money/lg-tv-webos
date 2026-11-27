@@ -1,3 +1,7 @@
+# v1.7.2 — Native Home verification (ứng viên)
+
+[Hướng dẫn thử nghiệm](RELEASE_NOTES_v1.7.2.md).
+
 # v1.7.1 — Infiniti Home V9.1 (ứng viên)
 
 [Hướng dẫn thử nghiệm và giới hạn](RELEASE_NOTES_v1.7.1.md).

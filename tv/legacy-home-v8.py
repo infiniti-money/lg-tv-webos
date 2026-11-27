@@ -127,14 +127,33 @@ def watch(mode):
             previous_tick = now
             if now >= refresh:
                 refresh = now + 10
-                for path in input_paths():
+                try:
+                    paths = input_paths()
+                except OSError as e:
+                    log('input scan unavailable: %s' % e)
+                    paths = []
+                for path in paths:
                     if path not in fds.values():
                         try:
                             fds[os.open(path, os.O_RDONLY | os.O_NONBLOCK)] = path
                             log('input: ' + path)
                         except OSError:
                             pass
-            ready, _, _ = select.select(list(fds), [], [], 1)
+            try:
+                ready, _, _ = select.select(list(fds), [], [], 1)
+            except (OSError, select.error) as e:
+                if e.args and e.args[0] == errno.EINTR:
+                    continue
+                log('input select failed: %s; reopening devices' % e)
+                for fd in list(fds):
+                    try:
+                        os.close(fd)
+                    except OSError:
+                        pass
+                fds.clear()
+                refresh = 0
+                time.sleep(1)
+                continue
             trigger = False
             wake_trigger = False
             for fd in ready:

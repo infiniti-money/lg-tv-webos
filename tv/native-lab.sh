@@ -5,9 +5,11 @@ D=/home/root/lg-tv-vibehack
 CFG=/home/root/.config/lginputhook/keybinds.json
 fail(){ echo "LAB_REFUSED: $*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || fail 'root required for ptrace'
-[ "$#" = 2 ] || fail 'usage: native-lab.sh DIRECTORY pass|ignore'
+[ "$#" = 2 ] || [ "$#" = 3 ] || fail 'usage: native-lab.sh DIRECTORY pass|ignore [multi]'
 src=$1
 mode=$2
+variant=${3:-single}
+case "$variant" in single|multi) ;; *) fail "invalid variant";; esac
 case "$mode" in pass|ignore) ;; *) fail 'invalid mode';; esac
 for c in sha256sum timeout mktemp readlink awk; do command -v "$c" >/dev/null || fail "$c missing"; done
 if timeout -t 2 -s KILL true >/dev/null 2>&1; then
@@ -88,6 +90,13 @@ wait_line(){
   fail "probe did not produce $1"
 }
 wait_line READY 1
+if [ "$variant" = multi ]; then
+  printf m >&3
+  wait_line MULTI_READY 1
+  count=$(awk '/^Threads:/ {print $2}' "/proc/$child/status")
+  [ "$count" -ge 7 ] || fail "expected seven preexisting threads, observed $count"
+  echo "Pre-injection threads: $count"
+fi
 printf t >&3
 wait_line PASS_THROUGH_OK 1
 check_config || fail 'config changed'
@@ -104,6 +113,7 @@ printf t >&3
 if [ "$mode" = pass ]; then wait_line PASS_THROUGH_OK 2; else wait_line HOME_ONLY_IGNORED 1; fi
 grep -Eq 'uinput_code=773([^0-9]|$)' "$work/hook.log" || fail 'no observed Home hook call'
 grep -Eq 'uinput_code=115([^0-9]|$)' "$work/hook.log" || fail 'no observed other-key hook call'
+/usr/bin/node "$D/native-diagnostics.js" "$child" "$work" >"$work/diagnostics.json" || fail "post-hook diagnostics failed"
 if grep -Eiq 'SIGILL|SIGSEGV|Illegal instruction|Segmentation fault' "$work/inject.log" "$work/hook.log"; then fail 'fault reported'; fi
 printf q >&3
 n=0

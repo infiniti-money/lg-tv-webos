@@ -1065,7 +1065,7 @@
   // The wallpaper page relaunches us with {reload: true} after changing the wallpaper.
   document.addEventListener('webOSRelaunch', function (e) {
     var p = (e && e.detail) || {};
-    if (!p.reload && window.PalmSystem) { try { p = JSON.parse(PalmSystem.launchParams || '{}'); } catch (x) { p = {}; } }
+    if (!p.reload && !p.infinitiRenderToken && window.PalmSystem) { try { p = JSON.parse(PalmSystem.launchParams || '{}'); } catch (x) { p = {}; } }
     if (p.reload) { location.reload(); return; }
     idleReset();resume();
     if(p.infinitiIdlePreview===true&&window.INFINITI_IDLE_PREVIEW)window.INFINITI_IDLE_PREVIEW();

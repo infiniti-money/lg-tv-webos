@@ -58,8 +58,19 @@ def helper(action):
 
 def spawn_helper(action):
     # No shell, optional subprocess module, or inherited input device ownership.
-    return os.spawnv(os.P_NOWAIT, '/usr/bin/node',
-                     ['/usr/bin/node', DATA + '/legacy-luna.js', action])
+    pid = os.fork()
+    if pid == 0:
+        try:
+            for name in os.listdir('/proc/self/fd'):
+                if name.isdigit() and int(name) > 2:
+                    try:
+                        os.close(int(name))
+                    except OSError:
+                        pass
+            os.execv('/usr/bin/node', ['/usr/bin/node', DATA + '/legacy-luna.js', action])
+        finally:
+            os._exit(127)
+    return pid
 
 
 def poll_helper(pid):
@@ -185,7 +196,7 @@ def input_paths():
             name = ''
         if name.startswith('LGE M-RCU') or name == 'LGE RCU' or name == 'LGE Simple Premium':
             preferred.append(path)
-        elif not name and os.path.basename(path) in ('event1','event4','event5','event6'):
+        elif not name and os.path.basename(path) in ('event1','event3','event4','event5','event6'):
             fallback.append(path)
     return preferred + fallback
 

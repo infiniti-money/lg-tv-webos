@@ -63,7 +63,10 @@ child=$!
 wait_line(){
   n=0
   while [ "$n" -lt 10 ]; do
-    [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" = "$work/thumb-probe" ] || fail 'owned probe exited or changed'
+    if [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" != "$work/thumb-probe" ]; then
+      [ "$1" = READY ] && kill -0 "$child" 2>/dev/null || fail 'owned probe exited or changed'
+      n=$((n+1)); sleep 1; continue
+    fi
     count=$(grep -c "^$1$" "$work/probe.log" || true)
     [ "$count" -ge "$2" ] && return 0
     n=$((n+1)); sleep 1

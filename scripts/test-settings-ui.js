@@ -9,7 +9,7 @@ var ids = {}, docEvents = {}, weatherCalls = 0, lastXhr = null;
 function Node(tag, id) {
   this.tagName = tag || 'div'; this.id = id || '';
   this.parentNode = null; this.children = []; this.className = '';
-  this.textContent = ''; this.value = ''; this.events = {}; this.style = {};
+  this.textContent = ''; this.value = ''; this.events = {}; this.style = {}; this.attributes = {};
   var self = this;
   this.classList = {
     add:function(name) { if (!self.hasClass(name)) self.className += (self.className ? ' ' : '') + name; },
@@ -21,7 +21,9 @@ Node.prototype.appendChild = function (el) { el.parentNode=this; this.children.p
 Node.prototype.addEventListener = function (type, cb) { this.events[type] = cb; };
 Node.prototype.focus = function () { document.activeElement = this; };
 Node.prototype.click = function () { if (this.events.click) this.events.click({target:this}); };
-Node.prototype.setAttribute = function () {};
+Node.prototype.setAttribute = function (name,value) { this.attributes[name]=String(value); };
+Node.prototype.getAttribute = function (name) { return Object.prototype.hasOwnProperty.call(this.attributes,name)?this.attributes[name]:null; };
+Node.prototype.removeAttribute = function (name) { delete this.attributes[name]; };
 Node.prototype.scrollIntoView = function () {};
 Node.prototype.querySelectorAll = function (tag) {
   var found = [];

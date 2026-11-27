@@ -4,9 +4,11 @@ Launcher tùy chỉnh dành cho LG webOS. Chủ sở hữu kho mã, quản trị
 
 [English](README.md) · [Bản phát hành](https://github.com/infiniti-money/lg-tv-webos/releases) · [Hướng dẫn chủ TV](docs/owner-guide.vi.md) · [Giấy phép](LICENSE)
 
+[Lịch sử tất cả phiên bản và kết quả nghiệm thu](CHANGELOG.md)
+
 ## Phiên bản hiện tại
 
-Bản ổn định v1.6.2; v1.6.6 đã phát hành prerelease. v1.6.7 là ứng viên kiểm thử Home theo foreground. Tất cả gói cài đặt chính thức của bản tùy chỉnh được phân phối từ repository này.
+Bản phát hành không prerelease gần nhất: v1.6.2; bản thử nghiệm mới nhất tại thời điểm cập nhật: v1.7.9. Xem changelog để phân biệt trạng thái CI và nghiệm thu TV. Tất cả gói cài đặt chính thức của bản tùy chỉnh được phân phối từ repository này.
 
 | Chức năng | v1.6.7 (ứng viên) |
 |---|---|

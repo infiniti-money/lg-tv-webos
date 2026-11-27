@@ -39,6 +39,8 @@ def disarm_enabled():
 def allowed(mode):
     if os.path.exists(FAILSAFE) or os.path.exists(LEGACY_HOOK):
         return False
+    if exists('ribbon') and (os.path.exists('/tmp/inputhook') or os.path.exists('/var/lib/webosbrew/init.d/inputhook')):
+        return False
     # Never compete with Input Hook's existing Home binding.
     if os.path.exists(os.path.join(DATA, 'home-enabled')):
         return False
@@ -212,11 +214,60 @@ def input_paths():
             fallback.append(path)
     return preferred + fallback
 
+# V9: only consume new complete system-log lines, never replay old boot history.
+class RibbonLog(object):
+    def __init__(self, path='/var/log/messages'):
+        self.path, self.identity, self.offset, self.partial = path, None, 0, b''
+    def read(self):
+        try:
+            with open(self.path, 'rb') as fp:
+                st = os.fstat(fp.fileno())
+                identity = (st.st_dev, st.st_ino)
+                if identity != self.identity or st.st_size < self.offset:
+                    self.identity, self.offset, self.partial = identity, st.st_size, b''
+                    return []
+                fp.seek(self.offset)
+                # After backlog, discard history instead of triggering stale recovery.
+                if st.st_size - self.offset > 65536:
+                    self.offset, self.partial = st.st_size, b''
+                    return []
+                data = fp.read(65536)
+                self.offset = fp.tell()
+        except (IOError, OSError):
+            self.identity, self.partial = None, b''
+            return []
+        lines = (self.partial + data).split(b'\n')
+        self.partial = lines.pop()[-4096:]
+        events = []
+        for line in lines:
+            if b'surface-manager-starfish' not in line or b' LSM NL_HOME_' not in line:
+                continue
+            if b' LSM NL_HOME_SHOWN ' in line:
+                events.append(('shown', b'"foregroundId":"com.infinitimoney.tvhome"' in line))
+            elif b' LSM NL_HOME_HIDDEN ' in line:
+                events.append(('hidden', False))
+        return events
+
+def ribbon_events(queue, events, now):
+    # Hidden is diagnostic only; this firmware has not yet confirmed that event.
+    # Require a pending physical Home intent; no log-only launches or synthetic keys.
+    for state, own in events:
+        log('V9 ribbon %s; foreground_tan=%d' % (state, own))
+        if state == 'shown' and queue.pending and queue.last_press is not None and 0 <= now - queue.last_press <= 1.5:
+            if own:
+                queue.repeat = True
+            queue.due = min(queue.due, now + 0.15)
+            log('V9 correlated Home ribbon; bounded recovery requested')
+
 def watch(mode):
     fds = {}
     last = 0
     last_home = None
     queue = HomeQueue(mode)
+    ribbon = RibbonLog() if exists('ribbon') else None
+    if ribbon is not None:
+        ribbon.read()  # baseline before listening
+        log('V9 ribbon correlation enabled; no injection or mounts')
     prev = None
     next_power = 0
     next_sync = time.time() + 10
@@ -247,7 +298,7 @@ def watch(mode):
                         except OSError:
                             pass
             try:
-                ready, _, _ = select.select(list(fds), [], [], 0.15 if queue.pid is not None or queue.pending else 1)
+                ready, _, _ = select.select(list(fds), [], [], 0.15 if ribbon is not None or queue.pid is not None or queue.pending else 1)
             except (OSError, select.error) as e:
                 if e.args and e.args[0] == errno.EINTR:
                     continue
@@ -283,6 +334,10 @@ def watch(mode):
                 if distinct_home_press(stamp, last_home):
                     last_home = stamp
                     queue.press(now)
+                    if ribbon is not None and not queue.repeat:
+                        queue.due = max(queue.due, now + 0.6)
+            if ribbon is not None:
+                ribbon_events(queue, ribbon.read(), now)
             result = queue.reap(now)
             wake_enabled = mode == 'enabled' and exists('wake')
             if not wake_enabled:

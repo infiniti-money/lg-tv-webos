@@ -195,6 +195,9 @@ function handle(req, res) {
     });
   }
 
+  if (route === 'GET /api/diagnostics') {
+    return json(res,200,{uptime:os.uptime(),totalMemory:os.totalmem(),freeMemory:os.freemem(),load:os.loadavg(),cores:os.cpus().length,port:PORT});
+  }
   if (route === 'GET /api/state') {
     var s = readJSON(SETTINGS, {}), w = s.weather || {};
     return json(res, 200, {

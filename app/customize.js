@@ -74,16 +74,16 @@
   }
   function resetVisible() { safeWrite(VISIBILITY_KEY, {}); }
   var IDLE_CHOICES=[0,30,60,120,300];
-  var IDLE_EFFECTS=["rain","snow","petals","stars","fireflies","bubbles","mist","leaves","sparkles","meteor","aurora","embers","waves","hearts","random"];
-  var IDLE_LABELS=["Mưa rơi","Tuyết rơi","Cánh hoa","Bầu trời sao","Đom đóm","Bong bóng","Sương mờ","Lá bay","Ánh kim","Sao băng","Cực quang","Tàn lửa","Sóng ánh sáng","Trái tim","Ngẫu nhiên"];
+  var IDLE_EFFECTS=["rain","snow","petals","stars","fireflies","bubbles","mist","leaves","sparkles","meteor","aurora","embers","waves","hearts","random","random-light"];
+  var IDLE_LABELS=["Mưa rơi","Tuyết rơi","Cánh hoa","Bầu trời sao","Đom đóm","Bong bóng","Sương mờ","Lá bay","Ánh kim","Sao băng","Cực quang","Tàn lửa","Sóng ánh sáng","Trái tim","Ngẫu nhiên","Ngẫu nhiên nhẹ"];
   function idleEffectValue(v){return IDLE_EFFECTS.indexOf(v)>=0?v:defaults.idleEffect;}
   function resolveIdleEffect(p,random){
     if(!p.idleRain||p.reduceMotion)return '';
     var effect=idleEffectValue(p.idleEffect);
-    if(effect!=='random')return effect;
+    if(effect!=='random'&&effect!=='random-light')return effect;
     var n=Number(random);
     if(!isFinite(n)||n<0||n>=1)n=0;
-    return IDLE_EFFECTS[Math.floor(n*(IDLE_EFFECTS.length-1))];
+    var pool=effect==='random-light'?['snow','petals','stars','mist','leaves','sparkles']:IDLE_EFFECTS.slice(0,14);return pool[Math.floor(n*pool.length)];
   }
   function idleValue(v){return IDLE_CHOICES.indexOf(v)>=0?v:defaults.idleSeconds;}
   function getAppearance() {

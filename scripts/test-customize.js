@@ -87,3 +87,5 @@ console.log('Idle effect preferences and random choice passed.');
 assert.equal(p.setPinned('netflix',true),true);assert.equal(p.getPinned()[0],'netflix');assert.equal(p.setPinned('com.infinitimoney.tvhome',true),false);assert.equal(p.setPinned('netflix',false),true);assert.equal(p.getPinned().indexOf('netflix'),-1);
 
 assert.ok(p.recordRecent('com.netflix.app'));assert.ok(p.recordRecent('youtube.leanback.v4'));assert.ok(p.recordRecent('com.netflix.app'));assert.equal(p.getRecent()[0],'com.netflix.app');assert.equal(p.getRecent().filter(function(x){return x==='com.netflix.app';}).length,1);assert.ok(p.matchesApp({id:'com.netflix.app',title:'Netflix'},'netf'));assert.ok(!p.matchesApp({id:'com.netflix.app',title:'Netflix'},'xyz'));
+
+assert.equal(p.resolveIdleEffect({idleRain:true,idleEffect:'random-light'},0),'snow');assert.equal(p.resolveIdleEffect({idleRain:true,idleEffect:'random-light'},.999),'sparkles');

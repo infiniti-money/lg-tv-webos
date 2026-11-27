@@ -29,7 +29,9 @@ restore(){
 case "$1" in
   recover) restore; exit ;;
   report) exec /usr/bin/node "$D/native-trial-proof.js" report ;;
-  preflight|trial) ;;
+  diagnose) pids=$(pidof lginput2 || true); case "$pids" in ''|*[!0-9]*) fail "expected one lginput2";; esac; exec /usr/bin/node "$D/native-diagnostics.js" "$pids" "$STATE" ;;
+  trial) fail "Physical injection suspended after v1.7.5 mapped-but-unverified result. Use diagnose or isolated lab." ;;
+  preflight) ;;
   *) fail 'unknown operation' ;;
 esac
 for c in sha256sum timeout readlink pidof awk cmp; do command -v "$c" >/dev/null || fail "$c missing"; done
@@ -74,48 +76,4 @@ verify_bins(){
 }
 verify_bins "$SRC" || fail 'upstream checksum mismatch'
 echo 'PREFLIGHT_PASS: exact binary fingerprint; firmware display still requires owner confirmation'
-[ "$1" = trial ] || exit 0
-[ "$#" = 2 ] && [ "$2" = --confirm-05.70.45 ] || fail 'confirm TV Settings shows firmware 05.70.45; keep second SSH open'
-umask 077
-mkdir "$STATE" || fail 'trial state exists'
-trap 'rc=$?; trap - 0; restore || rc=1; exit "$rc"' 0
-trap 'exit 130' INT
-trap 'exit 143' TERM HUP
-cp -p "$CFG" "$BACKUP"
-cp -p "$BACKUP" "$STATE/original"
-printf '%s\n' "$p" > "$STATE/pid"
-printf '%s\n' "$start" > "$STATE/start"
-cp "$SRC/ezinject" "$SRC/libinputhookpp.so" "$STATE/"
-verify_bins "$STATE" || fail 'copied binaries mismatch'
-chmod 700 "$STATE/ezinject"
-identity && empty_config || fail 'target/config changed'
-bounded "$STATE/ezinject" -l "$STATE/hook.log" "$p" "$STATE/libinputhookpp.so" >"$STATE/inject.log" 2>&1 || fail 'inject failed or timed out; recover and inspect'
-sleep 2
-identity || fail 'target changed after injection'
-grep -F "$STATE/libinputhookpp.so" "/proc/$p/maps" >/dev/null || fail 'library not mapped'
-grep -F 'Replacing lginput_uinput_send_button' "$STATE/hook.log" >/dev/null || fail 'expected Thumb hook missing'
-if grep -Eiq 'SIGILL|SIGSEGV|Illegal instruction|Segmentation fault' "$STATE/inject.log" "$STATE/hook.log"; then fail 'fault observed'; fi
-echo 'PASS-THROUGH PHASE: test Volume, Back and cursor for 10 seconds; stop immediately if abnormal'
-sleep 10
-identity && empty_config && [ ! -e "$STATE/cancel" ] || fail 'target/config changed or canceled'
-echo 'After confirming Volume, Back and cursor work, type YES to arm; anything else cancels.'
-read answer || fail 'confirmation canceled'
-[ "$answer" = YES ] && [ ! -e "$STATE/cancel" ] && identity && empty_config || fail 'trial canceled'
-/usr/bin/node "$D/native-trial-proof.js" begin || fail 'cannot baseline ribbon logs'
-echo 'ARMING 60-second trial; press Home from another app, then again while Tân Dev foreground'
-printf '%s\n' "$(( $(date +%s) + 60 ))" > "$STATE/active"
-tmp="$CFG.infiniti-trial-$$"
-printf '%s\n' "$KEY" > "$tmp"
-chmod 600 "$tmp"
-[ ! -e "$STATE/cancel" ] || { rm -f "$tmp"; fail "trial canceled"; }
-mv -f "$tmp" "$CFG"
-[ ! -e "$STATE/cancel" ] || fail "trial canceled during mapping"
-n=0
-while [ "$n" -lt 60 ] && [ -f "$STATE/active" ]; do
-  identity || fail 'lginput2 exited/restarted'
-  [ ! -e "$STATE/cancel" ] || break
-  [ "$(cat "$CFG")" = "$KEY" ] || fail 'config changed'
-  sleep 1
-  n=$((n+1))
-done
-echo 'TRIAL ENDED: restoring config; no automatic reboot'
+echo "Physical trial suspended pending multithreaded lab investigation."

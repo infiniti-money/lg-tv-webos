@@ -5,9 +5,11 @@ D=/home/root/lg-tv-vibehack
 CFG=/home/root/.config/lginputhook/keybinds.json
 fail(){ echo "LAB_REFUSED: $*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || fail 'root required for ptrace'
-[ "$#" = 2 ] || fail 'usage: native-lab.sh DIRECTORY pass|ignore'
+[ "$#" = 2 ] || [ "$#" = 3 ] || fail 'usage: native-lab.sh DIRECTORY pass|ignore [multi]'
 src=$1
 mode=$2
+variant=${3:-single}
+case "$variant" in single|multi) ;; *) fail "invalid variant";; esac
 case "$mode" in pass|ignore) ;; *) fail 'invalid mode';; esac
 for c in sha256sum timeout mktemp readlink awk; do command -v "$c" >/dev/null || fail "$c missing"; done
 if timeout -t 2 -s KILL true >/dev/null 2>&1; then
@@ -88,12 +90,21 @@ wait_line(){
   fail "probe did not produce $1"
 }
 wait_line READY 1
+if [ "$variant" = multi ]; then
+  printf m >&3
+  wait_line MULTI_READY 1
+  count=$(awk '/^Threads:/ {print $2}' "/proc/$child/status")
+  [ "$count" -ge 7 ] || fail "expected seven preexisting threads, observed $count"
+  echo "Pre-injection threads: $count"
+fi
 printf t >&3
 wait_line PASS_THROUGH_OK 1
 check_config || fail 'config changed'
 # Only PID obtained from our own background child; no user PID argument.
 [ "$(readlink "/proc/$child/exe")" = "$work/thumb-probe" ] || fail 'owned probe identity changed'
-bounded "$work/ezinject" -l "$work/hook.log" "$child" "$work/libinputhookpp.so" >"$work/inject.log" 2>&1 || fail 'injector failed or timed out'
+if /usr/bin/node "$D/native-inject-observe.js" "$work" "$child" "$" >"$work/inject.log" 2>&1; then rc=0; else rc=$?; fi
+/usr/bin/node "$D/native-diagnostics.js" "$child" "$work" >"$work/diagnostics.json" 2>&1 || true
+[ "$rc" = 0 ] || fail "injector failed; inspect inject-result.json and diagnostics.json"
 sleep 2
 [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" = "$work/thumb-probe" ] || fail 'probe died after injection'
 grep -F "$work/libinputhookpp.so" "/proc/$child/maps" >/dev/null || fail 'library not mapped'
@@ -102,6 +113,7 @@ printf t >&3
 if [ "$mode" = pass ]; then wait_line PASS_THROUGH_OK 2; else wait_line HOME_ONLY_IGNORED 1; fi
 grep -Eq 'uinput_code=773([^0-9]|$)' "$work/hook.log" || fail 'no observed Home hook call'
 grep -Eq 'uinput_code=115([^0-9]|$)' "$work/hook.log" || fail 'no observed other-key hook call'
+/usr/bin/node "$D/native-diagnostics.js" "$child" "$work" >"$work/diagnostics.json" || fail "post-hook diagnostics failed"
 if grep -Eiq 'SIGILL|SIGSEGV|Illegal instruction|Segmentation fault' "$work/inject.log" "$work/hook.log"; then fail 'fault reported'; fi
 printf q >&3
 n=0

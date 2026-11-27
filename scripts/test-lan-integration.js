@@ -12,7 +12,13 @@ try{
  auth=false;assert.equal(run(a,'POST','/api/album/upload',{},pic).code,403);auth=true;
  assert.equal(run(a,'POST','/api/album/upload',{},Buffer.from('invalid')).code,400);
  assert.equal(run(a,'POST','/api/album/settings',{enabled:'1',seconds:'3600',random:'1',transition:'invalid'}).code,400);
- var restored=album.create(dir,function(){return dest;},function(){return allowed;},log);assert.equal(run(restored,'GET','/api/album').value.photos[0],id);
+ var id2=run(a,'POST','/api/album/upload',{},pic).value.id;
+ assert.equal(run(a,'POST','/api/album/move',{id:id,direction:'up'}).code,409);
+ assert.equal(run(a,'POST','/api/album/move',{id:id,direction:'down'}).code,200);
+ assert.deepStrictEqual(run(a,'GET','/api/album').value.photos,[id2,id]);
+ assert.equal(run(a,'POST','/api/album/settings',{enabled:'1',seconds:'3600',random:'0',intensity:'medium'}).code,200);
+ assert.equal(run(a,'POST','/api/album/settings',{enabled:'1',seconds:'3600',random:'0',intensity:'invalid'}).code,400);
+ var restored=album.create(dir,function(){return dest;},function(){return allowed;},log);assert.equal(run(restored,'GET','/api/album').value.photos[0],id2);assert.equal(run(restored,'GET','/api/album').value.intensity,'medium');
  assert.equal(run(restored,'POST','/api/album/delete',{id:id}).code,200);assert.ok(!fs.existsSync(path.join(dest,'idle-photo-'+id+'.jpg')));assert.equal(run(restored,'GET','/api/album').value.transition,'cinema');
  fs.writeFileSync(path.join(dest,'apps.js'),'window.TV_APPS = {"apps":[{"id":"netflix","title":"Netflix"}]};\n');
  var m=remote.create(dir,function(){return dest;},function(){return allowed;},log);

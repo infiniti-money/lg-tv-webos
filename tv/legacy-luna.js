@@ -149,7 +149,7 @@ function renderSession(mode, closeFirst, callback, options) {
       luna(M+'closeByAppId',{id:APP},function(e){
         if(done)return;
         if(e)console.log('close: '+e.message);
-        setTimeout(launch,150);
+        setTimeout(launch, !e && exists(DATA+'/legacy-v8-ribbon') && exists(DATA+'/legacy-v8-fast') ? 50 : 150);
       },null,1500);
     }else launch();
   });
@@ -215,6 +215,8 @@ function fail(e){console.error(String(e));process.exitCode=1;}
 function run(action) {
   if(/^boot-(trial|enabled)$/.test(action)){
     boot(action.slice(5));
+  } else if(action==='lsm-state'){
+    luna('luna://com.webos.surfacemanager/getCurrentState',{},function(e,r){if(e)return fail(e);console.log(JSON.stringify(r));},null,2000);
   } else if(action==='probe' || action==='catalog'){
     luna(M+(action==='probe'?'getForegroundAppInfo':'listApps'),{},function(e,r){
       if(e) return fail(e);

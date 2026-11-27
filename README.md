@@ -1,5 +1,7 @@
 # Designed by Tân Dev
 
+[Version history and validation evidence](CHANGELOG.md) · [Vietnamese release notes](RELEASE.vi.md)
+
 Custom LG webOS launcher owned and maintained as a repository by [infiniti-money](https://github.com/infiniti-money).
 
 [Tiếng Việt](README.vi.md) · [Official releases](https://github.com/infiniti-money/lg-tv-webos/releases) · [Owner guide (Vietnamese)](docs/owner-guide.vi.md) · [License](LICENSE)

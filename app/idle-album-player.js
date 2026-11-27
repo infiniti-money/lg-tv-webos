@@ -1,11 +1,11 @@
 /* Two bounded image layers, only while idle; no background timer otherwise. */
 (function(root){
 'use strict';
-var active=false,seq=0,timer=null,index=-1,current='',layer=0,prefs=null,loaded=null,script=null,loadTimer=null,imageTimer=null,transitionTimer=null,lastStyle='',lastMotion='',appliedMotion='',motionTimer=null,motionStart=0,motionLayer=null,motionName='still',enterState=null,previewMode=false,failed={};
+var active=false,seq=0,timer=null,index=-1,current='',layer=0,prefs=null,loaded=null,script=null,loadTimer=null,imageTimer=null,transitionTimer=null,lastStyle='',lastMotion='',appliedMotion='',motionTimer=null,motionStart=0,motionLayer=null,motionName='still',enterState=null,previewMode=false,previewOptions=null,failed={};
 var allowed=[0,15,20,30,60,120,300,600,1800,3600,7200,21600,43200,86400,172800,604800],a=document.getElementById('idlePhotoA'),b=document.getElementById('idlePhotoB');
 function clean(){stopMotion();enterState=null;if(transitionTimer!==null){clearTimeout(transitionTimer);transitionTimer=null;}if(imageTimer!==null){clearTimeout(imageTimer);imageTimer=null;}if(timer!==null){clearTimeout(timer);timer=null;}if(loadTimer!==null){clearTimeout(loadTimer);loadTimer=null;}if(script&&script.parentNode)script.parentNode.removeChild(script);script=null;if(loaded){loaded.onload=loaded.onerror=null;loaded=null;}}
 function clearLayer(el){el.className='idlePhoto';el.style.zIndex='0';el.style.opacity='';el.style.webkitAnimationDuration='';el.style.animationDuration='';el.style.webkitTransform='';el.style.transform='';el.firstChild.style.webkitTransform='';el.firstChild.style.transform='';el.firstChild.className='idlePhotoImage';el.firstChild.style.backgroundImage='';}
-function stop(){previewMode=false;failed={};active=false;seq++;clean();[a,b].forEach(clearLayer);current='';index=-1;layer=0;appliedMotion='';}
+function stop(){previewMode=false;previewOptions=null;failed={};active=false;seq++;clean();[a,b].forEach(clearLayer);current='';index=-1;layer=0;appliedMotion='';}
 var styles=["fade","slide-left","slide-right","slide-up","zoom-in","zoom-out","dissolve","cinema","slide-down","diagonal","soft-rotate","sweep","lift","focus","slide-nw","slide-ne","slide-sw","cross-zoom","swing-left","swing-right","drift-in","drop-in","curtain-lite","flip-lite"],motions=["zoom-in","zoom-out","pan-left","pan-right","pan-up","pan-down","pan-nw","pan-ne","pan-sw","pan-se","drift-horizontal","drift-vertical"];
 function chooseStyle(pref,options,last,r){if(pref==='random-light')options=options.filter(function(x){return ['fade','dissolve','slide-left','slide-right','zoom-in','zoom-out','drift-in','pan-left','pan-right','pan-up','pan-down','drift-horizontal','drift-vertical'].indexOf(x)>=0;});else if(pref==='random-cinema')options=options.filter(function(x){return ['cinema','focus','cross-zoom','swing-left','swing-right','curtain-lite','drop-in'].indexOf(x)>=0;});else if(pref!=='random')return pref;if(!options.length)return last||'none';var available=options.filter(function(x){return x!==last;});if(!available.length)available=options;return available[Math.min(available.length-1,Math.max(0,Math.floor(r*available.length)))];}
 function reduced(){return document.body.classList.contains('motion-reduced');}
@@ -54,10 +54,15 @@ function read(n){
  function finish(ok){if(script!==s)return;if(loadTimer!==null){clearTimeout(loadTimer);loadTimer=null;}if(s.parentNode)s.parentNode.removeChild(s);script=null;if(!active||n!==seq)return;
  var p=ok?root.INFINITI_IDLE_ALBUM:null;
  if(p&&Array.isArray(p.photos)&&allowed.indexOf(p.seconds)>=0){prefs={enabled:p.enabled===true,seconds:p.seconds,random:p.random===true,transition:["fade","slide-left","slide-right","slide-up","zoom-in","zoom-out","dissolve","cinema","slide-down","diagonal","soft-rotate","sweep","lift","focus","slide-nw","slide-ne","slide-sw","cross-zoom","swing-left","swing-right","drift-in","drop-in","curtain-lite","flip-lite","random","random-light","random-cinema","none"].indexOf(p.transition)>=0?p.transition:'random-light',motion:["still","zoom","pan","drift","random","random-light","zoom-in","zoom-out","pan-left","pan-right","pan-up","pan-down","pan-nw","pan-ne","pan-sw","pan-se","drift-horizontal","drift-vertical"].indexOf(p.motion)>=0?p.motion:'random-light',speed:[600,1100,1600].indexOf(p.speed)>=0?p.speed:1100,powerEpoch:typeof p.powerEpoch==='string'?p.powerEpoch:'',photos:p.photos.filter(function(id){return typeof id==='string'&&/^[a-f0-9]{24}$/.test(id);}).slice(0,20)};}else prefs=null;
+ if(prefs&&previewMode&&previewOptions){if(previewOptions.transition)prefs.transition=previewOptions.transition;if(previewOptions.motion)prefs.motion=previewOptions.motion;}
  render(n);}
  s.onload=function(){finish(true);};s.onerror=function(){finish(false);};loadTimer=setTimeout(function(){finish(false);},4000);document.body.appendChild(s);
 }
-root.INFINITI_IDLE_ALBUM_START=function(preview){stop();previewMode=preview===true;active=true;read(seq);};
+function previewSelection(options){var out={};if(options&&styles.indexOf(options.transition)>=0)out.transition=options.transition;if(options&&(motions.indexOf(options.motion)>=0||options.motion==='still'))out.motion=options.motion;return out;}
+root.INFINITI_IDLE_ALBUM_PREVIEW_SELECTION=previewSelection;
+root.INFINITI_IDLE_ALBUM_STYLES=function(){return styles.slice();};
+root.INFINITI_IDLE_ALBUM_MOTIONS=function(){return motions.slice();};
+root.INFINITI_IDLE_ALBUM_START=function(preview,options){stop();previewMode=preview===true;previewOptions=previewMode?previewSelection(options):null;active=true;read(seq);};
 root.INFINITI_IDLE_ALBUM_NEXT=function(){if(!active||!previewMode||!prefs||prefs.photos.length<2||script||loaded||enterState||transitionTimer!==null)return false;if(timer!==null){clearTimeout(timer);timer=null;}read(seq);return true;};
 root.INFINITI_IDLE_ALBUM_IS_PREVIEW=function(){return active&&previewMode;};
 root.INFINITI_IDLE_ALBUM_STOP=stop;

@@ -28,7 +28,7 @@ done
 
 # First disarm *all* known activators, even if Input Hook has an unknown
 # binding or the older home-control.sh refuses its keymap rollback.
-for item in "$D/legacy-v8-session" "$D/legacy-v8-armed" "$D/legacy-v8-trial" "$D/legacy-v8-enabled" "$D/legacy-v8-wake" "$D/legacy-v8-wallpaper" "$D/home-enabled" "$D/home-event-device" "$D/boot-services-enabled" \
+for item in "$D/legacy-v8-session" "$D/legacy-v8-armed" "$D/legacy-v8-trial" "$D/legacy-v8-enabled" "$D/legacy-v8-wake" "$D/legacy-v8-wallpaper" "$D/legacy-v8-ribbon" "$D/legacy-v8-fast" "$D/home-enabled" "$D/home-event-device" "$D/boot-services-enabled" \
   "$D/auto-update-enabled" "$D/boot-home-armed" "$D/boot-home-trial" "$D/boot-home-enabled"; do
   if [ -f "$item" ]; then
     mv "$item" "$R/" || {
@@ -39,7 +39,7 @@ for item in "$D/legacy-v8-session" "$D/legacy-v8-armed" "$D/legacy-v8-trial" "$D
 done
 
 # Invalidate stale trial proof after flags were removed.
-rm -f /tmp/infiniti-legacy-v8-trial-ok || FAIL=1
+rm -f /tmp/infiniti-native-proof.json /tmp/infiniti-legacy-v8-trial-ok || FAIL=1
 
 # Homebrew executes every executable file in init.d on boot.
 # 97-homekey is the user's experimental 25s physical-key loop.

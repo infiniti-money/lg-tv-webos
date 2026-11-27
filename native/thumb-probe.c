@@ -5,15 +5,23 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <poll.h>
+static pthread_mutex_t held_mutex=PTHREAD_MUTEX_INITIALIZER;
+static void *poll_worker(void *arg) { (void)arg; for (;;) poll(0,0,1000); return 0; }
+static void *lock_worker(void *arg) { (void)arg; if(pthread_mutex_lock(&held_mutex)==0) pthread_mutex_unlock(&held_mutex); return 0; }
 
 /* Bind the old ARM glibc symbol explicitly, including on modern build hosts. */
 extern int legacy_pthread_create(pthread_t *, const pthread_attr_t *, void *(*)(void *), void *);
 __asm__(".symver legacy_pthread_create,pthread_create@GLIBC_2.4");
 static void *idle_worker(void *arg) { (void)arg; for (;;) pause(); return 0; }
-static int start_workers(void) {
+static int start_workers(int mixed) {
     pthread_t threads[6];
     unsigned i;
-    for(i=0;i<6;i++) if(legacy_pthread_create(&threads[i],0,idle_worker,0)!=0) return -1;
+    if(mixed && pthread_mutex_lock(&held_mutex)!=0) return -1;
+    for(i=0;i<6;i++) {
+        void *(*worker)(void *)=mixed && i<2?poll_worker:mixed && i<4?lock_worker:idle_worker;
+        if(legacy_pthread_create(&threads[i],0,worker,0)!=0) return -1;
+    }
     return 0;
 }
 
@@ -44,10 +52,10 @@ int probe_main(void) {
     keys[0].code=773; keys[1].code=115;
     SAY("READY\n");
     while(read(0,&c,1)==1) {
-        if(c=='q') return 0;
-        if(c=='m') {
-            if(multi || start_workers()!=0) { SAY("MULTI_FAILED\n"); return 2; }
-            multi=1; SAY("MULTI_READY\n"); continue;
+        if(c=='q') { SAY("QUIT_ACK\n"); return 0; }
+        if(c=='m' || c=='r') {
+            if(multi || start_workers(c=='r')!=0) { SAY("MULTI_FAILED\n"); return 2; }
+            multi=1; if(c=='r') SAY("MIXED_READY\n"); SAY("MULTI_READY\n"); continue;
         }
         if(c!='t') continue;
         unsigned before=calls;

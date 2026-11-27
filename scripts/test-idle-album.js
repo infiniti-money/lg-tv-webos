@@ -26,3 +26,5 @@ var playerSource=fs.readFileSync('app/idle-album-player.js','utf8');assert.ok(pl
 assert.equal(root.INFINITI_IDLE_ALBUM_IS_PREVIEW(),false);assert.equal(root.INFINITI_IDLE_ALBUM_NEXT(),false);assert.ok(playerSource.indexOf('!previewMode||!prefs')>=0);assert.ok(fs.readFileSync('app/app.js','utf8').indexOf('e.keyCode===39&&window.INFINITI_IDLE_ALBUM_IS_PREVIEW')>=0);
 
 assert.equal(root.INFINITI_IDLE_ALBUM_STYLES().length,24);assert.equal(root.INFINITI_IDLE_ALBUM_MOTIONS().length,12);assert.equal(root.INFINITI_IDLE_ALBUM_PREVIEW_SELECTION({transition:'fade',motion:'still'}).motion,'still');assert.equal(Object.keys(root.INFINITI_IDLE_ALBUM_PREVIEW_SELECTION({transition:'bad',motion:'bad'})).length,0);
+
+assert.ok(playerSource.indexOf('loaded.removeAttribute(\'src\')')>=0);assert.ok(playerSource.indexOf('prefs.photos.length===1')>=0);assert.ok(playerSource.indexOf('if(script||loaded)return;')>=0);assert.ok(fs.readFileSync('app/index.html','utf8').indexOf('customizeAlbumBrowse')>=0);

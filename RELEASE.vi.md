@@ -1,3 +1,7 @@
+# v1.7.6 — Chẩn đoán Native Hook, thử nghiệm đa luồng
+
+[Quy trình](RELEASE_NOTES_v1.7.6.md). Tạm dừng inject tiến trình LG thật.
+
 # v1.7.5 — Native Home 773, thử nghiệm vật lý
 
 [Xem quy trình và phục hồi](RELEASE_NOTES_v1.7.5.md). Chưa nghiệm thu phần cứng.

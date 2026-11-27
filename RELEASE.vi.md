@@ -1,3 +1,7 @@
+# v1.7.3 — Native Thumb Lab (ứng viên)
+
+[Hướng dẫn](RELEASE_NOTES_v1.7.3.md).
+
 # v1.7.2 — Native Home verification (ứng viên)
 
 [Hướng dẫn thử nghiệm](RELEASE_NOTES_v1.7.2.md).

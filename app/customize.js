@@ -815,7 +815,11 @@
   appearanceToggle('customizeIdleRain','idleRain');
   $('customizeAlbumRefresh').addEventListener('click',renderAlbumState);
   $('customizeAlbumWeb').addEventListener('click',function(){activateTab('wallpaper');tabs.wallpaper.focus();});
-  $('customizeAlbumPreview').addEventListener('click',function(){hide();if(root.INFINITI_IDLE_PREVIEW)root.INFINITI_IDLE_PREVIEW(true);});
+  var previewTransition='',previewMotion='';
+  function cyclePreview(id,values,current,label){var choices=[''].concat(values),next=choices[(choices.indexOf(current)+1)%choices.length];$(id).textContent=label+': '+(next||'cấu hình');return next;}
+  $('customizeAlbumTransitionPreview').addEventListener('click',function(){previewTransition=cyclePreview('customizeAlbumTransitionPreview',root.INFINITI_IDLE_ALBUM_STYLES?root.INFINITI_IDLE_ALBUM_STYLES():[],previewTransition,'Chuyển cảnh');});
+  $('customizeAlbumMotionPreview').addEventListener('click',function(){previewMotion=cyclePreview('customizeAlbumMotionPreview',root.INFINITI_IDLE_ALBUM_MOTIONS?['still'].concat(root.INFINITI_IDLE_ALBUM_MOTIONS()):[],previewMotion,'Chuyển động');});
+  $('customizeAlbumPreview').addEventListener('click',function(){hide();if(root.INFINITI_IDLE_PREVIEW)root.INFINITI_IDLE_PREVIEW(true,{transition:previewTransition,motion:previewMotion});});
   $('customizeIdlePreview').addEventListener('click',function(){var a=getAppearance();if(!a.idleRain||a.reduceMotion){message('Bật hiệu ứng và tắt Giảm chuyển động để thử chuyển động.');return;}hide();if(root.INFINITI_IDLE_PREVIEW)root.INFINITI_IDLE_PREVIEW();});
   $('customizeIdleEffect').addEventListener('click',function(){var a=getAppearance();saveAppearance({idleEffect:IDLE_EFFECTS[(IDLE_EFFECTS.indexOf(a.idleEffect)+1)%IDLE_EFFECTS.length]});applyAppearance();refreshToggles();renderIdle();});
   $('customizeIdleTime').addEventListener('click',function(){var a=getAppearance();saveAppearance({idleSeconds:IDLE_CHOICES[(IDLE_CHOICES.indexOf(a.idleSeconds)+1)%IDLE_CHOICES.length]});applyAppearance();refreshToggles();});

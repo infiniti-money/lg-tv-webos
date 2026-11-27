@@ -1,0 +1,11 @@
+# v1.7.8 — isolated Lab lifecycle and loader investigation
+
+Owner's v1.7.7 logs: seven pre-existing synthetic threads, eight after hook; pass injector exit 0 in 256 ms; ignore exit 0 in 254 ms, HOME_ONLY_IGNORED and four hook calls. Ignore run was interrupted (no LAB_PASS), then probe and injector absent, lock gone, config {}, lginput2 PID 1876 unchanged and NOT_MAPPED. Cause of interrupted shutdown not established.
+
+New stage log and QUIT_ACK distinguish request, exit and reaping. Bounded polling and owned-child kill on cleanup, retained lock/evidence on incomplete cleanup. No claim that an uninterruptible kernel task can be killed within deadline. LAB_PASS only after cleanup succeeds. No physical injection.
+
+Cycle requires empty existing config, no competing system hook, fixed mock script, persistent backup and atomic mapping edits. Tests pass -> ignore -> pass -> exec mock -> pass on own probe only; mock writes exactly one marker, never calls Luna. Mode mixed starts two poll workers, two mutex-blocked workers and two pause workers. These approximate wait categories, not actual LG code, constructor sequence, or lock ownership. If interrupted and backup remains, inspect original and current config and ensure no active lab before restoring; do not discard evidence. Power loss/SIGKILL cannot guarantee trap execution.
+
+Collect actual LG ELF providers locally using native-collect.sh; copy to private computer (do not commit proprietary binaries), then python3 native/audit-loader.py DIR/elf > loader-audit.json. Inventory records SONAME, dependency, symbol provider, imports/exports, program headers and init/fini tags. Static evidence does not prove actual runtime symbol lookup, constructor completion or deadlock. Versioned import matching is separate from unversioned direct-dependency candidates; transitive/global resolution may differ. Full real audit requires actual missing files. Prior logs show mapped hook and open but empty hook log; seven threads also exist before injection. No root cause claimed.
+
+CI tests syntax, prior regressions and legacy 2.19 QEMU single/multi/mixed/QUIT_ACK. Dynamic hook cycle and cleanup on actual TV remain unverified. V9.1 fallback kept; autostart off; native-trial.sh trial remains disabled.

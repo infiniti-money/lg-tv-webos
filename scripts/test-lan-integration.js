@@ -20,6 +20,18 @@ try{
  assert.equal(run(a,'POST','/api/album/settings',{enabled:'1',seconds:'3600',random:'0',intensity:'invalid'}).code,400);
  var restored=album.create(dir,function(){return dest;},function(){return allowed;},log);assert.equal(run(restored,'GET','/api/album').value.photos[0],id2);assert.equal(run(restored,'GET','/api/album').value.intensity,'medium');
  assert.equal(run(restored,'POST','/api/album/delete',{id:id}).code,200);assert.ok(!fs.existsSync(path.join(dest,'idle-photo-'+id+'.jpg')));assert.equal(run(restored,'GET','/api/album').value.transition,'cinema');
+ var cfg=JSON.parse(fs.readFileSync(path.join(dest,'idle-album.js'),'utf8').replace(/^window\.INFINITI_IDLE_ALBUM = /,'').replace(/;\s*$/,''));
+ function localAlbum(v,ip,origin){var req=new EventEmitter(),out;req.method='POST';req.socket={remoteAddress:ip||'127.0.0.1'};req.headers={origin:origin||'null'};assert.equal(restored.localRoute(req,{}, {pathname:'/api/album-local'},function(res,c,v){out={code:c,value:v};}),true);req.emit('data',Buffer.from(JSON.stringify(v)));req.emit('end');return out;}
+ var token=cfg.localToken;assert.equal(token.length,48);
+ assert.equal(localAlbum({token:token,action:'settings',field:'seconds',value:30},'192.168.1.10').code,403);
+ assert.equal(localAlbum({token:token,action:'settings',field:'seconds',value:30},'127.0.0.1','https://example.com').code,403);
+ assert.equal(localAlbum({token:'bad',action:'settings',field:'seconds',value:30}).code,403);
+ assert.equal(localAlbum({token:token,action:'settings',field:'command',value:'reboot'}).code,400);
+ assert.equal(localAlbum({token:token,action:'delete',id:id2}).code,400);
+ assert.equal(localAlbum({token:token,action:'settings',field:'seconds',value:30}).code,200);
+ assert.equal(run(restored,'GET','/api/album').value.seconds,30);
+ assert.equal(localAlbum({token:token,action:'delete',id:id2,confirm:true}).code,200);
+ assert.equal(run(restored,'GET','/api/album').value.photos.length,0);
  fs.writeFileSync(path.join(dest,'apps.js'),'window.TV_APPS = {"apps":[{"id":"netflix","title":"Netflix"}]};\n');
  var m=remote.create(dir,function(){return dest;},function(){return allowed;},log);
  assert.equal(run(m,'POST','/api/remote-set',{},JSON.stringify({idleEffect:'snow','app:netflix:pinned':true,weatherUnit:'fahrenheit'}),true).code,202);

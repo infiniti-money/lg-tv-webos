@@ -34,6 +34,15 @@ jobs:
         run: |
           node -e "const a=require('./app/appinfo.json');if(a.id!=='com.infinitimoney.tvhome'||a.title!=='Designed by Tân Dev'||a.vendor!=='Designed by Tân Dev')process.exit(1);console.log(a.id, a.version)"
 
+      - name: Require version documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(node -p "require('./app/appinfo.json').version")
+          test -s "RELEASE_NOTES_v$VERSION.md"
+          grep -F "v$VERSION" CHANGELOG.md >/dev/null
+          grep -F "RELEASE_NOTES_v$VERSION.md" RELEASE.vi.md >/dev/null
+
       - name: Check ES5 compatibility, Home rollback, and shell syntax
         shell: bash
         run: |

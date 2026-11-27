@@ -96,3 +96,6 @@ Metadata 1.6.3, notes và workflow đã cập nhật; CI của head mới vẫn 
 
 ### P4 — Xem thử riêng từng chuyển cảnh và chuyển động (27/11/2026)
 TV có hai nút lựa chọn tạm trong Album: 24 chuyển cảnh, 12 chuyển động và chế độ tĩnh. Nhấn Thử nhanh để áp dụng riêng trong phiên preview; mũi tên phải chuyển ảnh khi player sẵn sàng. Không ghi cấu hình album hoặc mốc lịch thật; giảm chuyển động vẫn ưu tiên. Kiểm thử validator và đường truyền tham số đã bổ sung; cần CI head và nghiệm thu D-pad/hiển thị trên TV. Quản lý ảnh trực tiếp trên TV và cường độ motion vẫn chưa hoàn tất.
+
+### P4/P5 — Quản lý album bằng remote
+Đã thêm nút chọn ảnh có thumbnail, đổi thứ tự, xóa xác nhận hai lần, bật/tắt, chu kỳ, tuần tự/ngẫu nhiên và cường độ nhẹ/vừa. Tải ảnh vẫn qua web LAN. API ghi riêng chỉ nhận loopback, origin null hoặc không có origin và token ngẫu nhiên theo tiến trình; giới hạn body 2 KiB và whitelist thao tác. Không mở shell, không dùng mật khẩu LAN làm token, không ghi token vào log. Kiểm thử từ chối IP LAN, origin web, token sai, field ngoài whitelist và xóa thiếu xác nhận. Cần xác minh CI head, hiển thị/focus D-pad, CORS loopback và đồng bộ thực tế trên webOS 3.4.3; CPU/RAM và cold boot chưa đo.

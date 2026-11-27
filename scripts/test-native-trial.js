@@ -54,3 +54,8 @@ assert.ok(lab.indexOf('mock-exec-once')>=0);
 assert.ok(lab.indexOf('cycle-final-pass')>=0);
 assert.ok(lab.indexOf('LAB_CLEANUP_INCOMPLETE')>=0);
 assert.ok(lab.indexOf('native-lab-cycle-original.json')>=0);
+
+assert.ok(lab.indexOf('preloaded-runtime-verified')>=0);
+assert.ok(lab.indexOf('LD_PRELOAD="$GLIB:$CXX" LD_DEBUG=libs,bindings')>=0);
+assert.ok(lab.indexOf('maps-before.txt')>=0);
+assert.ok(lab.indexOf('loader-summary.log')>=0);

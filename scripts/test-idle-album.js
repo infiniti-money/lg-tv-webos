@@ -24,3 +24,5 @@ assert.equal(a.settings({seconds:20,speed:600}).speed,600);assert.equal(a.settin
 var playerSource=fs.readFileSync('app/idle-album-player.js','utf8');assert.ok(playerSource.indexOf('if(advance&&!previewMode)remember(id)')>=0);assert.ok(playerSource.indexOf('previewMode?5000:60000')>=0);assert.ok(playerSource.indexOf('failed[id]=Date.now()')>=0);
 
 assert.equal(root.INFINITI_IDLE_ALBUM_IS_PREVIEW(),false);assert.equal(root.INFINITI_IDLE_ALBUM_NEXT(),false);assert.ok(playerSource.indexOf('!previewMode||!prefs')>=0);assert.ok(fs.readFileSync('app/app.js','utf8').indexOf('e.keyCode===39&&window.INFINITI_IDLE_ALBUM_IS_PREVIEW')>=0);
+
+assert.equal(root.INFINITI_IDLE_ALBUM_STYLES().length,24);assert.equal(root.INFINITI_IDLE_ALBUM_MOTIONS().length,12);assert.equal(root.INFINITI_IDLE_ALBUM_PREVIEW_SELECTION({transition:'fade',motion:'still'}).motion,'still');assert.equal(Object.keys(root.INFINITI_IDLE_ALBUM_PREVIEW_SELECTION({transition:'bad',motion:'bad'})).length,0);

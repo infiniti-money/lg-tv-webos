@@ -28,8 +28,19 @@ r=scenario(app,false,true);assert.strictEqual(r.calls.length,0);assert.ok(/coale
 r=scenario(app,false,false,true);assert.strictEqual(r.calls.length,1);assert.ok(/no launch/.test(r.log));
 var trial=fs.readFileSync('tv/native-trial.sh','utf8');
 assert.ok(trial.indexOf('sha256sum "/proc/$p/exe"')>=0);
-assert.ok(trial.indexOf('bounded "$STATE/ezinject" -l "$STATE/hook.log" "$p"')>=0);
+assert.ok(trial.indexOf('Physical injection suspended')>=0);
+assert.ok(trial.indexOf('bounded "$STATE/ezinject"')<0);
 assert.ok(trial.indexOf('--confirm-05.70.45')>=0);
 assert.ok(trial.indexOf('native-trial-original.json')>=0);
 assert.ok(fs.readFileSync('tv/native-lab.sh','utf8').indexOf('= "$$" ]')>=0);
 console.log('Native trial foreground, coalescing, expired/refused launch and static safety checks passed.');
+
+var classify=require('../tv/native-diagnostics.js').classify;
+var mapped='123-456 r-xp /tmp/libinputhookpp.so\n';
+assert.strictEqual(classify(mapped,'',null).status,'MAPPED_INIT_UNVERIFIED');
+assert.strictEqual(classify(mapped,'',null).reinjectForbidden,true);
+assert.strictEqual(classify('','',null).status,'NOT_MAPPED');
+var log='InputHook initialized\nFrida gum initialized\nReplacing lginput_uinput_send_button\nlib_main returned: 0\n';
+assert.strictEqual(classify(mapped,log,null).status,'INIT_LOGGED_NO_CALLS');
+assert.strictEqual(classify(mapped,log+'lginput_uinput_send_button called:',null).status,'CALLS_OBSERVED');
+console.log('Native diagnostic classifications passed');

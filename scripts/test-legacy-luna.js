@@ -29,3 +29,23 @@ helper.waitReady(function(){return 'ready';},function(cb){samples++;cb(sequence.
     },{seconds:0.02,interval:2});
   },{interval:0});
 },{interval:0});
+
+ // A fresh proof on the fast path must never cause a close; errors fall back once.
+ function scenario(errors,guards,expected,success){
+   var calls=[],result=0;
+   helper.redirectHome('enabled',function(mode,closeFirst,cb,opts){
+     assert.strictEqual(mode,'enabled');
+     calls.push(closeFirst);
+     if(!closeFirst){assert.strictEqual(opts.deadline,2500);assert.strictEqual(opts.launchTimeout,1200);}
+     cb(errors.shift()||null);
+   },function(){return guards.shift();},function(e){
+     result++;assert.strictEqual(!e,success);
+   });
+   assert.deepStrictEqual(calls,expected);assert.strictEqual(result,1);
+ }
+ scenario([null],[true],[false],true);
+ scenario([Error('no render proof'),null],[true,true],[false,true],true);
+ scenario([Error('timeout'),Error('fallback timeout')],[true,true],[false,true],false);
+ scenario([Error('canceled')],[true,false],[false],false);
+ scenario([],[false],[],false);
+ console.log('Home fast relaunch, one fallback, and failsafe cancellation passed.');

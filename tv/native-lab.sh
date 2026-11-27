@@ -93,7 +93,9 @@ wait_line PASS_THROUGH_OK 1
 check_config || fail 'config changed'
 # Only PID obtained from our own background child; no user PID argument.
 [ "$(readlink "/proc/$child/exe")" = "$work/thumb-probe" ] || fail 'owned probe identity changed'
-bounded "$work/ezinject" -l "$work/hook.log" "$child" "$work/libinputhookpp.so" >"$work/inject.log" 2>&1 || fail 'injector failed or timed out'
+if /usr/bin/node "$D/native-inject-observe.js" "$work" "$child" "$" >"$work/inject.log" 2>&1; then rc=0; else rc=$?; fi
+/usr/bin/node "$D/native-diagnostics.js" "$child" "$work" >"$work/diagnostics.json" 2>&1 || true
+[ "$rc" = 0 ] || fail "injector failed; inspect inject-result.json and diagnostics.json"
 sleep 2
 [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" = "$work/thumb-probe" ] || fail 'probe died after injection'
 grep -F "$work/libinputhookpp.so" "/proc/$child/maps" >/dev/null || fail 'library not mapped'

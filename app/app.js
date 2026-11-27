@@ -124,7 +124,7 @@
     }
     if(e.type==='click'&&Date.now()<idleClickUntil){idleStopEvent(e);return;}
     if(idleActive){
-      if(e.type==='keydown'&&e.keyCode===39&&window.INFINITI_IDLE_ALBUM_NEXT&&window.INFINITI_IDLE_ALBUM_NEXT()){idleWakeKey=e.keyCode;idleWakeUntil=Date.now();idleStopEvent(e);return;}
+      if(e.type==='keydown'&&e.keyCode===39&&window.INFINITI_IDLE_ALBUM_IS_PREVIEW&&window.INFINITI_IDLE_ALBUM_IS_PREVIEW()){window.INFINITI_IDLE_ALBUM_NEXT();idleWakeKey=e.keyCode;idleWakeUntil=Date.now();idleStopEvent(e);return;}
       idleReset();
       if(e.type==='keydown'){idleWakeKey=e.keyCode;idleWakeUntil=Date.now();idleStopEvent(e);}
       else if(e.type==='mousedown'||e.type==='touchstart'||e.type==='wheel'){idleClickUntil=Date.now()+700;idleStopEvent(e);}

@@ -1,8 +1,12 @@
 > Lịch sử phiên bản. Xem [hướng dẫn hiện hành](docs/owner-guide.vi.md); các tên và lệnh cũ chỉ mang tính tham chiếu lịch sử.
 
-# v1.6.3 — Designed by Tân Dev (ứng viên chưa phát hành)
+# v1.6.4 — Designed by Tân Dev (ứng viên)
 
-Xem [ghi chú v1.6.3](RELEASE_NOTES_v1.6.3.md) và [lộ trình nghiệm thu](docs/release-spec-v1.6.3.vi.md). IPK và Root Tools phải cùng build; chưa nghiệm thu TV thực tế. Bản chính thức vẫn là v1.6.2.
+Xem [ghi chú v1.6.4](RELEASE_NOTES_v1.6.4.md). Home bất đồng bộ, hàng đợi giới hạn; cần nghiệm thu TV lại.
+
+# v1.6.3 — Designed by Tân Dev (prerelease)
+
+Xem [ghi chú v1.6.3](RELEASE_NOTES_v1.6.3.md) và [lộ trình nghiệm thu](docs/release-spec-v1.6.3.vi.md). IPK và Root Tools phải cùng build. Đã phát hành prerelease; bản ổn định vẫn là v1.6.2.
 
 # v1.6.2 — Designed by Tân Dev
 

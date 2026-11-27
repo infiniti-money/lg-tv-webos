@@ -6,15 +6,15 @@ Launcher tùy chỉnh dành cho LG webOS. Chủ sở hữu kho mã, quản trị
 
 ## Phiên bản hiện tại
 
-Bản phát hành chính thức v1.6.2. Nhánh v1.6.3 là ứng viên đang kiểm thử, chưa phải bản phát hành. Tất cả gói cài đặt chính thức của bản tùy chỉnh được phân phối từ repository này.
+Bản ổn định v1.6.2; v1.6.3 đã phát hành prerelease. v1.6.4 là ứng viên đang kiểm thử Home bất đồng bộ. Tất cả gói cài đặt chính thức của bản tùy chỉnh được phân phối từ repository này.
 
-| Chức năng | v1.6.3 (ứng viên) |
+| Chức năng | v1.6.4 (ứng viên) |
 |---|---|
 | Home | Một hàng ứng dụng, chỉ hiện tên app được chọn |
 | Giao diện | Chủ đề, phông chữ, 105 icon, đổi tên và icon, ghim/ẩn/hiện app |
 | Đồng hồ | Lịch dương/âm, thời tiết hiện tại và dự báo |
 | Màn hình chờ | 14 hiệu ứng, ngẫu nhiên, kiểm thử tức thời |
-| Album | 20 ảnh Full HD, 14 chuyển cảnh, 6 chuyển động ảnh |
+| Album | 20 ảnh Full HD, 24 chuyển cảnh, 12 chuyển động ảnh |
 | Chu kỳ ảnh | 15 giây đến 7 ngày hoặc mỗi lần bật TV |
 | Tùy chỉnh | 8 chuyên mục trên TV; quản lý web qua cổng 9090, mật khẩu riêng từ 8 ký tự |
 | Khôi phục | Giữ LG Home gốc, thử watcher trước khi bật lâu dài |
@@ -23,11 +23,11 @@ Bản phát hành chính thức v1.6.2. Nhánh v1.6.3 là ứng viên đang ki�
 
 - TV đã root: cài IPK và Root Tools **cùng phiên bản** từ Release; theo [hướng dẫn SSH](docs/owner-guide.vi.md).
 - Không root: chỉ cài Launcher bằng công cụ Developer Mode phù hợp; không có dịch vụ quản lý root/LAN hoặc tích hợp Home legacy. Xem công cụ `install-noroot.sh` và [tích hợp Glasshouse](docs/GLASSHOUSE.md).
-- Trên v1.6.2, web dùng cổng 8090; ứng viên v1.6.3 chuyển sang 9090. Không mở cổng ra Internet.
+- Trên v1.6.2, web dùng cổng 8090; v1.6.3 trở lên chuyển sang 9090. Không mở cổng ra Internet.
 
 ## Tương thích và hỗ trợ
 
-Thiết bị mục tiêu LG 49UH850T-TA, webOS 3.4.3, firmware 05.70.45, ARMv7. v1.6.0 đã được thử khởi động trên thiết bị; hiệu ứng, album và web v1.6.3 vẫn cần nghiệm thu thực tế. Không sửa firmware hay xóa LG Home. Tài liệu kỹ thuật legacy và các ghi chú release cũ là tài liệu tham chiếu/khôi phục, không phải hướng dẫn cài hiện hành.
+Thiết bị mục tiêu LG 49UH850T-TA, webOS 3.4.3, firmware 05.70.45, ARMv7. v1.6.0 đã được thử khởi động trên thiết bị; chủ TV đã báo cáo P4/P5 v1.6.3 đạt, nhưng nhật ký Home mới cho thấy các lần nhấn chưa có trigger riêng; v1.6.4 cần nghiệm thu lại. Không sửa firmware hay xóa LG Home. Tài liệu kỹ thuật legacy và các ghi chú release cũ là tài liệu tham chiếu/khôi phục, không phải hướng dẫn cài hiện hành.
 
 Báo lỗi tại [Issues](https://github.com/infiniti-money/lg-tv-webos/issues). Không gửi mật khẩu hoặc URL chứa khóa.
 

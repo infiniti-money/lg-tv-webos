@@ -74,6 +74,18 @@ def home_down(data):
     _, _, kind, code, value = EVENT.unpack(data)
     return kind == 1 and code == HOME and value == 1
 
+def home_press_time(data):
+    if not home_down(data):
+        return None
+    sec, usec, _, _, _ = EVENT.unpack(data)
+    return sec + usec / 1000000.0
+
+
+def distinct_home_press(stamp, previous):
+    # Deduplicate copies of one physical press, not time spent in Luna/render.
+    return stamp is not None and (previous is None or abs(stamp - previous) >= 0.12)
+
+
 def input_paths():
     # Device numbering can change on reconnect. Prefer the actual named remote.
     preferred = []
@@ -97,6 +109,7 @@ def input_paths():
 def watch(mode):
     fds = {}
     last = 0
+    last_home = None
     prev = None
     next_power = 0
     next_sync = time.time() + 10
@@ -130,8 +143,11 @@ def watch(mode):
                     if not data:
                         os.close(fd)
                         del fds[fd]
-                    elif home_down(data):
-                        trigger = True
+                    else:
+                        stamp = home_press_time(data)
+                        if distinct_home_press(stamp, last_home):
+                            last_home = stamp
+                            trigger = True
                 except OSError as e:
                     if e.errno not in (errno.EAGAIN, errno.EINTR):
                         os.close(fd)
@@ -160,7 +176,7 @@ def watch(mode):
             else:
                 if not exists('wake'):
                     prev = None
-            if (trigger or wake_trigger) and now - last >= 2 and allowed(mode):
+            if (trigger or (wake_trigger and now - last >= 2)) and allowed(mode):
                 log('Home trigger' if trigger else 'Wake trigger')
                 if trigger:
                     time.sleep(0.15)

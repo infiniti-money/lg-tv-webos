@@ -70,7 +70,21 @@ function inventory(root){
  var mountInfo=null,mountError=null;
  try{var m=read(full('/proc/self/mountinfo'),1024*1024);if(m.truncated)throw Error('truncated');mountInfo=mountRows(m.text);if(!mountInfo.length)throw Error('empty');}
  catch(e){mountInfo=null;mountError='mountinfo unavailable or incomplete';}
- var exact=mountInfo?mountInfo.filter(function(m){return TARGETS.indexOf(m.target)>=0||m.target.indexOf(HOME+'/')===0;}):[];
+ function homeMounts(rows){return rows.filter(function(m){return TARGETS.indexOf(m.target)>=0||m.target.indexOf(HOME+'/')===0;});}
+ var exact=mountInfo?homeMounts(mountInfo):[];
+ var compositor=[];
+ try{fs.readdirSync(full('/proc')).filter(function(n){return /^[0-9]+$/.test(n);}).forEach(function(pid){
+  try{
+   var exe=fs.readlinkSync(full('/proc/'+pid+'/exe'));
+   if(!/^surface-manager(?:-starfish)?$/.test(path.basename(exe)))return;
+   var item={pid:pid,exe:exe,namespace:'unverified',homeMounts:[],resourcePaths:[],qrcMainMentioned:false};
+   try{item.namespace=fs.readlinkSync(full('/proc/'+pid+'/ns/mnt'));}catch(e){}
+   try{var b=read(full('/proc/'+pid+'/mountinfo'),1024*1024);if(!b.truncated){item.homeMounts=homeMounts(mountRows(b.text));item.mountinfoRead=true;}}catch(e){}
+   try{var b=read(full('/proc/'+pid+'/cmdline'),4096);item.qrcMainMentioned=b.text.indexOf('qrc:///main.qml')>=0;}catch(e){}
+   try{var b=read(full('/proc/'+pid+'/maps'),1024*1024);item.mapsComplete=!b.truncated;item.resourcePaths=b.text.split('\n').map(function(l){var m=l.match(/\s(\/[^\n]+\.(?:rcc|qml))(?: \(deleted\))?$/);return m?m[1]:null;}).filter(function(p,i,a){return p&&a.indexOf(p)===i;});}catch(e){}
+   compositor.push(item);
+  }catch(e){}
+ });}catch(e){}
  var conflicts=CONFLICTS.map(function(p){return inspect(p,false);}).filter(function(x){return x.status!=='absent';});
  var remotes=[];
  try{fs.readdirSync(full('/sys/class/input')).filter(function(n){return /^event\d+$/.test(n);}).sort().forEach(function(n){
@@ -87,10 +101,10 @@ function inventory(root){
  return {scope:'read-only; file presence is not runtime compatibility or mount authorization',version:version,
   node:process.version,targets:targets,filterPaths:filters,filterShape:configShape,
   mounts:{available:mountInfo!==null,error:mountError,homeTargets:exact},
-  conflicts:conflicts,remoteCandidates:remotes,
+  conflicts:conflicts,compositor:compositor,remoteCandidates:remotes,
   decisions:{qmlPanel:panel,keyFilters:key,executable:status('/usr/bin/com.webos.app.home')==='file'?'FILE_PRESENT_ONLY':'NO_VERIFIED_TARGET',
    mount:'DISABLED_RESEARCH_ONLY',physicalInjection:'DISABLED',legacyObserver:'EXISTING_V9_1_ONLY'},
-  limitations:['No QML patch compatibility checked','No active configd or compositor API verified','No mount or launch attempted','No proof remote candidates carry Home 773']};
+  limitations:['No QML patch compatibility checked','No active configd or compositor API verified; only base configuration checked','Compositor resources can be compiled in; absent mapped RCC does not establish absence','No mount or launch attempted','No proof remote candidates carry Home 773']};
 }
 module.exports={inventory:inventory,mountRows:mountRows,filterShape:filterShape};
 if(require.main===module){

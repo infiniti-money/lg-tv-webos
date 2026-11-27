@@ -5,11 +5,11 @@ D=/home/root/lg-tv-vibehack
 CFG=/home/root/.config/lginputhook/keybinds.json
 fail(){ echo "LAB_REFUSED: $*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || fail 'root required for ptrace'
-[ "$#" = 2 ] || [ "$#" = 3 ] || fail 'usage: native-lab.sh DIRECTORY pass|ignore|cycle [multi|mixed|preloaded]'
+[ "$#" = 2 ] || [ "$#" = 3 ] || fail 'usage: native-lab.sh DIRECTORY pass|ignore|cycle [single|multi|mixed|baseline-trace|glib-only|cxx-only|preloaded|cxx-first|preloaded-quiet]'
 src=$1
 mode=$2
 variant=${3:-single}
-case "$variant" in single|multi|mixed|preloaded) ;; *) fail "invalid variant";; esac
+case "$variant" in single|multi|mixed|baseline-trace|glib-only|cxx-only|preloaded|cxx-first|preloaded-quiet) ;; *) fail "invalid variant";; esac
 case "$mode" in pass|ignore|cycle) ;; *) fail 'invalid mode';; esac
 for c in sha256sum timeout mktemp readlink awk; do command -v "$c" >/dev/null || fail "$c missing"; done
 if timeout -t 2 -s KILL true >/dev/null 2>&1; then
@@ -42,6 +42,18 @@ lock=/tmp/infiniti-native-lab.lock
 mkdir "$lock" || fail 'another lab active or stale lock; inspect before removal'
 work=
 child=
+trace=0
+preload=
+GLIB=/usr/lib/libglib-2.0.so.0.4000.0
+CXX=/lib/libstdc++.so.6.0.19
+case "$variant" in
+  baseline-trace) trace=1;;
+  glib-only) trace=1; preload=$GLIB;;
+  cxx-only) trace=1; preload=$CXX;;
+  preloaded) trace=1; preload="$GLIB:$CXX";;
+  cxx-first) trace=1; preload="$CXX:$GLIB";;
+  preloaded-quiet) preload="$GLIB:$CXX";;
+esac
 backup="$D/native-lab-cycle-original.json"
 last_config=
 cycle_owned=0
@@ -95,6 +107,17 @@ cleanup(){
     if [ -n "$work" ]; then rm -f "$work/commands" "$work/thumb-probe" "$work/ezinject" "$work/libinputhookpp.so" "$work/mock-launch.sh"; fi
     rmdir "$lock" 2>/dev/null || rc=1
   fi
+  if [ -n "$work" ]; then
+    # Capture even if injector or baseline failed. No trace is not a successful init.
+    if [ "$trace" = 1 ]; then
+      bounded /usr/bin/node "$D/native-loader-report.js" "$work" > "$work/loader-report.json" 2>"$work/loader-report-error.log" || stage loader-report-failed
+      for f in "$work"/loader.[0-9]*; do
+        [ -f "$f" ] || continue
+        grep -E "calling init:|calling fini:|symbol lookup error|binding file .*libinputhookpp.* to .*lib(glib|stdc)" "$f" || true
+      done > "$work/loader-summary.log"
+    fi
+    printf '%s\n' "$rc" > "$work/lab-exit-code"
+  fi
   stage "final rc=$rc"
   if [ "$rc" = 0 ] && [ "$completed" = 1 ]; then echo "LAB_PASS: $mode; synthetic target only; not proof of physical LG Home interception"; fi
   exit "$rc"
@@ -126,15 +149,18 @@ mkfifo "$work/commands"
 exec 3<>"$work/commands"
 # Only the private synthetic executable gets these environment variables.
 # No LD_PRELOAD in the shell, observer, or any LG service.
-if [ "$variant" = preloaded ]; then
-  GLIB=/usr/lib/libglib-2.0.so.0.4000.0
-  CXX=/lib/libstdc++.so.6.0.19
-  printf '%s\n' \
-    "1a4314183bc80f6cf1d634ffb34802d5b9bb1d0c07c5962584ebb2d5bee74b34  $GLIB" \
-    "33c725259c618f54e2ce3e33fc30109ff12f177d0f500b4775994bd8de748e12  $CXX" | sha256sum -c - || fail 'LG runtime fingerprint mismatch'
-  LD_PRELOAD="$GLIB:$CXX" LD_DEBUG=libs,bindings LD_DEBUG_OUTPUT="$work/loader" "$work/thumb-probe" <&3 >"$work/probe.log" 2>&1 &
+case "$preload" in
+  *"$GLIB"*) printf '%s\n' "1a4314183bc80f6cf1d634ffb34802d5b9bb1d0c07c5962584ebb2d5bee74b34  $GLIB" | sha256sum -c - || fail 'GLib fingerprint mismatch';;
+esac
+case "$preload" in
+  *"$CXX"*) printf '%s\n' "33c725259c618f54e2ce3e33fc30109ff12f177d0f500b4775994bd8de748e12  $CXX" | sha256sum -c - || fail 'C++ fingerprint mismatch';;
+esac
+printf '%s\n' "$preload" > "$work/preload"
+printf '%s\n' "$trace" > "$work/trace-enabled"
+if [ "$trace" = 1 ]; then
+  LD_PRELOAD="$preload" LD_DEBUG=libs,bindings LD_DEBUG_OUTPUT="$work/loader" "$work/thumb-probe" <&3 >"$work/probe.log" 2>&1 &
 else
-  "$work/thumb-probe" <&3 >"$work/probe.log" 2>&1 &
+  LD_PRELOAD="$preload" LD_DEBUG= LD_DEBUG_OUTPUT= "$work/thumb-probe" <&3 >"$work/probe.log" 2>&1 &
 fi
 child=$!
 wait_line(){
@@ -154,7 +180,7 @@ wait_line(){
 wait_line READY 1
 stage ready
 if [ "$variant" != single ]; then
-  if [ "$variant" = mixed ] || [ "$variant" = preloaded ]; then printf r >&3; else printf m >&3; fi
+  if [ "$variant" = multi ]; then printf m >&3; else printf r >&3; fi
   wait_line MULTI_READY 1
   count=$(awk '/^Threads:/ {print $2}' "/proc/$child/status")
   [ "$count" -ge 7 ] || fail "expected seven preexisting threads, observed $count"
@@ -164,11 +190,15 @@ printf t >&3
 wait_line PASS_THROUGH_OK 1
 stage baseline-pass
 cp "/proc/$child/maps" "$work/maps-before.txt"
-if [ "$variant" = preloaded ]; then
-  grep -F "$GLIB" "$work/maps-before.txt" >/dev/null || fail "GLib not mapped before injection"
-  grep -F "$CXX" "$work/maps-before.txt" >/dev/null || fail "C++ not mapped before injection"
-  stage preloaded-runtime-verified
-fi
+# Check actual mapping, not just LD_PRELOAD string; transitive loads are recorded.
+for lib in "$GLIB" "$CXX"; do
+  present=0; grep -F "$lib" "$work/maps-before.txt" >/dev/null && present=1
+  case "$preload" in
+    *"$lib"*) [ "$present" = 1 ] || fail "requested runtime not mapped: $lib";;
+  esac
+  printf '%s %s\n' "$lib" "$present" >> "$work/runtime-before.txt"
+done
+if [ -n "$preload" ]; then stage preloaded-runtime-verified; fi
 if [ "$mode" = cycle ]; then [ "$(cat "$CFG")" = "$last_config" ] || fail "config changed"; else check_config || fail "config changed"; fi
 # Only PID obtained from our own background child; no user PID argument.
 [ "$(readlink "/proc/$child/exe")" = "$work/thumb-probe" ] || fail 'owned probe identity changed'
@@ -226,10 +256,7 @@ grep -Eq 'uinput_code=773([^0-9]|$)' "$work/hook.log" || fail 'no observed Home 
 grep -Eq 'uinput_code=115([^0-9]|$)' "$work/hook.log" || fail 'no observed other-key hook call'
 bounded /usr/bin/node "$D/native-diagnostics.js" "$child" "$work" >"$work/diagnostics.json" || fail "post-hook diagnostics failed"
 if grep -Eiq 'SIGILL|SIGSEGV|Illegal instruction|Segmentation fault' "$work/inject.log" "$work/hook.log"; then fail 'fault reported'; fi
-if [ "$variant" = preloaded ]; then
-  # Preserve raw per-process loader logs, plus a filtered summary for sharing.
-  grep -E "calling init:|calling fini:|libinputhookpp|g_malloc|g_free|g_log_default_handler|symbol lookup error" "$work"/loader.* > "$work/loader-summary.log" 2>/dev/null || true
-fi
+
 stage quit-request
 printf q >&3
 exec 3>&- 3<&-

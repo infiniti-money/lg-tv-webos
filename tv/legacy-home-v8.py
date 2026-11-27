@@ -109,20 +109,30 @@ class HomeQueue(object):
         self.mode, self.spawn, self.poll, self.stop = mode, spawn, poll, stop
         self.pid, self.kind, self.deadline = None, None, 0
         self.pending, self.due = False, 0
+        self.last_press, self.pending_since, self.repeat = None, 0, False
         self.received, self.coalesced, self.started, self.completed = 0, 0, 0, 0
 
     def press(self, now):
+        repeated = self.last_press is not None and 0 <= now - self.last_press <= 3.0
+        self.last_press = now
         self.received += 1
         if self.pending:
             self.coalesced += 1
         else:
             self.pending, self.due = True, now + 0.15
+            self.pending_since = now
+        if repeated:
+            self.repeat = True
+            # Wait briefly for the native Home animation, without starving a burst.
+            self.due = min(self.pending_since + 1.0, max(self.due, now + 0.35))
         log('Home input #%d; pending=1; coalesced=%d' % (self.received, self.coalesced))
 
     def start(self, kind, now):
         if self.pid is not None:
             return False
         action = 'redirect-' + self.mode if kind == 'home' else ('wake-enabled' if kind == 'wake' else 'power')
+        if kind == 'home' and self.repeat:
+            action = 'redirect-repeat-' + self.mode
         try:
             self.pid = self.spawn(action)
         except OSError as e:
@@ -132,6 +142,7 @@ class HomeQueue(object):
         self.kind, self.deadline = kind, now + (4 if kind == 'power' else 22)
         if kind == 'home':
             self.pending = False
+            self.repeat = False
             self.started += 1
             log('Home trigger; dispatched=%d' % self.started)
         elif kind == 'wake':
@@ -157,6 +168,7 @@ class HomeQueue(object):
 
     def close(self):
         self.pending = False
+        self.repeat = False
         if self.pid is not None:
             self.stop(self.pid)
             self.pid, self.kind = None, None

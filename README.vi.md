@@ -6,9 +6,9 @@ Launcher tùy chỉnh dành cho LG webOS. Chủ sở hữu kho mã, quản trị
 
 ## Phiên bản hiện tại
 
-Bản ổn định v1.6.2; v1.6.4 đã phát hành prerelease. v1.6.5 là ứng viên kiểm thử Home relaunch nhanh. Tất cả gói cài đặt chính thức của bản tùy chỉnh được phân phối từ repository này.
+Bản ổn định v1.6.2; v1.6.5 đã phát hành prerelease. v1.6.6 là ứng viên kiểm thử phục hồi Home liên tiếp. Tất cả gói cài đặt chính thức của bản tùy chỉnh được phân phối từ repository này.
 
-| Chức năng | v1.6.5 (ứng viên) |
+| Chức năng | v1.6.6 (ứng viên) |
 |---|---|
 | Home | Một hàng ứng dụng, chỉ hiện tên app được chọn |
 | Giao diện | Chủ đề, phông chữ, 105 icon, đổi tên và icon, ghim/ẩn/hiện app |
@@ -27,7 +27,7 @@ Bản ổn định v1.6.2; v1.6.4 đã phát hành prerelease. v1.6.5 là ứng 
 
 ## Tương thích và hỗ trợ
 
-Thiết bị mục tiêu LG 49UH850T-TA, webOS 3.4.3, firmware 05.70.45, ARMv7. v1.6.0 đã được thử khởi động trên thiết bị; chủ TV đã báo cáo P4/P5 v1.6.3 đạt, nhưng nhật ký Home mới cho thấy các lần nhấn chưa có trigger riêng; v1.6.5 cần nghiệm thu lại. Không sửa firmware hay xóa LG Home. Tài liệu kỹ thuật legacy và các ghi chú release cũ là tài liệu tham chiếu/khôi phục, không phải hướng dẫn cài hiện hành.
+Thiết bị mục tiêu LG 49UH850T-TA, webOS 3.4.3, firmware 05.70.45, ARMv7. v1.6.0 đã được thử khởi động trên thiết bị; chủ TV đã báo cáo P4/P5 v1.6.3 đạt, nhưng nhật ký Home mới cho thấy các lần nhấn chưa có trigger riêng; v1.6.6 cần nghiệm thu lại. Không sửa firmware hay xóa LG Home. Tài liệu kỹ thuật legacy và các ghi chú release cũ là tài liệu tham chiếu/khôi phục, không phải hướng dẫn cài hiện hành.
 
 Báo lỗi tại [Issues](https://github.com/infiniti-money/lg-tv-webos/issues). Không gửi mật khẩu hoặc URL chứa khóa.
 

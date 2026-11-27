@@ -563,9 +563,33 @@
     for (var i=0; i<list.length; i++) list[i].className = list[i] === selected ? 'selected' : '';
   }
   function renderIdle(){var a=getAppearance(),box=$('customizeIdleChoices');box.innerHTML='';IDLE_EFFECTS.forEach(function(e,i){var b=addButton(box,IDLE_LABELS[i],function(){saveAppearance({idleEffect:e});applyAppearance();refreshToggles();markChoice(box,b);},a.idleEffect===e);});refreshToggles();}
-  var albumReadSeq=0;
-  function renderAlbumState(){var target=$('customizeAlbumState'),n=++albumReadSeq,sc=document.createElement('script'),done=false,timer;target.textContent='Đang đọc album…';function finish(ok){if(done)return;done=true;clearTimeout(timer);if(sc.parentNode)sc.parentNode.removeChild(sc);if(n!==albumReadSeq||!opened||activeTab!=='album')return;var p=ok?root.INFINITI_IDLE_ALBUM:null;if(!p||!Array.isArray(p.photos)){target.textContent='Chưa có album đồng bộ. Bật dịch vụ web và tải ảnh.';return;}target.textContent=(p.enabled?'Đang bật':'Đang tắt')+' · '+p.photos.length+' ảnh · '+(p.seconds===0?'Mỗi lần bật TV':p.seconds>=86400?(p.seconds/86400)+' ngày':p.seconds>=3600?(p.seconds/3600)+' giờ':p.seconds+' giây')+' · '+(p.random?'Ngẫu nhiên':'Tuần tự');}
+  var albumReadSeq=0,albumData=null,albumSelected='',albumDeleteId='',albumDeleteAt=0,albumBusy=false;
+  var albumTimes=[0,15,20,30,60,120,300,600,1800,3600,7200,21600,43200,86400,172800,604800];
+  function albumTime(t){return t===0?'Mỗi lần bật TV':t>=86400?(t/86400)+' ngày':t>=3600?(t/3600)+' giờ':t+' giây';}
+  function albumControls(){
+    var p=albumData,ids=p?p.photos:[],i=ids.indexOf(albumSelected),ready=!!(p&&/^[a-f0-9]{48}$/.test(p.localToken||''))&&!albumBusy;
+    $('customizeAlbumSelect').textContent=i<0?'Chọn ảnh':'Ảnh '+(i+1)+'/'+ids.length;
+    $('customizeAlbumEnabled').textContent='Album: '+(p?(p.enabled?'Bật':'Tắt'):'—');
+    $('customizeAlbumSeconds').textContent='Lịch: '+(p?albumTime(p.seconds):'—');
+    $('customizeAlbumRandom').textContent='Thứ tự: '+(p?(p.random?'Ngẫu nhiên':'Tuần tự'):'—');
+    $('customizeAlbumIntensity').textContent='Cường độ: '+(p?(p.intensity==='medium'?'Vừa':'Nhẹ'):'—');
+    $('customizeAlbumDelete').textContent=albumDeleteId===albumSelected&&albumSelected&&Date.now()-albumDeleteAt<10000?'Xác nhận xóa':'Xóa ảnh';
+    ['customizeAlbumEnabled','customizeAlbumSeconds','customizeAlbumRandom','customizeAlbumIntensity'].forEach(function(k){$(k).disabled=!ready;});
+    $('customizeAlbumSelect').disabled=albumBusy||!ids.length;
+    $('customizeAlbumUp').disabled=!ready||i<=0;
+    $('customizeAlbumDown').disabled=!ready||i<0||i>=ids.length-1;
+    $('customizeAlbumDelete').disabled=!ready||i<0;
+  }
+  function renderAlbumState(){var target=$('customizeAlbumState'),n=++albumReadSeq,sc=document.createElement('script'),done=false,timer;albumData=null;albumDeleteId='';albumControls();target.textContent='Đang đọc album…';function finish(ok){if(done)return;done=true;clearTimeout(timer);if(sc.parentNode)sc.parentNode.removeChild(sc);if(n!==albumReadSeq||!opened||activeTab!=='album')return;var p=ok?root.INFINITI_IDLE_ALBUM:null;if(!p||!Array.isArray(p.photos)){target.textContent='Chưa có album đồng bộ. Bật dịch vụ web và tải ảnh.';return;}p.photos=p.photos.filter(function(id){return typeof id==='string'&&/^[a-f0-9]{24}$/.test(id);}).slice(0,20);albumData=p;if(p.photos.indexOf(albumSelected)<0)albumSelected=p.photos[0]||'';target.textContent=(p.enabled?'Đang bật':'Đang tắt')+' · '+p.photos.length+' ảnh · '+albumTime(p.seconds)+' · '+(p.random?'Ngẫu nhiên':'Tuần tự');albumControls();}
     sc.onload=function(){finish(true);};sc.onerror=function(){finish(false);};sc.src='idle-album.js?t='+Date.now();timer=setTimeout(function(){finish(false);},4000);document.body.appendChild(sc);}
+  function albumAction(v){
+    if(albumBusy||!albumData||!/^[a-f0-9]{48}$/.test(albumData.localToken||''))return;
+    v.token=albumData.localToken;albumBusy=true;albumDeleteId='';albumControls();
+    var x=new XMLHttpRequest(),done=false;
+    function finish(ok,published){if(done)return;done=true;albumBusy=false;if(opened&&activeTab==='album'){message(ok?(published?'Đã lưu và đồng bộ album.':'Đã lưu, đang chờ đồng bộ album.'):'Không thể lưu album. Hãy đọc lại hoặc kiểm tra Root Tools.');renderAlbumState();}}
+    try{x.open('POST','http://127.0.0.1:9090/api/album-local',true);x.timeout=5000;x.setRequestHeader('Content-Type','text/plain;charset=UTF-8');x.onload=function(){var v;try{v=JSON.parse(x.responseText);}catch(e){}finish(x.status===200&&v&&v.ok===true,v&&v.published);};x.onerror=x.ontimeout=function(){finish(false);};x.send(JSON.stringify(v));}catch(e){finish(false);}
+  }
+  function albumSetting(k,v){albumAction({action:'settings',field:k,value:v});}
   function refreshToggles() {
     var a = getAppearance();
     $('customizeIdleTime').textContent='Tự ẩn: '+(a.idleSeconds?a.idleSeconds+' giây':'Tắt');
@@ -674,6 +698,7 @@
     tabs.style.focus();
   }
   function hide() {
+    albumDeleteId='';albumReadSeq++;
     closeAppEditor();
     if (searchRequest) { searchRequest.abort(); searchRequest = null; }
     opened = false;
@@ -813,6 +838,14 @@
   appearanceToggle('customizeShowWeek','showWeek');
   appearanceToggle('customizeMotion','reduceMotion');
   appearanceToggle('customizeIdleRain','idleRain');
+  $('customizeAlbumSelect').addEventListener('click',function(){if(!albumData||!albumData.photos.length)return;albumSelected=albumData.photos[(albumData.photos.indexOf(albumSelected)+1)%albumData.photos.length];albumDeleteId='';albumControls();});
+  $('customizeAlbumUp').addEventListener('click',function(){albumAction({action:'move',id:albumSelected,direction:'up'});});
+  $('customizeAlbumDown').addEventListener('click',function(){albumAction({action:'move',id:albumSelected,direction:'down'});});
+  $('customizeAlbumDelete').addEventListener('click',function(){if(!albumSelected)return;if(albumDeleteId===albumSelected&&Date.now()-albumDeleteAt<10000){albumAction({action:'delete',id:albumSelected,confirm:true});return;}albumDeleteId=albumSelected;albumDeleteAt=Date.now();albumControls();message('Nhấn Xác nhận xóa lần nữa trong 10 giây.');});
+  $('customizeAlbumEnabled').addEventListener('click',function(){if(albumData)albumSetting('enabled',!albumData.enabled);});
+  $('customizeAlbumSeconds').addEventListener('click',function(){if(albumData)albumSetting('seconds',albumTimes[(albumTimes.indexOf(albumData.seconds)+1)%albumTimes.length]);});
+  $('customizeAlbumRandom').addEventListener('click',function(){if(albumData)albumSetting('random',!albumData.random);});
+  $('customizeAlbumIntensity').addEventListener('click',function(){if(albumData)albumSetting('intensity',albumData.intensity==='medium'?'light':'medium');});
   $('customizeAlbumBrowse').addEventListener('click',function(){hide();if(root.INFINITI_IDLE_PREVIEW)root.INFINITI_IDLE_PREVIEW(true,{motion:'still',manual:true});});
   $('customizeAlbumRefresh').addEventListener('click',renderAlbumState);
   $('customizeAlbumWeb').addEventListener('click',function(){activateTab('wallpaper');tabs.wallpaper.focus();});

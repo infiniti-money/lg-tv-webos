@@ -1,3 +1,7 @@
+# v1.7.9 — Loader và symbol interposition
+
+[Xem ghi chú](RELEASE_NOTES_v1.7.9.md). Chưa nghiệm thu trên LG.
+
 # v1.7.8 — Lab cycle và loader audit
 
 [Xem ghi chú](RELEASE_NOTES_v1.7.8.md). Chưa nghiệm thu trên LG.

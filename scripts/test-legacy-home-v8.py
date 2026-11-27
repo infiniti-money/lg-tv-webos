@@ -187,6 +187,25 @@ class LegacyTests(unittest.TestCase):
             self.assertFalse(q.repeat)
         self.assertEqual(calls, ['redirect-repeat-watch'])
 
+    def test_fast_ribbon_correlation(self):
+        from unittest.mock import patch
+        calls = []
+        q = legacy.HomeQueue('watch', lambda action: calls.append(action) or 7,
+                             lambda pid: 0, lambda pid: None)
+        with patch.object(legacy, 'log'):
+            legacy.ribbon_events(q, [('shown', True)], 1, True)
+            self.assertFalse(q.pending)
+            q.press(2)
+            q.due = 2.25
+            legacy.ribbon_events(q, [('shown', True)], 2.05, True)
+            self.assertAlmostEqual(q.due, 2.075)
+            self.assertTrue(q.repeat)
+            self.assertTrue(q.start('home', 2.08))
+            legacy.ribbon_events(q, [('shown', True)], 2.1, True)
+            self.assertFalse(q.pending)
+            self.assertEqual(q.reap(2.5), ('home', 0))
+        self.assertEqual(calls, ['redirect-repeat-watch'])
+
     def test_no_optional_modules(self):
         source = pathlib.Path("tv/legacy-home-v8.py").read_text()
         for name in ('json', 'fcntl', 'subprocess', 'glob'):

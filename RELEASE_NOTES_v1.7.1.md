@@ -1,0 +1,8 @@
+# Infiniti Home V9.1 v1.7.1 — Designed by Tân Dev
+
+Hardware-unverified prerelease. Three prioritized paths:
+1. Native Home: home-control.sh native-probe checks installed Input Hook 1.5.1, mapped C++ library in lginput2, absence of PHP and known fatal signals. This is a conservative diagnostic gate, not proof of interception. Enable/rebind refuse active legacy observer and failed preflight. Upstream hook remains optional and must be separately tested; no injector is bundled or run. Do not arm cold boot until actual Home presses succeed without Ribbon.
+2. LSM: legacy-home.sh lsm-probe reads local configuration/permissions and a bounded getCurrentState request. No setting is modified. Owner found qrc:///main.qml and a shared Eos Ribbon; no dedicated Home manifest or external RCC. No bind mount.
+3. Fast fallback: after removing Input Hook and clean reboot, legacy-home.sh ribbon-on, fast-on, watch. Shorter polling (50ms), correlation settle (25ms vs 150ms), no-log grace (250ms vs 600ms), and successful-close settle (50ms vs 150ms). Retains one child, coalesced pending intent, existing close timeout and render guard. These are configured intervals, not measured screen latency. Stop watcher and fast-off to return to V9, disable to restore LG default. Existing V8 is default.
+
+Real TV v1.7.0: physical Home detected and render confirmed, ribbon visually visible about 1.5s; logs showed roughly 2.4s from SHOWN to FULLSCREEN. No confirmed HIDDEN event. V9.1 cannot claim zero flash. Native and V9.1 are mutually exclusive. No firmware writes, no synthetic key events. Test remote, standby, boot, HDMI, recovery and wallpaper before stable release.

@@ -248,7 +248,7 @@ class RibbonLog(object):
                 events.append(('hidden', False))
         return events
 
-def ribbon_events(queue, events, now):
+def ribbon_events(queue, events, now, fast=False):
     # Hidden is diagnostic only; this firmware has not yet confirmed that event.
     # Require a pending physical Home intent; no log-only launches or synthetic keys.
     for state, own in events:
@@ -256,7 +256,7 @@ def ribbon_events(queue, events, now):
         if state == 'shown' and queue.pending and queue.last_press is not None and 0 <= now - queue.last_press <= 1.5:
             if own:
                 queue.repeat = True
-            queue.due = min(queue.due, now + 0.15)
+            queue.due = min(queue.due, now + (0.025 if fast else 0.15))
             log('V9 correlated Home ribbon; bounded recovery requested')
 
 def watch(mode):
@@ -265,6 +265,9 @@ def watch(mode):
     last_home = None
     queue = HomeQueue(mode)
     ribbon = RibbonLog() if exists('ribbon') else None
+    fast = ribbon is not None and exists('fast')
+    if fast:
+        log('V9.1 fast recovery selected; native ribbon may remain visible')
     if ribbon is not None:
         ribbon.read()  # baseline before listening
         log('V9 ribbon correlation enabled; no injection or mounts')
@@ -298,7 +301,7 @@ def watch(mode):
                         except OSError:
                             pass
             try:
-                ready, _, _ = select.select(list(fds), [], [], 0.15 if ribbon is not None or queue.pid is not None or queue.pending else 1)
+                ready, _, _ = select.select(list(fds), [], [], 0.05 if fast else (0.15 if ribbon is not None or queue.pid is not None or queue.pending else 1))
             except (OSError, select.error) as e:
                 if e.args and e.args[0] == errno.EINTR:
                     continue
@@ -335,9 +338,9 @@ def watch(mode):
                     last_home = stamp
                     queue.press(now)
                     if ribbon is not None and not queue.repeat:
-                        queue.due = max(queue.due, now + 0.6)
+                        queue.due = max(queue.due, now + (0.25 if fast else 0.6))
             if ribbon is not None:
-                ribbon_events(queue, ribbon.read(), now)
+                ribbon_events(queue, ribbon.read(), now, fast)
             result = queue.reap(now)
             wake_enabled = mode == 'enabled' and exists('wake')
             if not wake_enabled:

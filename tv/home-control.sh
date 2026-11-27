@@ -13,6 +13,45 @@ STARTUP=/var/lib/webosbrew/init.d/lg-tv-vibehack
 APP_ID=com.infinitimoney.tvhome
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin:$PATH
 hook_installed() { [ -d "$HOOK_APP" ] || [ -d "$HOOK_APP_ALT" ]; }
+observer_stopped() {
+  for f in session armed trial enabled; do
+    [ ! -e "$DATA/legacy-v8-$f" ] || return 1
+  done
+  [ ! -e /tmp/infiniti-legacy-v8-lock ]
+}
+native_probe() {
+  echo "=== Native Home diagnostic (read only) ==="
+  version=""
+  for base in "$HOOK_APP" "$HOOK_APP_ALT"; do
+    if [ -r "$base/appinfo.json" ]; then
+      version=$(/usr/bin/node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).version)' "$base/appinfo.json") || return 1
+      break
+    fi
+  done
+  echo "Input Hook version: ${version:-absent}"
+  loaded=0
+  old=0
+  for p in $(pidof lginput2 tvservice 2>/dev/null || true); do
+    echo "PID $p"
+    grep -E 'libphp\.so|libinputhookpp\.so' "/proc/$p/maps" || true
+    if grep -q 'libphp\.so' "/proc/$p/maps"; then old=1; fi
+    if [ "$(cat /proc/$p/comm 2>/dev/null)" = lginput2 ] && grep -q 'libinputhookpp\.so' "/proc/$p/maps"; then loaded=1; fi
+  done
+  faults=0
+  for f in /tmp/ezinject-*.log /tmp/lginput-hook-*.log; do
+    [ -f "$f" ] || continue
+    echo "=== $f ==="
+    tail -n 12 "$f"
+    if grep -Eiq 'Illegal instruction|Segmentation fault|SIGILL|SIGSEGV' "$f"; then faults=1; fi
+  done
+  [ ! -e /var/lib/webosbrew/init.d/inputhook ] || echo "Input Hook autostart exists (upstream-owned)"
+  if [ "$version" = 1.5.1 ] && [ "$loaded" = 1 ] && [ "$old" = 0 ] && [ "$faults" = 0 ]; then
+    echo "Native candidate: C++ mapped; physical Home test still required"
+    return 0
+  fi
+  echo "Native candidate NOT ready: version, library or log fault"
+  return 1
+}
 launcher_installed() {
   [ -d "/media/developer/apps/usr/palm/applications/$APP_ID" ] ||
   [ -d "/media/cryptofs/apps/usr/palm/applications/$APP_ID" ]
@@ -58,7 +97,12 @@ case "$action" in
     [ -f "$DATA/safe-recovery.sh" ] || { echo "Recovery helper missing" >&2; exit 1; }
     exec sh "$DATA/safe-recovery.sh"
     ;;
+  native-probe)
+    native_probe
+    ;;
   enable)
+    observer_stopped || { echo "Disable V8/V9 and let watcher exit before Native Home" >&2; exit 1; }
+    native_probe || { echo "Native compatibility not established; no key mapping changed" >&2; exit 1; }
     [ -f "$DATA/keymap.js" ] || {
       echo "Infiniti TV Home scripts are incomplete. Reinstall first." >&2; exit 1;
     }
@@ -80,6 +124,7 @@ case "$action" in
     echo "Restore with: sh $DATA/home-control.sh safe-mode"
     ;;
   rebind)
+    observer_stopped && native_probe || { echo 'Native preflight failed'; exit 1; }
     # Manual recovery only; never silently take ownership of another app's Home binding.
     # keymap.js archives both the previous backup and the current Home action.
     [ -f "$DATA/keymap.js" ] || {
@@ -200,5 +245,5 @@ case "$action" in
     fi
     echo "Home replacement disabled. Restart LG Input Hook if its old binding is cached."
     ;;
-  *) echo "Usage: sh $0 status|diagnose|safe-mode|enable|rebind|boot-arm|boot-confirm|boot-disable|evdev-disable|disable" >&2; exit 2 ;;
+  *) echo "Usage: sh $0 status|diagnose|native-probe|safe-mode|enable|rebind|boot-arm|boot-confirm|boot-disable|evdev-disable|disable" >&2; exit 2 ;;
 esac

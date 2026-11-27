@@ -32,6 +32,16 @@ class LegacyTests(unittest.TestCase):
         source = pathlib.Path("tv/legacy-home-v8.py").read_text()
         self.assertIn("trigger or (wake_trigger and now - last >= 2)", source)
 
+    def test_observer_recovers_select_failure(self):
+        from unittest.mock import patch
+        state = iter([True, True, False])
+        with patch.object(legacy, 'allowed', side_effect=lambda mode: next(state, False)), \
+             patch.object(legacy, 'input_paths', return_value=[]), \
+             patch.object(legacy.select, 'select', side_effect=[OSError(9, 'bad fd'), ([], [], [])]), \
+             patch.object(legacy.time, 'sleep'), \
+             patch.object(legacy, 'log'):
+            self.assertEqual(legacy.watch('watch'), 0)
+
     def test_no_optional_modules(self):
         source = pathlib.Path("tv/legacy-home-v8.py").read_text()
         for name in ('json', 'fcntl', 'subprocess', 'glob'):

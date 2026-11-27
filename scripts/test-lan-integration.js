@@ -6,6 +6,8 @@ function run(service,method,p,q,body,isRemote,local){var req=new EventEmitter(),
 try{
  var a=album.create(dir,function(){return dest;},function(){return allowed;},log);
  assert.equal(run(a,'POST','/api/album/settings',{enabled:'1',seconds:'3600',random:'1',transition:'cinema',motion:'pan'}).code,200);
+ ['',' ','0.0', ['0'], null].forEach(function(seconds){assert.equal(run(a,'POST','/api/album/settings',{enabled:'1',seconds:seconds,random:'0'}).code,400);});
+ assert.equal(run(a,'POST','/api/album/settings',{enabled:['1'],seconds:'30',random:'0'}).code,400);
  var pic=Buffer.from([255,216,1,2,255,217]);var uploaded=run(a,'POST','/api/album/upload',{},pic);assert.equal(uploaded.code,201);var id=uploaded.value.id;
  assert.ok(fs.existsSync(path.join(dest,'idle-photo-'+id+'.jpg')));
  var state=run(a,'GET','/api/album').value;assert.equal(state.transition,'cinema');assert.equal(state.motion,'pan');assert.equal(state.seconds,3600);assert.equal(state.photos.length,1);
@@ -32,6 +34,11 @@ try{
  assert.equal(run(restored,'GET','/api/album').value.seconds,30);
  assert.equal(localAlbum({token:token,action:'delete',id:id2,confirm:true}).code,200);
  assert.equal(run(restored,'GET','/api/album').value.photos.length,0);
+ fs.writeFileSync(path.join(dir,'idle-album','album.json'),JSON.stringify({enabled:true,seconds:30,photos:{bad:true}}));
+ var corrupt=album.create(dir,function(){return dest;},function(){return allowed;},log);
+ assert.deepStrictEqual(run(corrupt,'GET','/api/album').value.photos,[]);
+ assert.equal(run(corrupt,'POST','/api/album/upload',{},pic).code,201);
+ assert.equal(run(corrupt,'GET','/api/album').value.photos.length,1);
  fs.writeFileSync(path.join(dest,'apps.js'),'window.TV_APPS = {"apps":[{"id":"netflix","title":"Netflix"}]};\n');
  var m=remote.create(dir,function(){return dest;},function(){return allowed;},log);
  assert.equal(run(m,'POST','/api/remote-set',{},JSON.stringify({idleEffect:'snow','app:netflix:pinned':true,weatherUnit:'fahrenheit'}),true).code,202);

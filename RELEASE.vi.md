@@ -1,3 +1,7 @@
+# v1.7.4 — Native Lab: sửa thoát đa luồng và BusyBox
+
+Xem [ghi chú v1.7.4](RELEASE_NOTES_v1.7.4.md). Chưa nghiệm thu Home vật lý.
+
 # v1.7.3 — Native Thumb Lab (ứng viên)
 
 [Hướng dẫn](RELEASE_NOTES_v1.7.3.md).

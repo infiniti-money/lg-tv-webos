@@ -29,7 +29,8 @@ function create(dir,appDir,allowed,log){
     if(m!=='POST'){send(403,{error:'method'});return true;}
     body(req,res,150000,function(c,v){json(res,c,v,headers);},function(v){
       if(!obj(v)||(v.token!==token&&req.headers['x-infiniti-remote']!==token)){json(res,403,{error:'token'},headers);return;}
-      if(typeof v.revision!=='number'||v.revision<0||v.revision>data.revision||!obj(v.values))throw Error('bad ack');
+      if(typeof v.revision!=='number'||v.revision<0||Math.floor(v.revision)!==v.revision||v.revision>data.revision||!obj(v.values))throw Error('bad ack');
+      if(snap&&v.revision<snap.revision){json(res,409,{error:'stale ack'},headers);return;}
       var clean={};Object.keys(v.values).slice(0,800).forEach(function(k){if(validate(k,v.values[k]))clean[k]=v.values[k];});
       var idle=null;if(obj(v.idle)){var d=v.idle;idle={active:d.active===true,covered:d.covered===true,eligible:d.eligible===true,enabled:d.enabled===true,reduceMotion:d.reduceMotion===true,engine:['css','fallback','off'].indexOf(d.engine)>=0?d.engine:'off',effect:fields.idleEffect.indexOf(d.effect)>=0?d.effect:'rain',actualEffect:fields.idleEffect.indexOf(d.actualEffect)>=0?d.actualEffect:'',seconds:fields.idleSeconds.indexOf(d.seconds)>=0?d.seconds:60};}
       snap={revision:v.revision,values:clean,idle:idle};seen=Date.now();json(res,200,{ok:true},headers);

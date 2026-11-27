@@ -209,6 +209,11 @@ function run(action) {
     },null,1200);
   } else if(/^sync-(watch|trial|enabled)$/.test(action)){
     syncCatalog(action.slice(5));
+  } else if(/^redirect-repeat-(watch|trial|enabled)$/.test(action)){
+    var repeatMode=action.slice(16);
+    if(!allowed(repeatMode))return fail('V8 disabled or conflicting hook');
+    console.log('Home repeat recovery: close and relaunch');
+    renderSession(repeatMode,true,function(e){if(e)fail(e);});
   } else if(/^redirect-(watch|trial|enabled)$/.test(action)){
     var mode=action.slice(9);
     if(!allowed(mode))return fail('V8 disabled or conflicting hook');

@@ -37,8 +37,8 @@ child=
 cleanup(){
   if [ -n "$child" ] && [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" = "$work/thumb-probe" ]; then
     kill -KILL "$child" 2>/dev/null || true
+    wait "$child" 2>/dev/null || true
   fi
-  if [ -n "$child" ]; then wait "$child" 2>/dev/null || true; fi
   rm -f "$work/commands" "$work/thumb-probe" "$work/ezinject" "$work/libinputhookpp.so"
 }
 trap cleanup 0
@@ -76,7 +76,7 @@ wait_line PASS_THROUGH_OK 1
 check_config || fail 'config changed'
 # Only PID obtained from our own background child; no user PID argument.
 [ "$(readlink "/proc/$child/exe")" = "$work/thumb-probe" ] || fail 'owned probe identity changed'
-timeout 20 "$work/ezinject" -l "$work/hook.log" "$child" "$work/libinputhookpp.so" >"$work/inject.log" 2>&1 || fail 'injector failed or timed out'
+timeout -k 2 20 "$work/ezinject" -l "$work/hook.log" "$child" "$work/libinputhookpp.so" >"$work/inject.log" 2>&1 || fail 'injector failed or timed out'
 sleep 2
 [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" = "$work/thumb-probe" ] || fail 'probe died after injection'
 grep -F "$work/libinputhookpp.so" "/proc/$child/maps" >/dev/null || fail 'library not mapped'
@@ -87,6 +87,12 @@ grep -Eq 'uinput_code=773([^0-9]|$)' "$work/hook.log" || fail 'no observed Home 
 grep -Eq 'uinput_code=115([^0-9]|$)' "$work/hook.log" || fail 'no observed other-key hook call'
 if grep -Eiq 'SIGILL|SIGSEGV|Illegal instruction|Segmentation fault' "$work/inject.log" "$work/hook.log"; then fail 'fault reported'; fi
 printf q >&3
+n=0
+while [ "$(readlink "/proc/$child/exe" 2>/dev/null || true)" = "$work/thumb-probe" ]; do
+  [ "$n" -lt 5 ] || fail "probe exit timed out"
+  n=$((n+1)); sleep 1
+done
+[ ! -e "/proc/$child/exe" ] || fail "probe identity changed at exit"
 wait "$child" || fail 'probe did not exit cleanly'
 child=
 echo "LAB_PASS: $mode; synthetic target only; not proof of physical LG Home interception"

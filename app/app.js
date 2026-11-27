@@ -86,7 +86,7 @@
   function idleEligible(){return !launcherCovered()&&!editing&&!arranging&&(zone==='grid'||zone==='top'||zone==='pen'||zone==='none')&&!(window.INFINITI_CUSTOMIZE_IS_OPEN&&window.INFINITI_CUSTOMIZE_IS_OPEN());}
   function idleClear(){if(idleTimer!==null){clearTimeout(idleTimer);idleTimer=null;}if(idlePreviewTimer!==null){clearTimeout(idlePreviewTimer);idlePreviewTimer=null;}}
   function idleShow(){if(window.INFINITI_IDLE_EFFECT_STOP)window.INFINITI_IDLE_EFFECT_STOP();if(idleActive&&window.INFINITI_IDLE_ALBUM_STOP)window.INFINITI_IDLE_ALBUM_STOP();idleActive=false;document.body.classList.remove('idle-home');if(idleEffectClass)document.body.classList.remove(idleEffectClass);idleEffectClass='';}
-  function idleEnter(preview,albumPreview){
+  function idleEnter(preview,albumPreview,options){
     if(!idleEligible()||idleActive)return false;
     idleClear();
     // A lost key-up must not block idle forever or launch an app on return.
@@ -95,7 +95,7 @@
     var p=idlePrefs(),effect=window.INFINITI_PREFS&&window.INFINITI_PREFS.resolveIdleEffect?window.INFINITI_PREFS.resolveIdleEffect(p,Math.random()):(p.idleRain&&!p.reduceMotion?'rain':'');
     idleActive=true;idleWakeUntil=Date.now()+(preview?1800:700);
     document.body.classList.add('idle-home');
-    if(window.INFINITI_IDLE_ALBUM_START)window.INFINITI_IDLE_ALBUM_START(albumPreview===true);
+    if(window.INFINITI_IDLE_ALBUM_START)window.INFINITI_IDLE_ALBUM_START(albumPreview===true,options);
     if(effect){idleEffectClass='idle-'+effect;document.body.classList.add(idleEffectClass);if(window.INFINITI_IDLE_EFFECT_START)window.INFINITI_IDLE_EFFECT_START(effect);}
     return true;
   }
@@ -105,9 +105,9 @@
     idleTimer=setTimeout(function(){idleTimer=null;if(!idleEligible()){idleLastInput=Date.now();idleSchedule();return;}idleEnter(false);},remaining);
   }
   function idleReset(){idleLastInput=Date.now();idleShow();idleSchedule();}
-  window.INFINITI_IDLE_PREVIEW=function(albumPreview){
+  window.INFINITI_IDLE_PREVIEW=function(albumPreview,options){
     if(launcherCovered())return false;
-    idleClear();idlePreviewTimer=setTimeout(function(){idlePreviewTimer=null;if(!idleEnter(true,albumPreview===true))idleReset();},450);return true;
+    idleClear();idlePreviewTimer=setTimeout(function(){idlePreviewTimer=null;if(!idleEnter(true,albumPreview===true,options))idleReset();},450);return true;
   };
   window.INFINITI_IDLE_STATUS=function(){var p=idlePrefs();return {active:idleActive,covered:launcherCovered(),eligible:idleEligible(),seconds:p.idleSeconds,enabled:p.idleRain,effect:p.idleEffect,actualEffect:idleEffectClass.replace('idle-',''),engine:window.INFINITI_IDLE_EFFECT_MODE?window.INFINITI_IDLE_EFFECT_MODE():'off',reduceMotion:p.reduceMotion,lastInputMs:Date.now()-idleLastInput};};
   function idleStopEvent(e){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();}
